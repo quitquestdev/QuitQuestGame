@@ -1,0 +1,24 @@
+import './globals.css'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Quit Quest - Stop Smoking RPG',
+  description: 'Turn your quit smoking journey into an epic RPG adventure!',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  themeColor: '#1e293b',
+  icons: {
+    icon: '/favicon.ico',
+  },
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className="antialiased">{children}</body>
+    </html>
+  )
+}
