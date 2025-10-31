@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-900 text-white;
+  }
+}
+
+@layer utilities {
+  .pixelated {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  .player-attack {
+    animation: attack-right 0.5s ease-out;
+  }
+
+  .enemy-attack {
+    animation: attack-left 0.5s ease-out;
+  }
+
+  .heal {
+    animation: heal-glow 1s ease-out;
+  }
+
+  @keyframes attack-right {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(20px); }
+  }
+
+  @keyframes attack-left {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-20px); }
+  }
+
+  @keyframes heal-glow {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.5) hue-rotate(120deg); }
+    100% { filter: brightness(1); }
+  }
+}
