@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'pixel': ['"Press Start 2P"', 'Courier New', 'monospace'],
+        'pixel': ['Poppins', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       animation: {
         'shimmer': 'shimmer 2s infinite',

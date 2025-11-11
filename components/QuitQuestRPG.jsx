@@ -1940,13 +1940,9 @@ const QuitQuestRPG = () => {
   return (
     <>
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
         .pixelated {
-          font-family: 'Press Start 2P', 'Courier New', monospace;
-          image-rendering: pixelated;
-          image-rendering: -moz-crisp-edges;
-          image-rendering: crisp-edges;
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-weight: 600;
         }
         
         @keyframes shimmer {
