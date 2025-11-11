@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, Trophy, User, Shield, Sword, Crown, Heart, Star, TrendingUp, Award, AlertCircle, Settings, DollarSign, Target, Sparkles, Flame, Wind, Zap, Swords, AlertTriangle, Activity, BookOpen, Scroll, Map } from 'lucide-react';
 
 // Pixel Background Component (extracted to prevent re-renders)
@@ -33,6 +33,29 @@ const SetupScreen = React.memo(({
   nextStep,
   setSetupStep
 }) => {
+  // Refs to maintain focus across re-renders
+  const heroNameRef = React.useRef(null);
+  const cigarettesRef = React.useRef(null);
+  const priceRef = React.useRef(null);
+
+  // Restore focus after render if input was focused before
+  React.useEffect(() => {
+    const activeElement = document.activeElement;
+    if (setupStep === 1 && heroNameRef.current) {
+      if (activeElement === heroNameRef.current || !document.activeElement || document.activeElement === document.body) {
+        heroNameRef.current.focus();
+      }
+    } else if (setupStep === 4 && cigarettesRef.current) {
+      if (activeElement === cigarettesRef.current || !document.activeElement || document.activeElement === document.body) {
+        cigarettesRef.current.focus();
+      }
+    } else if (setupStep === 5 && priceRef.current) {
+      if (activeElement === priceRef.current || !document.activeElement || document.activeElement === document.body) {
+        priceRef.current.focus();
+      }
+    }
+  });
+
   // Generate star positions once to prevent re-renders on input change
   const stars = useMemo(() => {
     return [...Array(50)].map((_, i) => ({
@@ -90,14 +113,13 @@ const SetupScreen = React.memo(({
               <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
               <p className="text-gray-300 mb-6">What shall we call you on this quest?</p>
               <input
-                key="hero-name-input"
+                ref={heroNameRef}
                 type="text"
                 placeholder="Enter your hero name"
                 value={setupForm.heroName}
                 onChange={(e) => setSetupForm({...setupForm, heroName: e.target.value})}
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
                 maxLength={20}
-                autoFocus
               />
               <p className="text-gray-500 text-sm mt-2">Choose a name that inspires you!</p>
             </div>
@@ -158,7 +180,7 @@ const SetupScreen = React.memo(({
               <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
               <p className="text-gray-300 mb-6">How many cigarettes did you smoke per day?</p>
               <input
-                key="cigarettes-input"
+                ref={cigarettesRef}
                 type="number"
                 placeholder="20"
                 value={setupForm.cigarettesPerDay}
@@ -166,7 +188,6 @@ const SetupScreen = React.memo(({
                 min="1"
                 max="100"
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
-                autoFocus
               />
               <p className="text-gray-500 text-sm mt-2">Be honest - we'll track your victories!</p>
             </div>
@@ -177,7 +198,7 @@ const SetupScreen = React.memo(({
               <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
               <p className="text-gray-300 mb-6">How much did you spend on a pack?</p>
               <input
-                key="price-input"
+                ref={priceRef}
                 type="number"
                 placeholder="12.50"
                 value={setupForm.pricePerPack}
@@ -186,7 +207,6 @@ const SetupScreen = React.memo(({
                 max="100"
                 step="0.01"
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
-                autoFocus
               />
               <p className="text-gray-500 text-sm mt-2">We'll track your gold savings!</p>
             </div>
@@ -807,7 +827,7 @@ const QuitQuestRPG = () => {
     setGameState('playing');
   };
 
-  const validateStep = () => {
+  const validateStep = useCallback(() => {
     switch (setupStep) {
       case 1:
         return setupForm.heroName.trim().length > 0;
@@ -824,17 +844,39 @@ const QuitQuestRPG = () => {
       default:
         return false;
     }
-  };
+  }, [setupStep, setupForm]);
 
-  const nextStep = () => {
-    if (validateStep()) {
-      if (setupStep < 5) {
-        setSetupStep(setupStep + 1);
-      } else {
-        handleSetupSubmit();
-      }
+  const nextStep = useCallback(() => {
+    switch (setupStep) {
+      case 1:
+        if (setupForm.heroName.trim().length > 0) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 2:
+        if (setupForm.avatarClass && setupForm.avatarClass.length > 0) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 3:
+        if (setupForm.quitDate.length > 0) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 4:
+        const cigs = parseInt(setupForm.cigarettesPerDay);
+        if (cigs > 0 && cigs <= 100) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 5:
+        const price = parseFloat(setupForm.pricePerPack);
+        if (price > 0 && price <= 100) {
+          handleSetupSubmit();
+        }
+        break;
     }
-  };
+  }, [setupStep, setupForm, handleSetupSubmit, setSetupStep]);
 
   const resetProgress = () => {
     if (window.confirm('Are you sure? This will permanently delete all your progress!')) {
