@@ -1108,27 +1108,38 @@ const QuitQuestRPG = () => {
   };
 
   // Setup Screen Component
-  const SetupScreen = () => (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 p-6 relative">
-      <PixelBackground environment="castle" />
-      
-      <div className="max-w-md mx-auto relative z-10">
-        {/* Animated stars background */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-twinkle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`
-              }}
-            >
-              ⭐
-            </div>
-          ))}
-        </div>
+  const SetupScreen = () => {
+    // Generate star positions once to prevent re-renders on input change
+    const stars = React.useMemo(() => {
+      return [...Array(50)].map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 5
+      }));
+    }, []);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 p-6 relative">
+        <PixelBackground environment="castle" />
+
+        <div className="max-w-md mx-auto relative z-10">
+          {/* Animated stars background */}
+          <div className="fixed inset-0 overflow-hidden pointer-events-none">
+            {stars.map((star) => (
+              <div
+                key={star.id}
+                className="absolute animate-twinkle"
+                style={{
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  animationDelay: `${star.delay}s`
+                }}
+              >
+                ⭐
+              </div>
+            ))}
+          </div>
 
         <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
@@ -1277,7 +1288,8 @@ const QuitQuestRPG = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   // Dashboard Screen Component
   const DashboardScreen = () => {
