@@ -434,6 +434,65 @@ const QuitQuestRPG = () => {
     }
   }, [stats.daysSmokeFree]);
 
+  // Load data from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem('quitQuestData');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+
+        // Restore game state
+        if (parsed.gameState) {
+          setGameState(parsed.gameState);
+        }
+
+        // Restore user data
+        if (parsed.userData) {
+          setUserData(parsed.userData);
+        }
+
+        // Restore battle state if in battle
+        if (parsed.battleState) {
+          setBattleState(parsed.battleState);
+        }
+
+        // Restore story progress
+        if (parsed.storyChapter !== undefined) {
+          setStoryChapter(parsed.storyChapter);
+        }
+        if (parsed.unlockedStoryDays) {
+          setUnlockedStoryDays(parsed.unlockedStoryDays);
+        }
+
+        console.log('✅ Progress loaded from localStorage');
+      }
+    } catch (error) {
+      console.error('Failed to load data from localStorage:', error);
+    }
+  }, []); // Run only once on mount
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    if (gameState === 'playing' && userData.heroName) {
+      try {
+        const dataToSave = {
+          gameState,
+          userData,
+          battleState,
+          storyChapter,
+          unlockedStoryDays,
+          lastSaved: new Date().toISOString()
+        };
+
+        localStorage.setItem('quitQuestData', JSON.stringify(dataToSave));
+        console.log('💾 Progress auto-saved');
+      } catch (error) {
+        console.error('Failed to save data to localStorage:', error);
+      }
+    }
+  }, [userData, gameState, battleState, storyChapter, unlockedStoryDays]);
+
+
   const calculateStats = () => {
     const quitDate = new Date(userData.quitDate);
     const now = new Date();
@@ -928,6 +987,10 @@ const QuitQuestRPG = () => {
       setSetupStep(1);
       setGameState('setup');
       setCurrentScreen('dashboard');
+
+      // Clear localStorage
+      localStorage.removeItem('quitQuestData');
+      console.log('🗑️ Progress reset - localStorage cleared');
     }
   };
 
