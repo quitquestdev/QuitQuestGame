@@ -90,8 +90,8 @@ const SetupScreen = React.memo(({
 
         <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
-          <h1 className="text-3xl font-bold text-slate-900 text-center mb-2 relative z-10">🏰 QUIT QUEST</h1>
-          <p className="text-slate-800 text-center relative z-10">Begin your legendary smoke-free adventure!</p>
+          <h1 className="text-3xl font-black-hero text-slate-900 text-center mb-2 relative z-10">🏰 QUIT QUEST</h1>
+          <p className="text-slate-800 text-center relative z-10 font-medium-text">Begin your legendary smoke-free adventure!</p>
         </div>
 
         <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-6 mb-4 backdrop-blur-lg bg-opacity-90">
@@ -110,8 +110,8 @@ const SetupScreen = React.memo(({
 
           {setupStep === 1 && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
-              <p className="text-gray-300 mb-6">What shall we call you on this quest?</p>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
+              <p className="text-gray-300 mb-6 font-light-body">What shall we call you on this quest?</p>
               <input
                 ref={heroNameRef}
                 type="text"
@@ -121,14 +121,14 @@ const SetupScreen = React.memo(({
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
                 maxLength={20}
               />
-              <p className="text-gray-500 text-sm mt-2">Choose a name that inspires you!</p>
+              <p className="text-gray-500 text-sm mt-2 font-medium-text">Choose a name that inspires you!</p>
             </div>
           )}
 
           {setupStep === 2 && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">⚔️ CHOOSE YOUR CLASS</h2>
-              <p className="text-gray-300 mb-6">Select your hero's class</p>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">⚔️ CHOOSE YOUR CLASS</h2>
+              <p className="text-gray-300 mb-6 font-light-body">Select your hero's class</p>
               <div className="space-y-3">
                 {[
                   { id: 'warrior', name: 'Warrior', icon: '🛡️', desc: 'Strong and resilient' },
@@ -148,8 +148,8 @@ const SetupScreen = React.memo(({
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{cls.icon}</span>
                         <div className="text-left">
-                          <p className="font-bold">{cls.name}</p>
-                          <p className="text-sm opacity-80">{cls.desc}</p>
+                          <p className="font-bold-heading">{cls.name}</p>
+                          <p className="text-sm opacity-80 font-light-body">{cls.desc}</p>
                         </div>
                       </div>
                       {setupForm.avatarClass === cls.id && <span>✓</span>}
@@ -162,8 +162,8 @@ const SetupScreen = React.memo(({
 
           {setupStep === 3 && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">📅 QUIT DATE</h2>
-              <p className="text-gray-300 mb-6">When did you start your smoke-free journey?</p>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">📅 QUIT DATE</h2>
+              <p className="text-gray-300 mb-6 font-light-body">When did you start your smoke-free journey?</p>
               <input
                 type="date"
                 value={setupForm.quitDate}
@@ -171,14 +171,14 @@ const SetupScreen = React.memo(({
                 max={new Date().toISOString().split('T')[0]}
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
               />
-              <p className="text-gray-500 text-sm mt-2">This can be today or a past date</p>
+              <p className="text-gray-500 text-sm mt-2 font-medium-text">This can be today or a past date</p>
             </div>
           )}
 
           {setupStep === 4 && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
-              <p className="text-gray-300 mb-6">How many cigarettes did you smoke per day?</p>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
+              <p className="text-gray-300 mb-6 font-light-body">How many cigarettes did you smoke per day?</p>
               <input
                 ref={cigarettesRef}
                 type="number"
@@ -189,14 +189,14 @@ const SetupScreen = React.memo(({
                 max="100"
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
               />
-              <p className="text-gray-500 text-sm mt-2">Be honest - we'll track your victories!</p>
+              <p className="text-gray-500 text-sm mt-2 font-medium-text">Be honest - we'll track your victories!</p>
             </div>
           )}
 
           {setupStep === 5 && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
-              <p className="text-gray-300 mb-6">How much did you spend on a pack?</p>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
+              <p className="text-gray-300 mb-6 font-light-body">How much did you spend on a pack?</p>
               <input
                 ref={priceRef}
                 type="number"
@@ -208,7 +208,7 @@ const SetupScreen = React.memo(({
                 step="0.01"
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
               />
-              <p className="text-gray-500 text-sm mt-2">We'll track your gold savings!</p>
+              <p className="text-gray-500 text-sm mt-2 font-medium-text">We'll track your gold savings!</p>
             </div>
           )}
 
@@ -1080,8 +1080,8 @@ const QuitQuestRPG = () => {
     return (
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
         <div className="bg-yellow-600 text-slate-900 px-8 py-4 rounded-lg animate-scale-up pixelated">
-          <h2 className="text-3xl font-bold">LEVEL UP!</h2>
-          <p className="text-center mt-2">Knight Level {stats.knightLevel}</p>
+          <h2 className="text-3xl font-black-hero">LEVEL UP!</h2>
+          <p className="text-center mt-2 font-medium-text">Knight Level {stats.knightLevel}</p>
         </div>
       </div>
     );
@@ -1142,10 +1142,10 @@ const QuitQuestRPG = () => {
           } />
           
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold text-yellow-400 text-center mb-4 pixelated">
+            <h2 className="text-2xl font-extrabold-title text-yellow-400 text-center mb-4 pixelated">
               📜 THE LEGEND OF {userData.heroName.toUpperCase()} 📜
             </h2>
-            <p className="text-purple-200 text-center pixelated text-xs">
+            <p className="text-purple-200 text-center pixelated text-xs font-medium-text">
               Chapter {storyChapter}: Day {stats.daysSmokeFree} of Your Epic Journey
             </p>
             
@@ -1189,11 +1189,11 @@ const QuitQuestRPG = () => {
         {viewMode === 'today' && currentStory && (
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
             <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4 mb-4">
-              <h3 className="text-2xl font-bold text-yellow-400 mb-4 pixelated text-center">
+              <h3 className="text-2xl font-extrabold-title text-yellow-400 mb-4 pixelated text-center">
                 {currentStory.title}
               </h3>
               <div className="bg-slate-900 bg-opacity-50 rounded p-4">
-                <p className="text-gray-200 leading-relaxed text-sm" style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}>
+                <p className="text-gray-200 leading-relaxed text-sm font-light-body" style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}>
                   {currentStory.text.replace('{heroName}', userData.heroName)}
                 </p>
               </div>
@@ -1226,7 +1226,7 @@ const QuitQuestRPG = () => {
         {/* Story Archive View */}
         {viewMode === 'archive' && (
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-yellow-400 mb-4 pixelated text-center">
+            <h3 className="text-xl font-bold-heading text-yellow-400 mb-4 pixelated text-center">
               📚 YOUR STORY COLLECTION
             </h3>
             
@@ -1265,16 +1265,16 @@ const QuitQuestRPG = () => {
             
             {/* Selected Story Display */}
             <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4">
-              <h4 className="text-xl font-bold text-yellow-400 mb-3 pixelated">
+              <h4 className="text-xl font-bold-heading text-yellow-400 mb-3 pixelated">
                 Day {selectedDay}: {selectedStory.title}
               </h4>
               <div className="bg-slate-900 bg-opacity-50 rounded p-4">
-                <p className="text-gray-200 leading-relaxed text-sm" style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}>
+                <p className="text-gray-200 leading-relaxed text-sm font-light-body" style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}>
                   {selectedStory.text}
                 </p>
               </div>
               {selectedStory.day > 0 && (
-                <p className="text-yellow-500 text-xs text-center mt-3 pixelated">
+                <p className="text-yellow-500 text-xs text-center mt-3 pixelated font-medium-text">
                   {selectedStory.day <= 30 ? 'Chapter 1: The Awakening' :
                    selectedStory.day <= 60 ? 'Chapter 2: The Journey' :
                    selectedStory.day <= 90 ? 'Chapter 3: The Trials' :
@@ -1311,7 +1311,7 @@ const QuitQuestRPG = () => {
         {/* Journey Map View */}
         {viewMode === 'map' && (
           <div className="bg-gradient-to-br from-amber-900 to-amber-800 border-4 border-amber-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-amber-300 mb-4 pixelated text-center">
+            <h3 className="text-xl font-bold-heading text-amber-300 mb-4 pixelated text-center">
               🗺️ YOUR HEROIC JOURNEY
             </h3>
             
@@ -1499,8 +1499,8 @@ const QuitQuestRPG = () => {
         
         {/* Craving Emergency Button */}
         <div className="bg-gradient-to-r from-red-600 to-orange-600 border-4 border-red-500 rounded-lg p-4 text-center animate-pulse-slow relative z-10">
-          <h3 className="text-white font-bold mb-2 pixelated">🚨 CRAVING EMERGENCY? 🚨</h3>
-          <p className="text-red-100 text-sm mb-3">Fight the urge with an epic battle!</p>
+          <h3 className="text-white font-bold-heading mb-2 pixelated">🚨 CRAVING EMERGENCY? 🚨</h3>
+          <p className="text-red-100 text-sm mb-3 font-light-body">Fight the urge with an epic battle!</p>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => startBattle('mild')}
@@ -1532,15 +1532,15 @@ const QuitQuestRPG = () => {
               <div className="flex items-center gap-6">
                 <CharacterAvatar level={stats.knightLevel} size="large" animate={isLevelingUp} />
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 pixelated">{userData.heroName}</h2>
-                  <p className="text-slate-800 pixelated">Level {stats.knightLevel} {userData.avatarClass}</p>
+                  <h2 className="text-2xl font-extrabold-title text-slate-900 pixelated">{userData.heroName}</h2>
+                  <p className="text-slate-800 pixelated font-medium-text">Level {stats.knightLevel} {userData.avatarClass}</p>
                   <div className="mt-2">
-                    <p className="text-4xl font-bold text-slate-900 pixelated">{stats.daysSmokeFree}</p>
-                    <p className="text-sm text-slate-800 pixelated">DAYS SMOKE-FREE</p>
+                    <p className="text-4xl font-black-hero text-slate-900 pixelated">{stats.daysSmokeFree}</p>
+                    <p className="text-sm text-slate-800 pixelated font-medium-text">DAYS SMOKE-FREE</p>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <Swords className="w-4 h-4 text-slate-800" />
-                    <span className="text-sm text-slate-800 pixelated">Battles Won: {userData.battlesWon}</span>
+                    <span className="text-sm text-slate-800 pixelated font-medium-text">Battles Won: {userData.battlesWon}</span>
                   </div>
                 </div>
               </div>
@@ -1601,8 +1601,8 @@ const QuitQuestRPG = () => {
           <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-4 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
             <DollarSign className="w-8 h-8 mx-auto mb-2 text-slate-900" />
-            <p className="text-sm text-slate-800 pixelated">GOLD SAVED</p>
-            <p className="text-2xl font-bold text-slate-900 pixelated">${stats.moneySaved.toFixed(2)}</p>
+            <p className="text-sm text-slate-800 pixelated font-medium-text">GOLD SAVED</p>
+            <p className="text-2xl font-extrabold-title text-slate-900 pixelated">${stats.moneySaved.toFixed(2)}</p>
             <div className="mt-2 flex justify-center gap-1">
               {[...Array(Math.min(5, Math.floor(stats.moneySaved / 100)))].map((_, i) => (
                 <span key={i} className="text-yellow-300">💰</span>
@@ -1613,8 +1613,8 @@ const QuitQuestRPG = () => {
           <div className="bg-gradient-to-br from-amber-700 to-amber-800 border-4 border-amber-600 rounded-lg p-4 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
             <Shield className="w-8 h-8 mx-auto mb-2 text-amber-100" />
-            <p className="text-sm text-amber-200 pixelated">ENEMIES DEFEATED</p>
-            <p className="text-2xl font-bold text-white pixelated">{stats.cigarettesAvoided.toLocaleString()}</p>
+            <p className="text-sm text-amber-200 pixelated font-medium-text">ENEMIES DEFEATED</p>
+            <p className="text-2xl font-extrabold-title text-white pixelated">{stats.cigarettesAvoided.toLocaleString()}</p>
             <div className="mt-2 flex justify-center gap-1">
               {[...Array(Math.min(5, Math.floor(stats.cigarettesAvoided / 500)))].map((_, i) => (
                 <span key={i}>💀</span>
@@ -1625,10 +1625,10 @@ const QuitQuestRPG = () => {
 
         {/* Real-World Activities Section */}
         <div className="bg-gradient-to-br from-green-800 to-green-900 border-4 border-green-700 rounded-lg p-4 relative z-10">
-          <h3 className="text-xl font-bold text-green-300 mb-3 flex items-center gap-2 pixelated">
+          <h3 className="text-xl font-bold-heading text-green-300 mb-3 flex items-center gap-2 pixelated">
             <Activity className="w-5 h-5" /> HEALTHY ACTIVITIES
           </h3>
-          <p className="text-green-200 text-sm mb-3">Log activities to earn achievements!</p>
+          <p className="text-green-200 text-sm mb-3 font-light-body">Log activities to earn achievements!</p>
           <div className="grid grid-cols-4 gap-2">
             <button
               onClick={() => logActivity('walk')}
@@ -1662,10 +1662,10 @@ const QuitQuestRPG = () => {
           <div className="absolute top-0 right-0 opacity-20">
             <Heart className="w-20 h-20 text-red-500 animate-pulse" />
           </div>
-          <h3 className="text-xl font-bold text-yellow-500 mb-3 flex items-center gap-2 relative z-10 pixelated">
+          <h3 className="text-xl font-bold-heading text-yellow-500 mb-3 flex items-center gap-2 relative z-10 pixelated">
             <Heart className="w-5 h-5" /> HEALTH STATUS
           </h3>
-          <p className="text-gray-300 relative z-10">{stats.healthStatus}</p>
+          <p className="text-gray-300 relative z-10 font-light-body">{stats.healthStatus}</p>
           <div className="mt-4 grid grid-cols-4 gap-2">
             {stats.daysSmokeFree >= 1 && <span className="text-2xl animate-bounce-slow">🫁</span>}
             {stats.daysSmokeFree >= 7 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.1s'}}>💓</span>}
@@ -1689,7 +1689,7 @@ const QuitQuestRPG = () => {
           
           {/* Battle Status */}
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold text-yellow-500 text-center mb-4 pixelated">⚔️ BATTLE MODE ⚔️</h2>
+            <h2 className="text-2xl font-extrabold-title text-yellow-500 text-center mb-4 pixelated">⚔️ BATTLE MODE ⚔️</h2>
             
             {/* Enemy Section */}
             <div className="mb-6">
@@ -1795,15 +1795,15 @@ const QuitQuestRPG = () => {
     return (
       <div className="space-y-4">
         <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-slate-900 text-center mb-4 pixelated">🏆 HALL OF GLORY</h2>
+          <h2 className="text-2xl font-extrabold-title text-slate-900 text-center mb-4 pixelated">🏆 HALL OF GLORY</h2>
           <div className="flex justify-around mb-4">
             <div className="text-center">
-              <p className="text-3xl font-bold text-slate-900 pixelated">{unlockedCount}</p>
-              <p className="text-sm text-slate-800 pixelated">UNLOCKED</p>
+              <p className="text-3xl font-black-hero text-slate-900 pixelated">{unlockedCount}</p>
+              <p className="text-sm text-slate-800 pixelated font-medium-text">UNLOCKED</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-slate-900 pixelated">{totalCount}</p>
-              <p className="text-sm text-slate-800 pixelated">TOTAL</p>
+              <p className="text-3xl font-black-hero text-slate-900 pixelated">{totalCount}</p>
+              <p className="text-sm text-slate-800 pixelated font-medium-text">TOTAL</p>
             </div>
           </div>
           <div className="w-full bg-yellow-800 rounded-full h-3">
@@ -1823,9 +1823,9 @@ const QuitQuestRPG = () => {
       <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6">
         <div className="flex flex-col items-center text-center">
           <CharacterAvatar level={stats.knightLevel} size="large" />
-          <h2 className="text-2xl font-bold text-slate-900 mt-4 pixelated">{userData.heroName}</h2>
-          <p className="text-slate-800 pixelated">Level {stats.knightLevel} {userData.avatarClass}</p>
-          <p className="text-lg font-bold text-slate-900 mt-2 pixelated">{stats.daysSmokeFree} Days Strong!</p>
+          <h2 className="text-2xl font-extrabold-title text-slate-900 mt-4 pixelated">{userData.heroName}</h2>
+          <p className="text-slate-800 pixelated font-medium-text">Level {stats.knightLevel} {userData.avatarClass}</p>
+          <p className="text-lg font-bold-heading text-slate-900 mt-2 pixelated">{stats.daysSmokeFree} Days Strong!</p>
         </div>
       </div>
     </div>
@@ -1845,12 +1845,12 @@ const QuitQuestRPG = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-transparent to-purple-900 opacity-30"></div>
         <div className="max-w-4xl mx-auto p-4 relative z-10">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-yellow-500 pixelated">🏰 QUIT QUEST</h1>
+            <h1 className="text-2xl font-extrabold-title text-yellow-500 pixelated">🏰 QUIT QUEST</h1>
             <div className="flex items-center gap-3">
               <CharacterAvatar level={stats.knightLevel} size="small" />
               <div className="text-right">
-                <p className="text-yellow-500 font-bold pixelated">{userData.heroName}</p>
-                <p className="text-gray-400 text-xs pixelated">Day {stats.daysSmokeFree}</p>
+                <p className="text-yellow-500 font-bold-heading pixelated">{userData.heroName}</p>
+                <p className="text-gray-400 text-xs pixelated font-medium-text">Day {stats.daysSmokeFree}</p>
               </div>
             </div>
           </div>

@@ -16,6 +16,31 @@
     font-weight: 600;
   }
 
+  /* Font weight utilities for Poppins */
+  .font-light-body {
+    font-weight: 400;
+  }
+
+  .font-medium-text {
+    font-weight: 500;
+  }
+
+  .font-semibold-btn {
+    font-weight: 600;
+  }
+
+  .font-bold-heading {
+    font-weight: 700;
+  }
+
+  .font-extrabold-title {
+    font-weight: 800;
+  }
+
+  .font-black-hero {
+    font-weight: 900;
+  }
+
   .player-attack {
     animation: attack-right 0.5s ease-out;
   }
