@@ -1166,12 +1166,14 @@ const QuitQuestRPG = () => {
               <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
               <p className="text-gray-300 mb-6">What shall we call you on this quest?</p>
               <input
+                key="hero-name-input"
                 type="text"
                 placeholder="Enter your hero name"
                 value={setupForm.heroName}
                 onChange={(e) => setSetupForm({...setupForm, heroName: e.target.value})}
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
                 maxLength={20}
+                autoFocus
               />
               <p className="text-gray-500 text-sm mt-2">Choose a name that inspires you!</p>
             </div>
@@ -1232,6 +1234,7 @@ const QuitQuestRPG = () => {
               <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
               <p className="text-gray-300 mb-6">How many cigarettes did you smoke per day?</p>
               <input
+                key="cigarettes-input"
                 type="number"
                 placeholder="20"
                 value={setupForm.cigarettesPerDay}
@@ -1239,6 +1242,7 @@ const QuitQuestRPG = () => {
                 min="1"
                 max="100"
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                autoFocus
               />
               <p className="text-gray-500 text-sm mt-2">Be honest - we'll track your victories!</p>
             </div>
@@ -1249,6 +1253,7 @@ const QuitQuestRPG = () => {
               <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
               <p className="text-gray-300 mb-6">How much did you spend on a pack?</p>
               <input
+                key="price-input"
                 type="number"
                 placeholder="12.50"
                 value={setupForm.pricePerPack}
@@ -1257,6 +1262,7 @@ const QuitQuestRPG = () => {
                 max="100"
                 step="0.01"
                 className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                autoFocus
               />
               <p className="text-gray-500 text-sm mt-2">We'll track your gold savings!</p>
             </div>
