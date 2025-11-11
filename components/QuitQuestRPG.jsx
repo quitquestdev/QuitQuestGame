@@ -1,5 +1,227 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Trophy, User, Shield, Sword, Crown, Heart, Star, TrendingUp, Award, AlertCircle, Settings, DollarSign, Target, Sparkles, Flame, Wind, Zap, Swords, AlertTriangle, Activity, BookOpen, Scroll, Map } from 'lucide-react';
+
+// Pixel Background Component (extracted to prevent re-renders)
+const PixelBackground = React.memo(({ environment = 'forest' }) => {
+  const backgrounds = {
+    forest: '🌲🌳🌲🌳🌲',
+    mountain: '🏔️⛰️🏔️⛰️🏔️',
+    castle: '🏰🏯🏰🏯🏰',
+    dungeon: '⬛🟫⬛🟫⬛',
+    dragon: '🌋🔥🌋🔥🌋'
+  };
+
+  return (
+    <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
+      <div className="text-6xl leading-none">
+        {[...Array(20)].map((_, i) => (
+          <div key={i}>{backgrounds[environment]}</div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+PixelBackground.displayName = 'PixelBackground';
+
+// Setup Screen Component (extracted to prevent re-creation on every render)
+const SetupScreen = React.memo(({
+  setupStep,
+  setupForm,
+  setSetupForm,
+  validateStep,
+  nextStep,
+  setSetupStep
+}) => {
+  // Generate star positions once to prevent re-renders on input change
+  const stars = useMemo(() => {
+    return [...Array(50)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 5
+    }));
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 p-6 relative">
+      <PixelBackground environment="castle" />
+
+      <div className="max-w-md mx-auto relative z-10">
+        {/* Animated stars background */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          {stars.map((star) => (
+            <div
+              key={star.id}
+              className="absolute animate-twinkle"
+              style={{
+                left: `${star.left}%`,
+                top: `${star.top}%`,
+                animationDelay: `${star.delay}s`
+              }}
+            >
+              ⭐
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
+          <h1 className="text-3xl font-bold text-slate-900 text-center mb-2 relative z-10">🏰 QUIT QUEST</h1>
+          <p className="text-slate-800 text-center relative z-10">Begin your legendary smoke-free adventure!</p>
+        </div>
+
+        <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-6 mb-4 backdrop-blur-lg bg-opacity-90">
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-yellow-500 text-sm pixelated">Quest Setup Progress</span>
+              <span className="text-gray-400 text-sm pixelated">Step {setupStep} of 5</span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-3">
+              <div
+                className="bg-gradient-to-r from-yellow-500 to-amber-400 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${(setupStep / 5) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {setupStep === 1 && (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
+              <p className="text-gray-300 mb-6">What shall we call you on this quest?</p>
+              <input
+                key="hero-name-input"
+                type="text"
+                placeholder="Enter your hero name"
+                value={setupForm.heroName}
+                onChange={(e) => setSetupForm({...setupForm, heroName: e.target.value})}
+                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                maxLength={20}
+                autoFocus
+              />
+              <p className="text-gray-500 text-sm mt-2">Choose a name that inspires you!</p>
+            </div>
+          )}
+
+          {setupStep === 2 && (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">⚔️ CHOOSE YOUR CLASS</h2>
+              <p className="text-gray-300 mb-6">Select your hero's class</p>
+              <div className="space-y-3">
+                {[
+                  { id: 'warrior', name: 'Warrior', icon: '🛡️', desc: 'Strong and resilient' },
+                  { id: 'mage', name: 'Mage', icon: '🔮', desc: 'Wise and mystical' },
+                  { id: 'rogue', name: 'Rogue', icon: '🗡️', desc: 'Swift and cunning' }
+                ].map(cls => (
+                  <button
+                    key={cls.id}
+                    onClick={() => setSetupForm({...setupForm, avatarClass: cls.id})}
+                    className={`w-full p-4 rounded-lg border-2 transition-all pixelated ${
+                      setupForm.avatarClass === cls.id
+                        ? 'bg-yellow-600 border-yellow-500 text-slate-900'
+                        : 'bg-slate-700 border-slate-600 text-white hover:border-yellow-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{cls.icon}</span>
+                        <div className="text-left">
+                          <p className="font-bold">{cls.name}</p>
+                          <p className="text-sm opacity-80">{cls.desc}</p>
+                        </div>
+                      </div>
+                      {setupForm.avatarClass === cls.id && <span>✓</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {setupStep === 3 && (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">📅 QUIT DATE</h2>
+              <p className="text-gray-300 mb-6">When did you start your smoke-free journey?</p>
+              <input
+                type="date"
+                value={setupForm.quitDate}
+                onChange={(e) => setSetupForm({...setupForm, quitDate: e.target.value})}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+              />
+              <p className="text-gray-500 text-sm mt-2">This can be today or a past date</p>
+            </div>
+          )}
+
+          {setupStep === 4 && (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
+              <p className="text-gray-300 mb-6">How many cigarettes did you smoke per day?</p>
+              <input
+                key="cigarettes-input"
+                type="number"
+                placeholder="20"
+                value={setupForm.cigarettesPerDay}
+                onChange={(e) => setSetupForm({...setupForm, cigarettesPerDay: e.target.value})}
+                min="1"
+                max="100"
+                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                autoFocus
+              />
+              <p className="text-gray-500 text-sm mt-2">Be honest - we'll track your victories!</p>
+            </div>
+          )}
+
+          {setupStep === 5 && (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
+              <p className="text-gray-300 mb-6">How much did you spend on a pack?</p>
+              <input
+                key="price-input"
+                type="number"
+                placeholder="12.50"
+                value={setupForm.pricePerPack}
+                onChange={(e) => setSetupForm({...setupForm, pricePerPack: e.target.value})}
+                min="0.01"
+                max="100"
+                step="0.01"
+                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                autoFocus
+              />
+              <p className="text-gray-500 text-sm mt-2">We'll track your gold savings!</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 mt-8">
+            {setupStep > 1 && (
+              <button
+                onClick={() => setSetupStep(setupStep - 1)}
+                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg border-2 border-slate-600 transition-all transform hover:scale-105 pixelated"
+              >
+                Previous
+              </button>
+            )}
+            <button
+              onClick={nextStep}
+              disabled={!validateStep()}
+              className={`flex-1 py-3 rounded-lg border-2 transition-all transform hover:scale-105 pixelated ${
+                validateStep()
+                  ? setupStep === 5
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 border-green-500 text-white'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-blue-500 text-white'
+                  : 'bg-slate-700 border-slate-600 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {setupStep === 5 ? '⚔️ Begin Quest!' : 'Next →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+SetupScreen.displayName = 'SetupScreen';
 
 const QuitQuestRPG = () => {
   // Game States
@@ -760,27 +982,6 @@ const QuitQuestRPG = () => {
     );
   };
 
-  // Pixel Background Component
-  const PixelBackground = ({ environment = 'forest' }) => {
-    const backgrounds = {
-      forest: '🌲🌳🌲🌳🌲',
-      mountain: '🏔️⛰️🏔️⛰️🏔️',
-      castle: '🏰🏯🏰🏯🏰',
-      dungeon: '⬛🟫⬛🟫⬛',
-      dragon: '🌋🔥🌋🔥🌋'
-    };
-    
-    return (
-      <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
-        <div className="text-6xl leading-none">
-          {[...Array(20)].map((_, i) => (
-            <div key={i}>{backgrounds[environment]}</div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   // Story Screen Component
   const StoryScreen = () => {
     const [selectedDay, setSelectedDay] = useState(stats.daysSmokeFree || 1);
@@ -1104,190 +1305,6 @@ const QuitQuestRPG = () => {
           </div>
         )}
       </div>
-    );
-  };
-
-  // Setup Screen Component
-  const SetupScreen = () => {
-    // Generate star positions once to prevent re-renders on input change
-    const stars = React.useMemo(() => {
-      return [...Array(50)].map((_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: Math.random() * 5
-      }));
-    }, []);
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 p-6 relative">
-        <PixelBackground environment="castle" />
-
-        <div className="max-w-md mx-auto relative z-10">
-          {/* Animated stars background */}
-          <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            {stars.map((star) => (
-              <div
-                key={star.id}
-                className="absolute animate-twinkle"
-                style={{
-                  left: `${star.left}%`,
-                  top: `${star.top}%`,
-                  animationDelay: `${star.delay}s`
-                }}
-              >
-                ⭐
-              </div>
-            ))}
-          </div>
-
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
-          <h1 className="text-3xl font-bold text-slate-900 text-center mb-2 relative z-10">🏰 QUIT QUEST</h1>
-          <p className="text-slate-800 text-center relative z-10">Begin your legendary smoke-free adventure!</p>
-        </div>
-
-        <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-6 mb-4 backdrop-blur-lg bg-opacity-90">
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-yellow-500 text-sm pixelated">Quest Setup Progress</span>
-              <span className="text-gray-400 text-sm pixelated">Step {setupStep} of 5</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-yellow-500 to-amber-400 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${(setupStep / 5) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {setupStep === 1 && (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
-              <p className="text-gray-300 mb-6">What shall we call you on this quest?</p>
-              <input
-                type="text"
-                placeholder="Enter your hero name"
-                value={setupForm.heroName}
-                onChange={(e) => setSetupForm({...setupForm, heroName: e.target.value})}
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
-                maxLength={20}
-              />
-              <p className="text-gray-500 text-sm mt-2">Choose a name that inspires you!</p>
-            </div>
-          )}
-
-          {setupStep === 2 && (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">⚔️ CHOOSE YOUR CLASS</h2>
-              <p className="text-gray-300 mb-6">Select your hero's class</p>
-              <div className="space-y-3">
-                {[
-                  { id: 'warrior', name: 'Warrior', icon: '🛡️', desc: 'Strong and resilient' },
-                  { id: 'mage', name: 'Mage', icon: '🔮', desc: 'Wise and mystical' },
-                  { id: 'rogue', name: 'Rogue', icon: '🗡️', desc: 'Swift and cunning' }
-                ].map(cls => (
-                  <button
-                    key={cls.id}
-                    onClick={() => setSetupForm({...setupForm, avatarClass: cls.id})}
-                    className={`w-full p-4 rounded-lg border-2 transition-all pixelated ${
-                      setupForm.avatarClass === cls.id
-                        ? 'bg-yellow-600 border-yellow-500 text-slate-900'
-                        : 'bg-slate-700 border-slate-600 text-white hover:border-yellow-500'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{cls.icon}</span>
-                        <div className="text-left">
-                          <p className="font-bold">{cls.name}</p>
-                          <p className="text-sm opacity-80">{cls.desc}</p>
-                        </div>
-                      </div>
-                      {setupForm.avatarClass === cls.id && <span>✓</span>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {setupStep === 3 && (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">📅 QUIT DATE</h2>
-              <p className="text-gray-300 mb-6">When did you start your smoke-free journey?</p>
-              <input
-                type="date"
-                value={setupForm.quitDate}
-                onChange={(e) => setSetupForm({...setupForm, quitDate: e.target.value})}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
-              />
-              <p className="text-gray-500 text-sm mt-2">This can be today or a past date</p>
-            </div>
-          )}
-
-          {setupStep === 4 && (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
-              <p className="text-gray-300 mb-6">How many cigarettes did you smoke per day?</p>
-              <input
-                type="number"
-                placeholder="20"
-                value={setupForm.cigarettesPerDay}
-                onChange={(e) => setSetupForm({...setupForm, cigarettesPerDay: e.target.value})}
-                min="1"
-                max="100"
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
-              />
-              <p className="text-gray-500 text-sm mt-2">Be honest - we'll track your victories!</p>
-            </div>
-          )}
-
-          {setupStep === 5 && (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
-              <p className="text-gray-300 mb-6">How much did you spend on a pack?</p>
-              <input
-                type="number"
-                placeholder="12.50"
-                value={setupForm.pricePerPack}
-                onChange={(e) => setSetupForm({...setupForm, pricePerPack: e.target.value})}
-                min="0.01"
-                max="100"
-                step="0.01"
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
-              />
-              <p className="text-gray-500 text-sm mt-2">We'll track your gold savings!</p>
-            </div>
-          )}
-
-          <div className="flex gap-3 mt-8">
-            {setupStep > 1 && (
-              <button
-                onClick={() => setSetupStep(setupStep - 1)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg border-2 border-slate-600 transition-all transform hover:scale-105 pixelated"
-              >
-                Previous
-              </button>
-            )}
-            <button
-              onClick={nextStep}
-              disabled={!validateStep()}
-              className={`flex-1 py-3 rounded-lg border-2 transition-all transform hover:scale-105 pixelated ${
-                validateStep() 
-                  ? setupStep === 5 
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 border-green-500 text-white' 
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-blue-500 text-white'
-                  : 'bg-slate-700 border-slate-600 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {setupStep === 5 ? '⚔️ Begin Quest!' : 'Next →'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
     );
   };
 
@@ -1919,7 +1936,18 @@ const QuitQuestRPG = () => {
           100% { filter: brightness(1); }
         }
       `}</style>
-      {gameState === 'setup' ? <SetupScreen /> : <GameScreen />}
+      {gameState === 'setup' ? (
+        <SetupScreen
+          setupStep={setupStep}
+          setupForm={setupForm}
+          setSetupForm={setSetupForm}
+          validateStep={validateStep}
+          nextStep={nextStep}
+          setSetupStep={setSetupStep}
+        />
+      ) : (
+        <GameScreen />
+      )}
     </>
   );
 };
