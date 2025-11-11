@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, Trophy, User, Shield, Sword, Crown, Heart, Star, TrendingUp, Award, AlertCircle, Settings, DollarSign, Target, Sparkles, Flame, Wind, Zap, Swords, AlertTriangle, Activity, BookOpen, Scroll, Map } from 'lucide-react';
 
 // Pixel Background Component (extracted to prevent re-renders)
@@ -807,7 +807,7 @@ const QuitQuestRPG = () => {
     setGameState('playing');
   };
 
-  const validateStep = () => {
+  const validateStep = useCallback(() => {
     switch (setupStep) {
       case 1:
         return setupForm.heroName.trim().length > 0;
@@ -824,17 +824,39 @@ const QuitQuestRPG = () => {
       default:
         return false;
     }
-  };
+  }, [setupStep, setupForm]);
 
-  const nextStep = () => {
-    if (validateStep()) {
-      if (setupStep < 5) {
-        setSetupStep(setupStep + 1);
-      } else {
-        handleSetupSubmit();
-      }
+  const nextStep = useCallback(() => {
+    switch (setupStep) {
+      case 1:
+        if (setupForm.heroName.trim().length > 0) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 2:
+        if (setupForm.avatarClass && setupForm.avatarClass.length > 0) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 3:
+        if (setupForm.quitDate.length > 0) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 4:
+        const cigs = parseInt(setupForm.cigarettesPerDay);
+        if (cigs > 0 && cigs <= 100) {
+          setSetupStep(setupStep + 1);
+        }
+        break;
+      case 5:
+        const price = parseFloat(setupForm.pricePerPack);
+        if (price > 0 && price <= 100) {
+          handleSetupSubmit();
+        }
+        break;
     }
-  };
+  }, [setupStep, setupForm, handleSetupSubmit, setSetupStep]);
 
   const resetProgress = () => {
     if (window.confirm('Are you sure? This will permanently delete all your progress!')) {
