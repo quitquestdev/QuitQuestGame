@@ -1839,15 +1839,42 @@ const QuitQuestRPG = () => {
     );
   };
 
-  // Achievements Screen Component (simplified for space)
+  // Achievements Screen Component
   const AchievementsScreen = () => {
     const unlockedCount = userData.achievements.length;
     const totalCount = achievementsList.length;
     const completionPercentage = Math.round((unlockedCount / totalCount) * 100);
 
+    // Helper to check if achievement is unlocked
+    const isUnlocked = (achievementId) => userData.achievements.includes(achievementId);
+
+    // Rarity colors
+    const getRarityColor = (rarity) => {
+      switch (rarity) {
+        case 'common': return 'from-gray-600 to-gray-700';
+        case 'uncommon': return 'from-green-600 to-green-700';
+        case 'rare': return 'from-blue-600 to-blue-700';
+        case 'epic': return 'from-purple-600 to-purple-700';
+        case 'legendary': return 'from-yellow-600 to-orange-600';
+        default: return 'from-gray-600 to-gray-700';
+      }
+    };
+
+    const getRarityBadge = (rarity) => {
+      switch (rarity) {
+        case 'common': return '⚪ Common';
+        case 'uncommon': return '🟢 Uncommon';
+        case 'rare': return '🔵 Rare';
+        case 'epic': return '🟣 Epic';
+        case 'legendary': return '🟡 Legendary';
+        default: return '⚪ Common';
+      }
+    };
+
     return (
-      <div className="space-y-4">
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6">
+      <div className="space-y-4 max-w-4xl mx-auto pb-8">
+        {/* Header Stats */}
+        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 sticky top-0 z-10">
           <h2 className="text-2xl font-extrabold-title text-slate-900 text-center mb-4 pixelated">🏆 HALL OF GLORY</h2>
           <div className="flex justify-around mb-4">
             <div className="text-center">
@@ -1858,14 +1885,98 @@ const QuitQuestRPG = () => {
               <p className="text-3xl font-black-hero text-slate-900 pixelated">{totalCount}</p>
               <p className="text-sm text-slate-800 pixelated font-medium-text">TOTAL</p>
             </div>
+            <div className="text-center">
+              <p className="text-3xl font-black-hero text-slate-900 pixelated">{completionPercentage}%</p>
+              <p className="text-sm text-slate-800 pixelated font-medium-text">COMPLETE</p>
+            </div>
           </div>
           <div className="w-full bg-yellow-800 rounded-full h-3">
-            <div 
-              className="bg-gradient-to-r from-yellow-300 to-amber-300 h-3 rounded-full transition-all"
+            <div
+              className="bg-gradient-to-r from-yellow-300 to-amber-300 h-3 rounded-full transition-all duration-500"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
         </div>
+
+        {/* Achievement Gallery Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
+          {achievementsList.map((achievement) => {
+            const unlocked = isUnlocked(achievement.id);
+
+            return (
+              <div
+                key={achievement.id}
+                className={`rounded-lg border-4 p-4 transition-all duration-300 ${
+                  unlocked
+                    ? `bg-gradient-to-br ${getRarityColor(achievement.rarity)} border-yellow-500 transform hover:scale-105 hover:shadow-xl animate-achievement-unlock`
+                    : 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-600 opacity-60'
+                }`}
+              >
+                {/* Icon */}
+                <div className="text-center mb-3">
+                  <span className={`text-5xl ${unlocked ? 'animate-bounce-slow' : 'grayscale opacity-50'}`}>
+                    {unlocked ? achievement.icon : '🔒'}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h3 className={`text-center font-bold-heading mb-2 pixelated text-sm ${
+                  unlocked ? 'text-yellow-300' : 'text-gray-400'
+                }`}>
+                  {unlocked ? achievement.title : '???'}
+                </h3>
+
+                {/* Description */}
+                <p className={`text-center text-xs mb-3 font-light-body ${
+                  unlocked ? 'text-gray-200' : 'text-gray-500'
+                }`}>
+                  {unlocked ? achievement.description : 'Keep questing to unlock!'}
+                </p>
+
+                {/* Footer - XP and Rarity */}
+                <div className="flex items-center justify-between text-xs">
+                  <span className={`pixelated font-medium-text ${
+                    unlocked ? 'text-green-300' : 'text-gray-500'
+                  }`}>
+                    +{achievement.experience} XP
+                  </span>
+                  <span className={`pixelated font-medium-text ${
+                    unlocked ? 'text-white' : 'text-gray-500'
+                  }`}>
+                    {getRarityBadge(achievement.rarity)}
+                  </span>
+                </div>
+
+                {/* Unlocked shine effect */}
+                {unlocked && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 hover:opacity-20 transition-opacity pointer-events-none rounded-lg"></div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Motivational Footer */}
+        {unlockedCount < totalCount && (
+          <div className="bg-gradient-to-br from-purple-900 to-purple-800 border-4 border-purple-700 rounded-lg p-4 text-center mx-4">
+            <p className="text-purple-200 pixelated font-light-body">
+              ⚔️ {totalCount - unlockedCount} achievements await you, brave hero! ⚔️
+            </p>
+          </div>
+        )}
+
+        {/* Completion Message */}
+        {unlockedCount === totalCount && (
+          <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 text-center mx-4 animate-pulse-slow">
+            <p className="text-3xl mb-2">🎉</p>
+            <h3 className="text-xl font-extrabold-title text-slate-900 pixelated mb-2">
+              LEGENDARY HERO!
+            </h3>
+            <p className="text-slate-800 font-light-body">
+              You've unlocked every achievement! You are a true legend of Quit Quest!
+            </p>
+          </div>
+        )}
       </div>
     );
   };
