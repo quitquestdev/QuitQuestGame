@@ -1245,8 +1245,8 @@ const QuitQuestRPG = () => {
               <h3 className="text-2xl font-extrabold-title text-yellow-400 mb-4 pixelated text-center">
                 {currentStory.title}
               </h3>
-              <div className="bg-slate-900 bg-opacity-50 rounded p-4">
-                <p className="text-gray-200 leading-relaxed text-sm font-light-body" style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}>
+              <div className="parchment-bg rounded-lg p-6 shadow-lg">
+                <p className="story-text text-center">
                   {currentStory.text.replace('{heroName}', userData.heroName)}
                 </p>
               </div>
@@ -1318,11 +1318,11 @@ const QuitQuestRPG = () => {
             
             {/* Selected Story Display */}
             <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4">
-              <h4 className="text-xl font-bold-heading text-yellow-400 mb-3 pixelated">
+              <h4 className="text-xl font-bold-heading text-yellow-400 mb-3 pixelated text-center">
                 Day {selectedDay}: {selectedStory.title}
               </h4>
-              <div className="bg-slate-900 bg-opacity-50 rounded p-4">
-                <p className="text-gray-200 leading-relaxed text-sm font-light-body" style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}>
+              <div className="parchment-bg rounded-lg p-6 shadow-lg">
+                <p className="story-text text-center">
                   {selectedStory.text}
                 </p>
               </div>
