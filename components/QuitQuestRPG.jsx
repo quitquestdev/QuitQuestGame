@@ -1885,10 +1885,6 @@ const QuitQuestRPG = () => {
               <p className="text-3xl font-black-hero text-slate-900 pixelated">{totalCount}</p>
               <p className="text-sm text-slate-800 pixelated font-medium-text">TOTAL</p>
             </div>
-            <div className="text-center">
-              <p className="text-3xl font-black-hero text-slate-900 pixelated">{completionPercentage}%</p>
-              <p className="text-sm text-slate-800 pixelated font-medium-text">COMPLETE</p>
-            </div>
           </div>
           <div className="w-full bg-yellow-800 rounded-full h-3">
             <div
