@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -39,6 +40,27 @@
 
   .font-black-hero {
     font-weight: 900;
+  }
+
+  /* Story text styling */
+  .story-text {
+    font-family: 'Merriweather', Georgia, serif;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.9;
+    letter-spacing: 0.02em;
+    color: #F5E6D3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .story-text-bold {
+    font-family: 'Merriweather', Georgia, serif;
+    font-weight: 700;
+  }
+
+  .parchment-bg {
+    background: linear-gradient(135deg, rgba(139, 92, 46, 0.15) 0%, rgba(101, 67, 33, 0.2) 100%);
+    border: 2px solid rgba(180, 140, 90, 0.3);
   }
 
   .player-attack {
