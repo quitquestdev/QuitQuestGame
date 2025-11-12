@@ -587,7 +587,23 @@ const QuitQuestRPG = () => {
   };
 
   const achievementsList = [
-    // Time-Based Achievements (Days)
+    // Health-Based Achievements (Real Medical Milestones)
+    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate & blood pressure normalizing!', icon: '💓', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide levels dropping!', icon: '🩸', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'CO levels normal, oxygen levels rising!', icon: '💨', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Heart attack risk begins to drop!', icon: '❤️', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings regrowing! Taste & smell improving!', icon: '👃', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Bronchial tubes relaxing! Breathing easier!', icon: '🫁', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Blood circulation improving dramatically!', icon: '🔄', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function increasing significantly!', icon: '🌬️', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia regrowing! Coughing decreasing!', icon: '🌱', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Major lung healing! Shortness of breath gone!', icon: '💪', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Heart disease risk cut by 50%!', icon: '💚', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_5YEAR', title: 'Stroke Survivor', description: 'Stroke risk reduced to non-smoker level!', icon: '🧠', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_10YEAR', title: 'Cancer Conqueror', description: 'Lung cancer risk cut by 50%!', icon: '🛡️', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk equals non-smoker!', icon: '🔥', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
+
+    // Time-Based Achievements
     { id: 'HOUR_1', title: 'The First Hour', description: 'One hour smoke-free!', icon: '⏰', hoursRequired: 1, experience: 10, rarity: 'common', category: 'time' },
     { id: 'HOUR_12', title: 'Half Day Hero', description: '12 hours smoke-free!', icon: '🌓', hoursRequired: 12, experience: 25, rarity: 'common', category: 'time' },
     { id: 'DAY_1', title: 'First Victory', description: 'Survived your first day!', icon: '🛡️', daysRequired: 1, experience: 100, rarity: 'common', category: 'time' },
@@ -606,7 +622,7 @@ const QuitQuestRPG = () => {
     { id: 'DAY_500', title: 'Eternal Warrior', description: '500 days of freedom!', icon: '♾️', daysRequired: 500, experience: 12500, rarity: 'legendary', category: 'time' },
     { id: 'YEAR_2', title: 'Legend Reborn', description: 'Two years smoke-free!', icon: '🔥', daysRequired: 730, experience: 20000, rarity: 'legendary', category: 'time' },
     { id: 'DAY_1000', title: 'Millennial Master', description: '1000 days - truly legendary!', icon: '🌌', daysRequired: 1000, experience: 25000, rarity: 'legendary', category: 'time' },
-    
+
     // Money Saved Achievements
     { id: 'SAVE_10', title: 'Copper Collector', description: 'Saved $10!', icon: '🪙', moneySaved: 10, experience: 50, rarity: 'common', category: 'money' },
     { id: 'SAVE_25', title: 'Silver Saver', description: 'Saved $25!', icon: '🥈', moneySaved: 25, experience: 100, rarity: 'common', category: 'money' },
@@ -618,30 +634,60 @@ const QuitQuestRPG = () => {
     { id: 'SAVE_2500', title: 'Treasury Master', description: 'Saved $2,500!', icon: '🏰', moneySaved: 2500, experience: 6000, rarity: 'epic', category: 'money' },
     { id: 'SAVE_5000', title: 'Dragon\'s Hoard', description: 'Saved $5,000!', icon: '🐲', moneySaved: 5000, experience: 10000, rarity: 'legendary', category: 'money' },
     { id: 'SAVE_10000', title: 'Kingdom\'s Fortune', description: 'Saved $10,000!', icon: '🌍', moneySaved: 10000, experience: 20000, rarity: 'legendary', category: 'money' },
-    
+
     // Battle Achievements
     { id: 'BATTLE_1', title: 'First Blood', description: 'Won your first battle!', icon: '🩸', battlesRequired: 1, experience: 50, rarity: 'common', category: 'battle' },
     { id: 'BATTLE_10', title: 'Craving Fighter', description: 'Defeated 10 cravings!', icon: '⚔️', battlesRequired: 10, experience: 300, rarity: 'uncommon', category: 'battle' },
+    { id: 'BATTLE_25', title: 'Demon Hunter', description: 'Defeated 25 cravings!', icon: '👹', battlesRequired: 25, experience: 800, rarity: 'uncommon', category: 'battle' },
     { id: 'BATTLE_50', title: 'Craving Slayer', description: 'Defeated 50 cravings!', icon: '🗡️', battlesRequired: 50, experience: 1500, rarity: 'rare', category: 'battle' },
     { id: 'BATTLE_100', title: 'Centurion', description: 'Won 100 battles!', icon: '🏛️', battlesRequired: 100, experience: 3000, rarity: 'epic', category: 'battle' },
+    { id: 'BATTLE_250', title: 'War Legend', description: 'Defeated 250 cravings!', icon: '⚡', battlesRequired: 250, experience: 7500, rarity: 'epic', category: 'battle' },
+    { id: 'PERFECT_5', title: 'Flawless Fighter', description: '5 perfect victories!', icon: '✨', perfectRequired: 5, experience: 500, rarity: 'uncommon', category: 'battle' },
     { id: 'PERFECT_10', title: 'Perfect Warrior', description: '10 flawless victories!', icon: '💫', perfectRequired: 10, experience: 1000, rarity: 'rare', category: 'battle' },
+    { id: 'PERFECT_25', title: 'Untouchable Champion', description: '25 perfect victories!', icon: '🌟', perfectRequired: 25, experience: 2500, rarity: 'epic', category: 'battle' },
+
+    // Activity Achievements
+    { id: 'WALK_10', title: 'Wanderer', description: 'Logged 10 walks!', icon: '🚶', activityRequired: { type: 'walks', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
+    { id: 'WALK_50', title: 'Pathfinder', description: 'Logged 50 walks!', icon: '🥾', activityRequired: { type: 'walks', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
+    { id: 'EXERCISE_10', title: 'Fitness Initiate', description: 'Completed 10 workouts!', icon: '💪', activityRequired: { type: 'exercises', count: 10 }, experience: 250, rarity: 'common', category: 'activity' },
+    { id: 'EXERCISE_50', title: 'Gym Champion', description: 'Completed 50 workouts!', icon: '🏋️', activityRequired: { type: 'exercises', count: 50 }, experience: 1250, rarity: 'uncommon', category: 'activity' },
+    { id: 'MEDITATE_10', title: 'Inner Peace Seeker', description: 'Meditated 10 times!', icon: '🧘', activityRequired: { type: 'meditations', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
+    { id: 'MEDITATE_50', title: 'Zen Master', description: 'Meditated 50 times!', icon: '☮️', activityRequired: { type: 'meditations', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
+    { id: 'WATER_25', title: 'Hydration Hero', description: 'Drank water 25 times!', icon: '💧', activityRequired: { type: 'waterDrinks', count: 25 }, experience: 300, rarity: 'common', category: 'activity' },
+    { id: 'WATER_100', title: 'Aqua Champion', description: 'Drank water 100 times!', icon: '💦', activityRequired: { type: 'waterDrinks', count: 100 }, experience: 1200, rarity: 'uncommon', category: 'activity' },
+
+    // Streak Achievements
+    { id: 'STREAK_7', title: 'Week Streak', description: '7 day streak maintained!', icon: '🔥', streakDays: 7, experience: 500, rarity: 'uncommon', category: 'streak' },
+    { id: 'STREAK_30', title: 'Unstoppable', description: '30 day streak!', icon: '⚡', streakDays: 30, experience: 1500, rarity: 'rare', category: 'streak' },
+    { id: 'STREAK_100', title: 'Unbreakable', description: '100 day streak!', icon: '💎', streakDays: 100, experience: 5000, rarity: 'epic', category: 'streak' },
+    { id: 'STREAK_365', title: 'Year of Iron Will', description: '365 day streak!', icon: '🏆', streakDays: 365, experience: 15000, rarity: 'legendary', category: 'streak' },
+
+    // Cigarette Avoidance Achievements
+    { id: 'CIGS_100', title: 'Century Saver', description: 'Avoided 100 cigarettes!', icon: '🚭', cigarettesAvoided: 100, experience: 300, rarity: 'common', category: 'avoidance' },
+    { id: 'CIGS_500', title: 'Half Thousand', description: 'Avoided 500 cigarettes!', icon: '🛡️', cigarettesAvoided: 500, experience: 1000, rarity: 'uncommon', category: 'avoidance' },
+    { id: 'CIGS_1000', title: 'Thousand Strong', description: 'Avoided 1,000 cigarettes!', icon: '⭐', cigarettesAvoided: 1000, experience: 2000, rarity: 'rare', category: 'avoidance' },
+    { id: 'CIGS_5000', title: 'Five Thousand Victory', description: 'Avoided 5,000 cigarettes!', icon: '🌟', cigarettesAvoided: 5000, experience: 5000, rarity: 'epic', category: 'avoidance' },
+    { id: 'CIGS_10000', title: 'Ten Thousand Triumph', description: 'Avoided 10,000 cigarettes!', icon: '👑', cigarettesAvoided: 10000, experience: 10000, rarity: 'legendary', category: 'avoidance' },
   ];
 
   const checkAchievements = (days) => {
     let newAchievements = [...userData.achievements];
     let totalExp = userData.totalExperience;
-    
-    // Calculate hours for hour-based achievements
+
+    // Calculate time-based values
     const hours = days * 24;
-    
+    const minutes = hours * 60;
+
     achievementsList.forEach(achievement => {
       // Skip if already unlocked
       if (newAchievements.includes(achievement.id)) return;
-      
+
       let shouldUnlock = false;
-      
+
       // Check different achievement types
-      if (achievement.hoursRequired && hours >= achievement.hoursRequired) {
+      if (achievement.minutesRequired && minutes >= achievement.minutesRequired) {
+        shouldUnlock = true;
+      } else if (achievement.hoursRequired && hours >= achievement.hoursRequired) {
         shouldUnlock = true;
       } else if (achievement.daysRequired && days >= achievement.daysRequired) {
         shouldUnlock = true;
@@ -655,8 +701,15 @@ const QuitQuestRPG = () => {
         shouldUnlock = true;
       } else if (achievement.streakDays && userData.currentStreak >= achievement.streakDays) {
         shouldUnlock = true;
+      } else if (achievement.activityRequired) {
+        const activityType = achievement.activityRequired.type;
+        const requiredCount = achievement.activityRequired.count;
+        const actualCount = userData.activities[activityType] || 0;
+        if (actualCount >= requiredCount) {
+          shouldUnlock = true;
+        }
       }
-      
+
       if (shouldUnlock) {
         newAchievements.push(achievement.id);
         totalExp += achievement.experience;
@@ -664,7 +717,7 @@ const QuitQuestRPG = () => {
         setTimeout(() => setShowParticles(false), 3000);
       }
     });
-    
+
     if (newAchievements.length !== userData.achievements.length) {
       setUserData(prev => ({
         ...prev,
