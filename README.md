@@ -19,7 +19,9 @@ Works best on modern browsers:
 Chrome/Edge (latest)
 Firefox (latest)
 Safari (latest)
+
 Copyright
+
 Copyright © 2022-2025 Jonathan Klimoski. All rights reserved.
 
 This software and associated documentation files (the "Software") are protected by copyright law and international treaties. Unauthorized reproduction or distribution of this Software, or any portion of it, may result in severe civil and criminal penalties, and will be prosecuted to the maximum extent possible under the law.
