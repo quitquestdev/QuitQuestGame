@@ -1047,55 +1047,112 @@ const QuitQuestRPG = () => {
     }
   };
 
-  // Character Avatar Component with 16-bit style
+  // Character Avatar Component with SVG Icons
   const CharacterAvatar = ({ level, className, size = 'large', animate = false }) => {
-    const getPixelArt = () => {
-      const baseClass = className || userData.avatarClass;
-      const pixelSprites = {
-        warrior: [
-          '⬜⬜⬛⬛⬛⬜⬜\n⬜⬛🟨🟨🟨⬛⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🟥🟥🟥🟥🟥⬜\n🟫🟥🟥🟥🟥🟥🟫\n⬜🟫🟥🟥🟥🟫⬜',
-          '⬜⬜🟦🟦🟦⬜⬜\n⬜🟦🟨🟨🟨🟦⬜\n⬜🟦👁️⬜👁️🟦⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🟦🟦🟦🟦🟦⬜\n🟫🟦🟦🟦🟦🟦🟫\n⬜🟫🟦🟦🟦🟫⬜',
-          '⬜⬜🟪🟪🟪⬜⬜\n⬜🟪🟨🟨🟨🟪⬜\n⬜🟪👁️⬜👁️🟪⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🟪🟪🟪🟪🟪⬜\n🟫🟪🟪🟪🟪🟪🟫\n⬜🟫🟪🟪🟪🟫⬜',
-          '⬜👑👑👑👑👑⬜\n⬜🟨🟨🟨🟨🟨⬜\n⬜🟨👁️⬜👁️🟨⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🟨🟨🟨🟨🟨⬜\n🟫🟨🟨🟨🟨🟨🟫\n⬜🟫🟨🟨🟨🟫⬜',
-          '⬜👑👑👑👑👑⬜\n⬜🔥🟨🟨🟨🔥⬜\n⬜🔥👁️⬜👁️🔥⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🔥🔥🔥🔥🔥⬜\n🟫🔥🔥🔥🔥🔥🟫\n⬜🟫🔥🔥🔥🟫⬜'
-        ],
-        mage: [
-          '⬜⬜🟣🟣🟣⬜⬜\n⬜🟣⬜⬜⬜🟣⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🔵🔵🔵🔵🔵⬜\n⬜🔵🔵🔵🔵🔵⬜\n⬜⬜🔵🔵🔵⬜⬜',
-          '⬜🔮🔮🔮🔮🔮⬜\n⬜🟣⬜⬜⬜🟣⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🔵🔵🔵🔵🔵⬜\n⬜🔵🔵🔵🔵🔵⬜\n⬜⬜🔵🔵🔵⬜⬜',
-          '⬜✨✨✨✨✨⬜\n⬜🟣⬜⬜⬜🟣⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🟣🟣🟣🟣🟣⬜\n⬜🟣🟣🟣🟣🟣⬜\n⬜⬜🟣🟣🟣⬜⬜',
-          '⬜⭐⭐⭐⭐⭐⬜\n⬜💜⬜⬜⬜💜⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜💜💜💜💜💜⬜\n⬜💜💜💜💜💜⬜\n⬜⬜💜💜💜⬜⬜',
-          '⬜🌟🌟🌟🌟🌟⬜\n⬜🔥⬜⬜⬜🔥⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🔥🔥🔥🔥🔥⬜\n⬜🔥🔥🔥🔥🔥⬜\n⬜⬜🔥🔥🔥⬜⬜'
-        ],
-        rogue: [
-          '⬜⬜⬛⬛⬛⬜⬜\n⬜⬛⬜⬜⬜⬛⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜⬛⬛⬛⬛⬛⬜\n⬜⬛⬛⬛⬛⬛⬜\n⬜⬜⬛⬛⬛⬜⬜',
-          '⬜⬜🟫🟫🟫⬜⬜\n⬜🟫⬜⬜⬜🟫⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🟫🟫🟫🟫🟫⬜\n⬜🟫🟫🟫🟫🟫⬜\n⬜⬜🟫🟫🟫⬜⬜',
-          '⬜⬜🌑🌑🌑⬜⬜\n⬜🌑⬜⬜⬜🌑⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🌑🌑🌑🌑🌑⬜\n⬜🌑🌑🌑🌑🌑⬜\n⬜⬜🌑🌑🌑⬜⬜',
-          '⬜🎩🎩🎩🎩🎩⬜\n⬜⚫⬜⬜⬜⚫⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜⚫⚫⚫⚫⚫⬜\n⬜⚫⚫⚫⚫⚫⬜\n⬜⬜⚫⚫⚫⬜⬜',
-          '⬜👑👑👑👑👑⬜\n⬜🔥⬜⬜⬜🔥⬜\n⬜⬛👁️⬜👁️⬛⬜\n⬜⬛⬜👃⬜⬛⬜\n⬜🔥🔥🔥🔥🔥⬜\n⬜🔥🔥🔥🔥🔥⬜\n⬜⬜🔥🔥🔥⬜⬜'
-        ]
-      };
-      
-      return pixelSprites[baseClass][Math.min(level - 1, 4)];
+    const baseClass = className || userData.avatarClass;
+
+    // Size configurations
+    const sizeConfig = {
+      small: { container: 'w-12 h-12', icon: 'w-6 h-6', badge: 'text-xs px-1.5 py-0.5' },
+      medium: { container: 'w-20 h-20', icon: 'w-10 h-10', badge: 'text-xs px-2 py-1' },
+      large: { container: 'w-28 h-28', icon: 'w-14 h-14', badge: 'text-sm px-2 py-1' }
     };
-    
-    const sizeClasses = {
-      small: 'text-xs',
-      medium: 'text-sm',
-      large: 'text-base'
+
+    const config = sizeConfig[size];
+
+    // Class-based icon and color
+    const classConfig = {
+      warrior: {
+        icon: Shield,
+        baseColor: 'from-red-600 to-red-700',
+        glowColor: 'shadow-red-500/50',
+        borderColor: 'border-red-400'
+      },
+      mage: {
+        icon: Sparkles,
+        baseColor: 'from-purple-600 to-purple-700',
+        glowColor: 'shadow-purple-500/50',
+        borderColor: 'border-purple-400'
+      },
+      rogue: {
+        icon: Sword,
+        baseColor: 'from-gray-700 to-gray-800',
+        glowColor: 'shadow-gray-500/50',
+        borderColor: 'border-gray-400'
+      }
     };
-    
+
+    const avatarConfig = classConfig[baseClass] || classConfig.warrior;
+    const IconComponent = avatarConfig.icon;
+
+    // Level progression effects
+    const getLevelEffects = () => {
+      if (level >= 5) {
+        return {
+          border: 'border-4 border-yellow-400',
+          glow: 'shadow-xl shadow-yellow-500/70',
+          ring: 'ring-4 ring-yellow-300 ring-offset-2 ring-offset-slate-900'
+        };
+      } else if (level >= 4) {
+        return {
+          border: 'border-4 border-yellow-500',
+          glow: 'shadow-lg shadow-yellow-500/50',
+          ring: 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-slate-900'
+        };
+      } else if (level >= 3) {
+        return {
+          border: `border-3 ${avatarConfig.borderColor}`,
+          glow: `shadow-lg ${avatarConfig.glowColor}`,
+          ring: ''
+        };
+      } else {
+        return {
+          border: `border-2 ${avatarConfig.borderColor}`,
+          glow: `shadow-md ${avatarConfig.glowColor}`,
+          ring: ''
+        };
+      }
+    };
+
+    const effects = getLevelEffects();
+
     return (
       <div className={`relative inline-block ${animate ? 'animate-bounce' : ''}`}>
-        <div className={`${sizeClasses[size]} font-mono leading-none select-none pixelated`}>
-          <pre className="m-0 p-2 bg-black bg-opacity-20 rounded">
-            {getPixelArt()}
-          </pre>
+        {/* Avatar Circle */}
+        <div className={`
+          ${config.container}
+          rounded-full
+          bg-gradient-to-br ${avatarConfig.baseColor}
+          ${effects.border}
+          ${effects.glow}
+          ${effects.ring}
+          flex items-center justify-center
+          transition-all duration-300
+          hover:scale-110
+        `}>
+          <IconComponent className={`${config.icon} text-white`} />
+
+          {/* Crown for max level */}
+          {level >= 5 && (
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <Crown className="w-6 h-6 text-yellow-400 animate-pulse" />
+            </div>
+          )}
         </div>
-        
+
         {/* Level badge */}
         <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-          <span className="bg-yellow-600 text-white text-xs px-2 py-1 rounded-full font-bold pixelated">
-            LV.{level}
+          <span className={`
+            ${config.badge}
+            bg-gradient-to-r from-yellow-500 to-amber-500
+            text-slate-900
+            rounded-full
+            font-bold-heading
+            pixelated
+            shadow-lg
+            border-2 border-yellow-300
+          `}>
+            LV {level}
           </span>
         </div>
       </div>
