@@ -61,7 +61,16 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 
 ## Story
 - [ ] Four views: Today's Story, Story Archive, Journey Map, World Map (world map added on `feature/world-map`)
-- [ ] World Map: smog-covered island with seven regions; land travelled is restored to green below the hero's banner; regions show Restored / Here / Shrouded; Read opens a region's first reached story chapter; also opened from the dashboard location card
+- [ ] World Map (rebuilt on `feature/world-map-journey`): one road through eight regions from day 0 to the fortress at 180 and an epilogue to 15 years; also opened from the dashboard location card
+  - [ ] Region list: Restored / Here / Shrouded, and Read opens the region's first reached story chapter
+  - [ ] Parallax layers; drag, Back / Ahead, arrow keys, Home / End; Return to knight when out of view
+  - [ ] Fog over unreached regions; each region's reveal plays once (saved in `userData.journey.revealsSeen`)
+  - [ ] Knight walks from the last day shown to today (`userData.journey.lastDay`)
+  - [ ] 14 health milestones as landmarks with the achievement's own wording: lit when unlocked, hint only when locked
+  - [ ] Story signposts open the archive; locked ones say their day
+  - [ ] Craving camps start the same battles as the Quest tab; the fortress starts the Nicotine Lord fight from day 180
+  - [ ] Fortress silhouette on the horizon; particles by region; time-of-day light; swaying grass and flickering props
+  - [ ] Reduced Effects toggle on the Hero tab (`userData.settings.reducedEffects`), also on with the system reduce-motion setting
 - [ ] 33 dated entries from day 1 to 365, prologue and epilogue text, 10 Daily Wisdom snippets with `{heroName}`
 - [ ] Today: today's entry or a Daily Wisdom snippet, plus stories read / chapter / days counters
 - [ ] Archive: day stepper and number input clamped to unlocked days, chapter label, quick jump to 14 milestone days

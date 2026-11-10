@@ -27,7 +27,9 @@ const prefersReducedMotion = () =>
 // Living regions get swaying grass along the trail.
 const GRASS_REGIONS = new Set(['fields', 'woods', 'heights', 'epilogue']);
 
-const SCALE = 2;
+// Pixel scale: 2x normally; 1x when the map is very narrow (e.g. at 200% browser
+// zoom), which keeps the art the same physical size. Always a whole number.
+const NARROW_CSS = 220;
 const LAYERS = ['sky', 'far', 'mid', 'ground', 'fore'];
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -68,6 +70,7 @@ export default function JourneyMap({
   const layerRefs = useRef({});
   const camRef = useRef(journey.playerX);
   const [viewW, setViewW] = useState(0); // native pixels
+  const [S, setS] = useState(2); // whole-number pixel scale
   const [settledCam, setSettledCam] = useState(journey.playerX);
 
   // ---- The knight -------------------------------------------------------
@@ -156,7 +159,11 @@ export default function JourneyMap({
   useLayoutEffect(() => {
     const el = viewportRef.current;
     if (!el) return undefined;
-    const measure = () => setViewW(Math.min(J.MAX_VIEW_NATIVE, Math.floor(el.clientWidth / SCALE)));
+    const measure = () => {
+      const scale = el.clientWidth < NARROW_CSS ? 1 : 2;
+      setS(scale);
+      setViewW(Math.min(J.MAX_VIEW_NATIVE, Math.floor(el.clientWidth / scale)));
+    };
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
     ro?.observe(el);
@@ -165,20 +172,25 @@ export default function JourneyMap({
 
   const clampCam = useCallback((c) => clamp(c, viewW / 2, journey.width - viewW / 2), [viewW, journey.width]);
 
-  /** Move every layer for camera centre `cam` (whole native pixels). */
+  /**
+   * Move every layer for camera centre `cam` (whole native pixels).
+   * With Reduced Effects, a live drag moves only the road; the background
+   * layers stay still and catch up once the view settles (no parallax motion).
+   */
   const apply = useCallback(
-    (cam) => {
+    (cam, { live = false } = {}) => {
       const c = Math.round(cam);
       for (const name of LAYERS) {
         const el = layerRefs.current[name];
         if (!el) continue;
+        if (live && reducedEffects && name !== 'ground') continue;
         const { speed, pad } = layerInfo[name];
         const left = Math.round(viewW / 2 - speed * c - pad);
-        el.style.transform = `translate3d(${left * SCALE}px, 0, 0)`;
+        el.style.transform = `translate3d(${left * S}px, 0, 0)`;
       }
       for (const name of ['path', 'fog']) {
         const el = layerRefs.current[name];
-        if (el) el.style.transform = `translate3d(${Math.round(viewW / 2 - c) * SCALE}px, 0, 0)`;
+        if (el) el.style.transform = `translate3d(${Math.round(viewW / 2 - c) * S}px, 0, 0)`;
       }
       // The fortress stays on the horizon until the real one comes into view.
       const h = horizonRef.current;
@@ -187,15 +199,18 @@ export default function JourneyMap({
         h.style.display = fortressOnScreen ? 'none' : 'block';
       }
     },
-    [layerInfo, viewW, journey.fortressX],
+    [layerInfo, viewW, journey.fortressX, reducedEffects, S],
   );
 
   const placeKnight = (x) => {
     knightXRef.current = x;
-    if (knightRef.current) knightRef.current.style.left = `${(Math.round(x) - 16) * SCALE}px`;
+    if (knightRef.current) knightRef.current.style.left = `${(Math.round(x) - 16) * S}px`;
   };
 
-  const settle = useCallback(() => setSettledCam(Math.round(camRef.current)), []);
+  const settle = useCallback(() => {
+    apply(camRef.current); // bring any still layers up to date
+    setSettledCam(Math.round(camRef.current));
+  }, [apply]);
 
   // Centre on the knight when the size changes.
   useLayoutEffect(() => {
@@ -203,7 +218,7 @@ export default function JourneyMap({
     camRef.current = clampCam(knightXRef.current);
     apply(camRef.current);
     settle();
-  }, [viewW]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [viewW, S]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Smooth camera moves (instant with Reduced Effects).
   const tween = useRef(null);
@@ -234,9 +249,13 @@ export default function JourneyMap({
     [apply, clampCam, reducedEffects, settle],
   );
 
+
   // The walk: from the last day shown to today, the camera following along.
+  // Runs once per visit (not again when the viewport resizes or rotates).
+  const walkedRef = useRef(false);
   useEffect(() => {
-    if (!viewW) return undefined;
+    if (!viewW || walkedRef.current) return undefined;
+    walkedRef.current = true;
     if (walkFrom === null) {
       if (journeyState.lastDay !== journey.day) onJourneyStateChange?.({ lastDay: journey.day });
       return undefined;
@@ -301,8 +320,8 @@ export default function JourneyMap({
       cancelAnimationFrame(tween.current);
     }
     if (!d.captured) return;
-    camRef.current = clampCam(d.cam - dx / SCALE);
-    apply(camRef.current);
+    camRef.current = clampCam(d.cam - dx / S);
+    apply(camRef.current, { live: true });
   };
   const endDrag = (e) => {
     const d = drag.current;
@@ -353,6 +372,16 @@ export default function JourneyMap({
   const visibleLo = settledCam - viewW / 2 - 24;
   const visibleHi = settledCam + viewW / 2 + 24;
   const onScreen = (x) => x >= visibleLo && x <= visibleHi;
+  // Decorative grass only exists within a screen of the view.
+  const nearView = (x) => Math.abs(x - settledCam) <= viewW * 1.5;
+  // Off-screen places mount a frame after the visible ones, so opening the
+  // map does not do all its work in one frame.
+  const [allPlaces, setAllPlaces] = useState(false);
+  useEffect(() => {
+    if (!viewW || allPlaces) return undefined;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setAllPlaces(true)));
+    return () => cancelAnimationFrame(id);
+  }, [viewW, allPlaces]);
 
   const spriteFor = (p) => {
     if (p.type === 'landmark') return { id: `journey_lm_${p.kind}`, animation: p.active ? 'lit' : 'locked' };
@@ -370,7 +399,7 @@ export default function JourneyMap({
 
   const selectedPlace = selected ? places.find((p) => p.type === selected.type && p.id === selected.id) : null;
 
-  const height = J.WORLD_HEIGHT * SCALE;
+  const height = J.WORLD_HEIGHT * S;
   const here = journey.currentRegion;
   const viewRegion = journey.regionAtX(settledCam);
 
@@ -383,7 +412,7 @@ export default function JourneyMap({
       <div
         ref={viewportRef}
         className="qq-journey relative overflow-hidden qq-inset p-0 mx-auto select-none"
-        style={{ height, maxWidth: J.MAX_VIEW_NATIVE * SCALE, touchAction: 'pan-y' }}
+        style={{ height, maxWidth: J.MAX_VIEW_NATIVE * S, touchAction: 'pan-y' }}
         role="region"
         aria-label={`World map. You are on day ${journey.day} in ${here.name}. Drag or use the arrow keys to look along the road.`}
         tabIndex={0}
@@ -397,19 +426,19 @@ export default function JourneyMap({
           <>
             {['sky', 'far', 'mid'].map((name) => (
               <div key={name} ref={(el) => (layerRefs.current[name] = el)} className="absolute top-0 left-0 will-change-transform" aria-hidden="true">
-                <Sprite id={layerInfo[name].id} scale={SCALE} className="block" />
+                <Sprite id={layerInfo[name].id} scale={S} className="block" />
               </div>
             ))}
 
             {/* The road: ground, props and the knight share the camera exactly. */}
-            <div ref={(el) => (layerRefs.current.path = el)} className="absolute top-0 left-0 will-change-transform" style={{ width: journey.width * SCALE, height }}>
-              <Sprite id="journey_ground" scale={SCALE} className="block absolute top-0 left-0" />
-              {grass.map((x) => (
-                <div key={`g${x}`} className="absolute pointer-events-none" style={{ left: (x - 4) * SCALE, top: (J.PROP_BASELINE + 1 - 8) * SCALE }} aria-hidden="true">
-                  <Sprite id="journey_grass" scale={SCALE} playing={!reducedEffects && onScreen(x)} className="block" />
+            <div ref={(el) => (layerRefs.current.path = el)} className="absolute top-0 left-0 will-change-transform" style={{ width: journey.width * S, height }}>
+              <Sprite id="journey_ground" scale={S} className="block absolute top-0 left-0" />
+              {grass.filter(nearView).map((x) => (
+                <div key={`g${x}`} className="absolute pointer-events-none" style={{ left: (x - 4) * S, top: (J.PROP_BASELINE + 1 - 8) * S }} aria-hidden="true">
+                  <Sprite id="journey_grass" scale={S} playing={!reducedEffects && onScreen(x)} className="block" />
                 </div>
               ))}
-              {places.map((p) => {
+              {places.filter((p) => allPlaces || onScreen(p.x)).map((p) => {
                 const sp = spriteFor(p);
                 const isSel = selectedPlace === p;
                 return (
@@ -417,7 +446,7 @@ export default function JourneyMap({
                     key={`${p.type}_${p.id}`}
                     type="button"
                     className={`absolute qq-place ${isSel ? 'is-selected' : ''}`}
-                    style={{ left: (p.x - p.w / 2) * SCALE, top: (J.PROP_BASELINE + 1 - p.h) * SCALE, width: p.w * SCALE, height: p.h * SCALE }}
+                    style={{ left: (p.x - p.w / 2) * S, top: (J.PROP_BASELINE + 1 - p.h) * S, width: p.w * S, height: p.h * S }}
                     aria-label={labelFor(p)}
                     aria-pressed={isSel}
                     onClick={() => setSelected(isSel ? null : { type: p.type, id: p.id })}
@@ -425,37 +454,37 @@ export default function JourneyMap({
                       if (!onScreen(p.x)) panTo(p.x);
                     }}
                   >
-                    <Sprite id={sp.id} animation={sp.animation} scale={SCALE} playing={!reducedEffects && onScreen(p.x)} className="block" />
+                    <Sprite id={sp.id} animation={sp.animation} scale={S} playing={!reducedEffects && onScreen(p.x)} className="block" />
                   </button>
                 );
               })}
               <div
                 ref={knightRef}
                 className="absolute pointer-events-none"
-                style={{ left: (Math.round(knightXRef.current) - 16) * SCALE, top: (J.KNIGHT_BASELINE + 1 - 32) * SCALE }}
+                style={{ left: (Math.round(knightXRef.current) - 16) * S, top: (J.KNIGHT_BASELINE + 1 - 32) * S }}
                 aria-hidden="true"
               >
-                <Sprite id={heroSpriteId} animation={heroAnim} scale={SCALE} />
+                <Sprite id={heroSpriteId} animation={heroAnim} scale={S} />
               </div>
             </div>
 
             <div ref={(el) => (layerRefs.current.fore = el)} className="absolute top-0 left-0 will-change-transform pointer-events-none" aria-hidden="true">
-              <Sprite id={layerInfo.fore.id} scale={SCALE} className="block" />
+              <Sprite id={layerInfo.fore.id} scale={S} className="block" />
             </div>
 
             {/* Smog over land not yet reached, and the one-time reveal. */}
-            <div ref={(el) => (layerRefs.current.fog = el)} className="absolute top-0 left-0 will-change-transform pointer-events-none" style={{ width: journey.width * SCALE, height }} aria-hidden="true">
+            <div ref={(el) => (layerRefs.current.fog = el)} className="absolute top-0 left-0 will-change-transform pointer-events-none" style={{ width: journey.width * S, height }} aria-hidden="true">
               {fogStartX < journey.width && (
                 <>
-                  <Sprite id="journey_fog" scale={SCALE} className="block absolute top-0 left-0" style={{ clipPath: `inset(0 0 0 ${fogStartX * SCALE}px)` }} />
+                  <Sprite id="journey_fog" scale={S} className="block absolute top-0 left-0" style={{ clipPath: `inset(0 0 0 ${fogStartX * S}px)` }} />
                   {/* A thinner band in front of the edge so the smog dissolves instead of stopping in a line */}
                   <Sprite
                     id="journey_fog"
                     animation="lift"
                     frame={1}
-                    scale={SCALE}
+                    scale={S}
                     className="block absolute top-0 left-0"
-                    style={{ clipPath: `inset(0 ${(journey.width - fogStartX) * SCALE}px 0 ${Math.max(0, fogStartX - 14) * SCALE}px)` }}
+                    style={{ clipPath: `inset(0 ${(journey.width - fogStartX) * S}px 0 ${Math.max(0, fogStartX - 14) * S}px)` }}
                   />
                 </>
               )}
@@ -464,10 +493,10 @@ export default function JourneyMap({
                   key={revealRegion.id}
                   id="journey_fog"
                   animation="lift"
-                  scale={SCALE}
+                  scale={S}
                   onAnimationEnd={finishReveal}
                   className="block absolute top-0 left-0"
-                  style={{ clipPath: `inset(0 ${(journey.width - revealRegion.x1) * SCALE}px 0 ${revealRegion.x0 * SCALE}px)` }}
+                  style={{ clipPath: `inset(0 ${(journey.width - revealRegion.x1) * S}px 0 ${revealRegion.x0 * S}px)` }}
                 />
               )}
             </div>
@@ -476,8 +505,8 @@ export default function JourneyMap({
             {!reducedEffects && <MapParticles regionId={viewRegion.id} timeOfDay={timeOfDay} />}
 
             {/* The destination, always on the horizon until it comes into view */}
-            <div ref={horizonRef} className="absolute pointer-events-none" style={{ left: (viewW - 40) * SCALE, top: 38 * SCALE }} aria-hidden="true">
-              <Sprite id="journey_fortress_far" scale={SCALE} />
+            <div ref={horizonRef} className="absolute pointer-events-none" style={{ left: (viewW - 40) * S, top: 38 * S }} aria-hidden="true">
+              <Sprite id="journey_fortress_far" scale={S} />
             </div>
 
             <span className="absolute top-2 left-2 qq-chip qq-chip--brass px-2 py-0.5 text-sm pointer-events-none">
@@ -521,11 +550,11 @@ export default function JourneyMap({
 
       <ul className="space-y-2">
         {journey.regions.map((r) => (
-          <li key={r.id} className="flex items-center gap-3">
+          <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className={`qq-chip shrink-0 text-center px-2 py-1 text-base ${r.restored ? 'qq-chip--moss' : r.current ? 'qq-chip--brass' : 'qq-chip--locked'}`}>
               {r.restored ? 'Restored' : r.current ? 'Here' : 'Shrouded'}
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 basis-32">
               <p className={`type-subheading ${r.reached ? 'text-bone' : 'text-stone-400'}`}>{r.name}</p>
               <p className="qq-label">{r.from === r.to ? `Day ${r.from}` : `Days ${Math.max(1, r.from)}-${r.to}`}</p>
             </div>

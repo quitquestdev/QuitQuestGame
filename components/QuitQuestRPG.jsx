@@ -8,6 +8,8 @@ import { GreeningProvider, greeningStage } from './ui/Greening';
 import BattleField from './battle/BattleField';
 import JourneyMap from './map/JourneyMap';
 import { buildJourneyLayout } from '../lib/journey/layout';
+import { defaultRegistry } from '../lib/sprites/SpriteProvider';
+import { preloadSprites } from '../lib/sprites/preload';
 
 // Inline icon: a manifest sprite sitting on the text line.
 const Icon = ({ id, scale = 1, className = '' }) => (
@@ -444,6 +446,13 @@ const QuitQuestRPG = () => {
       }
     }
   }, [stats.daysSmokeFree]);
+
+  // Once the game is running, decode the world map's large layers while the
+  // browser is idle, so opening the map later does not hitch.
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    preloadSprites(defaultRegistry, ['journey_sky', 'journey_far', 'journey_mid', 'journey_ground', 'journey_fore', 'journey_fog']);
+  }, [gameState]);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -1902,6 +1911,15 @@ const QuitQuestRPG = () => {
     }));
   };
 
+  // Reduced Effects: calmer world map (no particles, parallax or animated reveals).
+  const reducedEffectsOn = userData.settings?.reducedEffects === true;
+  const toggleReducedEffects = () => {
+    setUserData(prev => ({
+      ...prev,
+      settings: { ...(prev.settings || {}), reducedEffects: !(prev.settings?.reducedEffects === true) }
+    }));
+  };
+
   // Profile Screen Component
   const ProfileScreen = () => (
     <div className="space-y-4">
@@ -1921,6 +1939,16 @@ const QuitQuestRPG = () => {
         </p>
         <Button tone={worldGreeningOn ? 'moss' : 'brass'} selected={worldGreeningOn} onClick={toggleWorldGreening}>
           {worldGreeningOn ? 'Regrowth on' : 'Regrowth off'}
+        </Button>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300">Reduced Effects</h3>
+        <p className="type-body text-bone">
+          A calmer world map: no drifting particles or parallax, and the knight, reveals and camera move without animation. Turns on by itself if your device asks for reduced motion.
+        </p>
+        <Button selected={reducedEffectsOn} onClick={toggleReducedEffects}>
+          {reducedEffectsOn ? 'Reduced Effects on' : 'Reduced Effects off'}
         </Button>
       </Panel>
     </div>
@@ -1957,8 +1985,8 @@ const QuitQuestRPG = () => {
 
         {/* Header */}
         <header className="bg-indigo-950 border-b-2 border-brass-700 relative">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <h1 className="type-heading text-brass-300 whitespace-nowrap"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
+          <div className="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="type-heading text-brass-300 min-w-0"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
             <div className="flex items-center gap-3 min-w-0">
               <CharacterAvatar level={stats.knightLevel} size="small" />
               <div className="text-right min-w-0">
@@ -1978,11 +2006,12 @@ const QuitQuestRPG = () => {
                 <button
                   key={tab.screen}
                   onClick={() => setCurrentScreen(tab.screen)}
+                  aria-label={tab.label}
                   aria-current={active ? 'page' : undefined}
                   className={`relative py-2 text-center ${active ? 'qq-chip qq-chip--brass' : 'text-stone-400'}`}
                 >
                   <Sprite id={tab.icon} scale={2} className="mx-auto mb-0.5 block" />
-                  <span className={`qq-label ${active ? 'text-indigo-950' : ''}`}>{tab.label}</span>
+                  <span className={`qq-label qq-tab-label ${active ? 'text-indigo-950' : ''}`}>{tab.label}</span>
                   {tab.dot && (
                     <span className={`absolute top-1 right-2 w-2 h-2 animate-pulse ${tab.dot === 'rust' ? 'bg-rust-400' : 'bg-brass-300'}`} />
                   )}

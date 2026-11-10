@@ -6,7 +6,8 @@ A gamified quit-smoking app that turns your journey into a 16-bit RPG adventure.
 
 - **Character creation:** name your hero and choose a class (Warrior, Mage or Rogue), each a knight in its own colours.
 - **Progress tracking:** days smoke-free, money saved and cigarettes avoided.
-- **Story:** 180+ days of story content in six chapters, with a story archive, a 180-day journey map and a world map of the island your hero crosses.
+- **Story:** 180+ days of story content in six chapters, with a story archive and a 180-day journey map.
+- **World map:** one road from the start of the quit to the Nicotine Lord's fortress at day 180. The world heals as the streak grows: smog lifts region by region, health milestones light up as landmarks, and the knight walks to today's position.
 - **Craving battles:** turn-based battles against addiction-themed enemies (a smoke wraith, a cigarette-butt goblin, a social pressure imp, a stress demon, a boredom slime and the Nicotine Lord) on a parallax battlefield.
 - **Achievements:** 68 achievements across health milestones, time, money, battles, activities, streaks and cigarettes avoided.
 - **Health milestones:** real recovery milestones from 20 minutes to 15 years.
@@ -46,13 +47,14 @@ app/                     Next.js App Router: layout, global CSS, icons, web mani
   dev/                   Dev harness route (/dev)
 components/
   QuitQuestRPG.jsx       The game: state, rules and screens
-  WorldMap.jsx           The world map (reads regions and road from the manifest)
+  map/                   World map: JourneyMap (renderer), MapParticles, place helpers
   Sprite.jsx             The only way pixel art is drawn
   SpriteBackground.jsx   Tiled sprite backgrounds
   ui/                    Panel, Button, ProgressBar, streak greening
   battle/                BattleScene (parallax) and BattleField (animation, damage numbers)
   dev/                   Dev harness
-lib/sprites/             Sprite registry and React provider (no DOM in the registry)
+lib/sprites/             Sprite registry, React provider and idle preloading
+lib/journey/             World map data layer: regions and day ranges, pure layout
 theme/
   palette.js             The 32-colour master palette
   typography.js          Type roles (pixel, display, body)
@@ -116,8 +118,7 @@ The sizes the game expects:
 | Icons (`icon_*`) | 16x16 | idle (one frame) |
 | Battle backgrounds (`bg_<scene>_<layer>`) | any width that tiles, one height per scene | idle; `meta.scene`, `meta.layer`, `meta.parallax` |
 | UI pieces (`ui_*`) | nine-slice: 24x24 with 8px corners | buttons use normal, pressed, disabled |
-| World map (`map_world_smog`, `map_world_clear`) | 120x180, both the same island | idle; `meta.regions` (name, chapter, day range) and `meta.waypoints` (road by day) on `map_world_clear` |
-| Map marker (`map_marker`) | 10x12 | idle; `meta.anchorX`, `meta.anchorY` mark the foot of the pole |
+| World map layers (`journey_*`) | see [World map](#world-map) | idle |
 
 ### Swapping in new art
 
@@ -141,6 +142,68 @@ if (pack) defaultRegistry.setSkins([pack]); // later packs override earlier ones
 ```
 
 Every `Sprite`, panel, button and battle scene updates without code changes. A pack that fails to load or validate is ignored, and the default art stays. The dev harness has an "Apply demo skin pack" button that shows this working.
+
+## World map
+
+The world map (Story tab > World Map, or the World Map button on the Quest tab's location card) is a side-scrolling road through eight regions:
+
+| Region | Quit days |
+|---|---|
+| Ashen Wastes | 0-3 |
+| Smog Marsh | 4-14 |
+| Thinning Haze | 15-30 |
+| Mending Fields | 31-60 |
+| Whispering Woods | 61-120 |
+| Sunlit Heights | 121-179 |
+| The Nicotine Lord's Fortress | 180 |
+| The Long Road (epilogue: 9 months to 15 years) | 181+ |
+
+The ranges follow the health milestones already in the game (the first three days hold the 20-minute to 3-day milestones; the marsh ends at 2 weeks, the haze at 1 month).
+
+### How it is built
+
+- **Data layer** (`lib/journey/`, no React and no game state):
+  - `regions.js` lists the regions, day ranges, world sizes and parallax speeds. The art script and the renderer both read it.
+  - `layout.js` turns a `JourneyData` object into positions: the day, the milestones (`{ id, day, title, description, icon, unlocked }`), story beats and encounters. Milestones are spaced so the knight stands exactly on them.
+- **Adapter:** `journeyData()` in `components/QuitQuestRPG.jsx` builds `JourneyData` from the game's own health achievements, story chapters and battle tiers. The map only renders a layout, so a different data source can drive it without touching the renderer.
+- **Renderer** (`components/map/JourneyMap.jsx`):
+  - Five parallax layers (sky 0.25, far 0.5, mid 0.75, ground 1, foreground 1.25) at a whole-number scale (2x, or 1x on very narrow screens).
+  - Places on the road: milestone landmarks, story signposts, craving camps and the fortress.
+  - Fog and one-time reveals, the knight's walk, the time-of-day light and particles.
+  - While you drag, layers move directly on the DOM in whole pixels.
+- **Saved with progress:** `userData.journey.revealsSeen` (each reveal plays once), `userData.journey.lastDay` (where the knight walks from next time) and `userData.settings.reducedEffects`.
+- **Places keep their existing behaviour:**
+  - Milestone landmarks show the achievement's own title and description, and are lit when it is unlocked.
+  - Signposts open the story archive.
+  - Camps start the same battles as the Quest tab's Mild, Medium and Strong buttons.
+  - The fortress starts the Nicotine Lord fight from day 180.
+- **Reduced Effects** (Hero tab, or automatic with the system's reduce-motion setting):
+  - turns off particles;
+  - keeps background layers still while dragging;
+  - shows reveals, the knight's walk and camera moves instantly;
+  - pauses prop animations.
+
+### Map art in the manifest
+
+All map art is code-drawn placeholder art (`npm run sprites:placeholders`, `scripts/sprites/parts/journey.js`). To replace it, keep the ID and the size and point the manifest entry at the new files.
+
+| ID | Size | Animations | Notes |
+|---|---|---|---|
+| `journey_sky` | 630x120 | idle | Whole world at speed 0.25 plus 120px padding each side |
+| `journey_far` | 940x120 | idle | Speed 0.5, padding 80 |
+| `journey_mid` | 1250x120 | idle | Speed 0.75, padding 40 |
+| `journey_ground` | 1560x120 | idle | The road the knight walks; trail on rows 100-107, props stand on row 99 |
+| `journey_fore` | 2030x120 | idle | Speed 1.25, padding 40; keep it below row 106 so the knight stays visible |
+| `journey_fog` | 1560x120 | idle, lift (4) | Smog over unreached land; `lift` dissolves it for a reveal |
+| `journey_lm_beacon`, `_lantern`, `_spring`, `_tree`, `_stone` | 16x24 | lit, locked | Milestone landmarks |
+| `journey_story` | 12x16 | unlocked, locked | Story signpost |
+| `journey_camp` | 16x16 | idle, locked | Craving camp |
+| `journey_fortress` | 64x64 | idle | The Nicotine Lord's fortress |
+| `journey_fortress_far` | 32x24 | idle | The fortress on the horizon |
+| `journey_grass` | 8x8 | idle | Swaying grass in the living regions |
+| `hero_*` | 32x32 | walk | The knight's walk on the map |
+
+The layer widths come from `lib/journey/regions.js`. If you change region widths, rebuild the placeholders or redraw the layers to the new sizes. Each layer's `meta.speed` and `meta.pad` tell the renderer how to place it. Run `npm run release:check` afterwards: it lists any map art still tagged as placeholder and checks every frame's size.
 
 ## Credits
 

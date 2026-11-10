@@ -124,7 +124,9 @@
   .qq-btn.is-selected .qq-btn__label { transform: translateY(2px); }
   .qq-btn:disabled { border-image-source: var(--btn-disabled); color: var(--c-stone400); text-shadow: none; cursor: not-allowed; }
   .qq-btn:focus-visible, .qq-chip:focus-visible { outline: 2px solid var(--c-brass300); outline-offset: 2px; }
-  .qq-btn__label { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  /* Labels may wrap (large text, narrow screens) instead of pushing the page wider. */
+  .qq-btn { min-width: 0; }
+  .qq-btn__label { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 6px; text-align: center; overflow-wrap: anywhere; }
 
   /* Progress bar: pixel end caps + fill tile with a highlight row. */
   .qq-bar {
@@ -266,6 +268,11 @@
     0% { transform: translateY(0); opacity: 1; }
     70% { opacity: 1; }
     100% { transform: translateY(-24px); opacity: 0; }
+  }
+
+  /* Very narrow screens (e.g. 200% zoom on a small phone): tabs show icons only. */
+  @media (max-width: 220px) {
+    .qq-tab-label { display: none; }
   }
 
   /* Places on the world map: transparent buttons over their sprites. */
