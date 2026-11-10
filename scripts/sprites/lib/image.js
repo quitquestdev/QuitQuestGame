@@ -94,6 +94,19 @@ class Img {
     return out;
   }
 
+  /**
+   * Whole-number nearest-neighbour enlargement. Only for final outputs such
+   * as app icons and splash images; sprites themselves are never pre-scaled.
+   */
+  scaleInt(n) {
+    if (!Number.isInteger(n) || n < 1) throw new Error(`scaleInt needs a whole number, got ${n}`);
+    const out = new Img(this.w * n, this.h * n);
+    for (let y = 0; y < out.h; y++) {
+      for (let x = 0; x < out.w; x++) out.set(x, y, this.get(Math.floor(x / n), Math.floor(y / n)));
+    }
+    return out;
+  }
+
   /** Bounding box of opaque pixels. */
   bounds() {
     let x0 = this.w, y0 = this.h, x1 = -1, y1 = -1;

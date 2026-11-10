@@ -12,9 +12,7 @@ import { palette } from '../theme/palette'
 export const metadata = {
   title: 'Quit Quest - Stop Smoking RPG',
   description: 'Turn your quit smoking journey into an epic RPG adventure!',
-  icons: {
-    icon: '/favicon.ico',
-  },
+  // Icons come from app/icon.png and app/apple-icon.png (npm run brand).
 }
 
 export const viewport = {

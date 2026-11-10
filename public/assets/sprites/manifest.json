@@ -235,6 +235,9 @@
           "frames": 4,
           "fps": 4
         }
+      },
+      "meta": {
+        "devOnly": true
       }
     },
     "enemy_boredom_slime": {

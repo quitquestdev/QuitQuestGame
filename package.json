@@ -9,7 +9,10 @@
     "start": "next start",
     "lint": "next lint",
     "sprites:dev-test": "node scripts/sprites/generate-dev-test.js",
-    "sprites:placeholders": "node scripts/sprites/build-placeholders.js"
+    "sprites:placeholders": "node scripts/sprites/build-placeholders.js",
+    "brand": "node scripts/brand/build-brand.js",
+    "release:check": "node scripts/release-check.js",
+    "release:check:strict": "node scripts/release-check.js --strict"
   },
   "dependencies": {
     "@fontsource/cinzel": "5.3.0",
