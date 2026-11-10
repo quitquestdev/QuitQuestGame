@@ -5,6 +5,10 @@ import Sprite from '../Sprite';
 import { useSpriteRegistry, loadSkinManifest } from '../../lib/sprites/SpriteProvider';
 import { families } from '../../theme/palette';
 import { typeRoles } from '../../theme/typography';
+import Panel from '../ui/Panel';
+import Button from '../ui/Button';
+import ProgressBar from '../ui/ProgressBar';
+import { GreeningProvider } from '../ui/Greening';
 
 const FAMILY_NOTES = {
   indigo: 'Panels, sky, backgrounds',
@@ -96,6 +100,55 @@ function SpriteCard({ id }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function UiKit() {
+  const [stage, setStage] = useState(0);
+  return (
+    <GreeningProvider stage={stage}>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="qq-label">Greening</span>
+        {[0, 1, 2, 3].map((g) => (
+          <Button key={g} size="sm" selected={stage === g} onClick={() => setStage(g)}>
+            {g === 0 ? 'Off / day 0' : `Day ${[30, 90, 150][g - 1]}+`}
+          </Button>
+        ))}
+      </div>
+      <div className="grid gap-3">
+        {['default', 'raised', 'danger', 'parchment', 'legendary', 'sunken'].map((tone) => (
+          <Panel key={tone} tone={tone}>
+            <p className="type-subheading text-brass-300 mb-1">{tone} panel</p>
+            <p className="type-body">Fight the urge with an epic battle. Every craving resisted adds to your legend.</p>
+          </Panel>
+        ))}
+        <Panel>
+          <p className="qq-label mb-2">Buttons</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button tone="brass">Attack</Button>
+            <Button tone="moss">Resist</Button>
+            <Button tone="rust">Flee</Button>
+            <Button tone="brass" disabled>Special</Button>
+            <Button tone="brass" selected>Selected</Button>
+            <Button tone="moss" size="sm">Walk</Button>
+          </div>
+          <p className="qq-label mt-4 mb-2">Progress bars</p>
+          <div className="grid gap-2">
+            <ProgressBar value={73} tone="moss" label="Health" />
+            <ProgressBar value={30} tone="moss" label="XP" />
+            <ProgressBar value={55} tone="rust" label="Enemy HP" />
+            <ProgressBar value={2} max={5} tone="brass" label="Setup" />
+          </div>
+          <p className="qq-label mt-4 mb-2">Inset and chips</p>
+          <div className="qq-inset mb-2"><span className="type-statL">$562.50</span></div>
+          <div className="flex flex-wrap gap-1">
+            {['', 'moss', 'brass', 'rust', 'locked', 'sealed'].map((t) => (
+              <button key={t || 'base'} className={`qq-chip ${t ? `qq-chip--${t}` : ''} w-8 h-8 text-lg`}>{t ? t[0].toUpperCase() : 'I'}</button>
+            ))}
+          </div>
+        </Panel>
+      </div>
+    </GreeningProvider>
   );
 }
 
@@ -303,6 +356,10 @@ export default function DevHarness() {
           ).map(([name, sceneIds]) => (
             <ScenePreview key={name} name={name} ids={sceneIds} />
           ))}
+        </Section>
+
+        <Section title="UI kit" note="The shared Panel, Button, ProgressBar, inset and chip styles every screen uses. Press a button to see its pressed state.">
+          <UiKit />
         </Section>
 
         <Section title="UI pieces at 2x" note="Nine-slice frames via CSS border-image. Corners stay crisp; only the centre stretches.">

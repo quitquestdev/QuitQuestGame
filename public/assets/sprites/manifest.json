@@ -1583,6 +1583,60 @@
       "meta": {
         "slice": 8
       }
+    },
+    "ui_panel_frame_g1": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_panel_frame_g1_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8,
+        "greening": 1
+      }
+    },
+    "ui_panel_frame_g2": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_panel_frame_g2_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8,
+        "greening": 2
+      }
+    },
+    "ui_panel_frame_g3": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_panel_frame_g3_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8,
+        "greening": 3
+      }
     }
   }
 }

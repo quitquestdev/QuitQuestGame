@@ -10,6 +10,9 @@
  *   ui_bar_frame     12x10 three-slice progress bar track with end caps
  *                    (4px caps, 4px repeatable middle, 4px-tall track).
  *   ui_bar_fill_<tone> 2x4 repeating fill with a highlight row on top.
+ *   ui_panel_frame_g1..g3  the panel frame as the world regrows with the
+ *                    quit streak: moss creeps into the brass trim, shadow
+ *                    side first, until only the highlights stay brass.
  */
 const { Img } = require('../lib/image');
 const { rgbOf } = require('../lib/color');
@@ -62,8 +65,9 @@ const PANEL_RINGS = [
 
 const TONES = {
   brass: { light: 'brass300', mid: 'brass500', dark: 'brass700', top: 'brass400', fill: 'brass500', deep: 'brass600' },
-  moss: { light: 'moss300', mid: 'moss500', dark: 'moss700', top: 'moss400', fill: 'moss500', deep: 'moss600' },
-  rust: { light: 'rust300', mid: 'rust500', dark: 'rust700', top: 'rust400', fill: 'rust500', deep: 'rust600' },
+  // Moss and rust fills sit one step darker so bone label text keeps >= 6:1 contrast.
+  moss: { light: 'moss300', mid: 'moss500', dark: 'moss700', top: 'moss400', fill: 'moss600', deep: 'moss700' },
+  rust: { light: 'rust300', mid: 'rust500', dark: 'rust700', top: 'rust400', fill: 'rust600', deep: 'rust700' },
 };
 
 function button(tone, state) {
@@ -118,9 +122,19 @@ function barFill(tone) {
   return img;
 }
 
+// Streak greening: moss creeps into the brass, shadow side first.
+const GREENING_RINGS = {
+  1: [PANEL_RINGS[0], ['brass300', 'brass500', 'moss700'], ['brass500', 'brass600', 'moss700'], PANEL_RINGS[3]],
+  2: [PANEL_RINGS[0], ['brass300', 'moss500', 'moss600'], ['moss500', 'moss600', 'moss700'], PANEL_RINGS[3]],
+  3: [PANEL_RINGS[0], ['moss300', 'moss400', 'moss600'], ['moss400', 'moss500', 'moss700'], ['moss600', 'indigo800', 'indigo950']],
+};
+
 module.exports = function buildUi() {
   const o = { category: 'ui', source: 'code' };
   add('ui_panel_frame', 'idle', [frame({ rings: PANEL_RINGS })], { ...o, file: 'ui_panel_frame_idle', meta: { slice: 8 } });
+  for (const [stage, rings] of Object.entries(GREENING_RINGS)) {
+    add(`ui_panel_frame_g${stage}`, 'idle', [frame({ rings })], { ...o, file: `ui_panel_frame_g${stage}_idle`, meta: { slice: 8, greening: Number(stage) } });
+  }
   for (const tone of Object.keys(TONES)) {
     for (const state of ['normal', 'pressed', 'disabled']) {
       add(`ui_button_${tone}`, state, [button(tone, state)], { ...o, file: `ui_button_${tone}_${state}`, meta: { slice: 8 }, defaultAnimation: 'normal' });
