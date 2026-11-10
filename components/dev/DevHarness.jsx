@@ -152,7 +152,7 @@ function UiKit() {
   );
 }
 
-const CATEGORY_ORDER = ['characters', 'enemies', 'icons', 'ui', 'backgrounds', 'placeholder'];
+const CATEGORY_ORDER = ['characters', 'enemies', 'icons', 'ui', 'backgrounds', 'map', 'placeholder'];
 
 function useDrift(on) {
   const [offset, setOffset] = useState(0);

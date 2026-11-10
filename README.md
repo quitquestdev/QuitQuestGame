@@ -6,7 +6,7 @@ A gamified quit-smoking app that turns your journey into a 16-bit RPG adventure.
 
 - **Character creation:** name your hero and choose a class (Warrior, Mage or Rogue), each a knight in its own colours.
 - **Progress tracking:** days smoke-free, money saved and cigarettes avoided.
-- **Story:** 180+ days of story content in six chapters, with a story archive and a 180-day journey map.
+- **Story:** 180+ days of story content in six chapters, with a story archive, a 180-day journey map and a world map of the island your hero crosses.
 - **Craving battles:** turn-based battles against addiction-themed enemies (a smoke wraith, a cigarette-butt goblin, a social pressure imp, a stress demon, a boredom slime and the Nicotine Lord) on a parallax battlefield.
 - **Achievements:** 68 achievements across health milestones, time, money, battles, activities, streaks and cigarettes avoided.
 - **Health milestones:** real recovery milestones from 20 minutes to 15 years.
@@ -46,6 +46,7 @@ app/                     Next.js App Router: layout, global CSS, icons, web mani
   dev/                   Dev harness route (/dev)
 components/
   QuitQuestRPG.jsx       The game: state, rules and screens
+  WorldMap.jsx           The world map (reads regions and road from the manifest)
   Sprite.jsx             The only way pixel art is drawn
   SpriteBackground.jsx   Tiled sprite backgrounds
   ui/                    Panel, Button, ProgressBar, streak greening
@@ -115,6 +116,8 @@ The sizes the game expects:
 | Icons (`icon_*`) | 16x16 | idle (one frame) |
 | Battle backgrounds (`bg_<scene>_<layer>`) | any width that tiles, one height per scene | idle; `meta.scene`, `meta.layer`, `meta.parallax` |
 | UI pieces (`ui_*`) | nine-slice: 24x24 with 8px corners | buttons use normal, pressed, disabled |
+| World map (`map_world_smog`, `map_world_clear`) | 120x180, both the same island | idle; `meta.regions` (name, chapter, day range) and `meta.waypoints` (road by day) on `map_world_clear` |
+| Map marker (`map_marker`) | 10x12 | idle; `meta.anchorX`, `meta.anchorY` mark the foot of the pole |
 
 ### Swapping in new art
 

@@ -60,7 +60,8 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - [ ] Battle log (only the last line is shown after the battle)
 
 ## Story
-- [ ] Three views: Today's Story, Story Archive, Journey Map
+- [ ] Four views: Today's Story, Story Archive, Journey Map, World Map (world map added on `feature/world-map`)
+- [ ] World Map: smog-covered island with seven regions; land travelled is restored to green below the hero's banner; regions show Restored / Here / Shrouded; Read opens a region's first reached story chapter; also opened from the dashboard location card
 - [ ] 33 dated entries from day 1 to 365, prologue and epilogue text, 10 Daily Wisdom snippets with `{heroName}`
 - [ ] Today: today's entry or a Daily Wisdom snippet, plus stories read / chapter / days counters
 - [ ] Archive: day stepper and number input clamped to unlocked days, chapter label, quick jump to 14 milestone days
@@ -93,7 +94,7 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 ## Behaviour quirks at baseline (recorded, not fixed)
 - The Level Up overlay shows on every page load for anyone above level 1, because derived stats start at level 1.
 - Minute and hour achievements only unlock once a full day has passed, because days are floored before conversion.
-- Screens are defined inside the main component, so the Story tab's selected day and view reset whenever parent state changes.
+- Screens are defined inside the main component, so the Story tab's selected day and view reset whenever parent state changes. (Fixed on `feature/world-map`: view and day now live in the main game state.)
 - XP bar uses `% 500`, which does not match the XP level thresholds.
 - At 320px the "LV 3" badge wraps onto two lines and the header name wraps. (Fixed in Stage 4.)
 - Next.js warns that `viewport` and `themeColor` belong in a `viewport` export.

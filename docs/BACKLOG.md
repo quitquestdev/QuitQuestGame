@@ -2,7 +2,11 @@
 
 Requests to pick up after the current restyle stage. Newest first.
 
-## In-game world map (requested during Stage 4, scheduled after Stage 4)
+## In-game world map (requested during Stage 4)
+
+**Status: built on branch `feature/world-map`, awaiting review.** Story tab > World Map, also opened from the dashboard's location card. Regions follow the six story chapters plus the Dragon's Lair (181-365). Land you have travelled is restored to green below your banner; reached regions open their first story chapter.
+
+Original notes:
 
 A visual map of the world that shows where the hero currently is.
 

@@ -6,6 +6,7 @@ import Button from './ui/Button';
 import ProgressBar from './ui/ProgressBar';
 import { GreeningProvider, greeningStage } from './ui/Greening';
 import BattleField from './battle/BattleField';
+import WorldMap from './WorldMap';
 
 // Inline icon: a manifest sprite sitting on the text line.
 const Icon = ({ id, scale = 1, className = '' }) => (
@@ -257,6 +258,10 @@ const QuitQuestRPG = () => {
   const [storyChapter, setStoryChapter] = useState(0);
   const [unlockedStoryDays, setUnlockedStoryDays] = useState([]);
   const [todayStoryViewed, setTodayStoryViewed] = useState(false);
+  // Story tab view and selected day live here (not inside StoryScreen) so
+  // other screens can open a view, and they survive re-renders.
+  const [storyView, setStoryView] = useState('today'); // 'today', 'archive', 'map', 'world'
+  const [storyDay, setStoryDay] = useState(null); // null = today
   
   // Battle State
   const [battleState, setBattleState] = useState({
@@ -1164,8 +1169,11 @@ const QuitQuestRPG = () => {
 
   // Story Screen Component
   const StoryScreen = () => {
-    const [selectedDay, setSelectedDay] = useState(stats.daysSmokeFree || 1);
-    const [viewMode, setViewMode] = useState('today'); // 'today', 'archive', 'map'
+    // A remembered day never runs past today (e.g. after a progress reset).
+    const selectedDay = storyDay !== null && storyDay <= Math.max(1, stats.daysSmokeFree) ? storyDay : (stats.daysSmokeFree || 1);
+    const setSelectedDay = setStoryDay;
+    const viewMode = storyView;
+    const setViewMode = setStoryView;
 
     const availableStories = storyContent.chapters.filter(
       ch => ch.day > 0 && ch.day <= stats.daysSmokeFree
@@ -1234,8 +1242,8 @@ const QuitQuestRPG = () => {
             </p>
 
             {/* View Mode Tabs */}
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              {[['today', "Today's Story"], ['archive', 'Story Archive'], ['map', 'Journey Map']].map(([mode, label]) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+              {[['today', "Today's Story"], ['archive', 'Story Archive'], ['map', 'Journey Map'], ['world', 'World Map']].map(([mode, label]) => (
                 <Button key={mode} size="sm" selected={viewMode === mode} onClick={() => setViewMode(mode)}>
                   {label}
                 </Button>
@@ -1351,6 +1359,23 @@ const QuitQuestRPG = () => {
                 ))}
               </div>
             </div>
+          </Panel>
+        )}
+
+        {/* World Map View */}
+        {viewMode === 'world' && (
+          <Panel className="space-y-2">
+            <Heading icon="icon_map">The World</Heading>
+            <WorldMap
+              daysSmokeFree={stats.daysSmokeFree}
+              onReadRegion={(region) => {
+                // Open the region's first story chapter you have reached.
+                const today = Math.max(1, stats.daysSmokeFree);
+                const first = storyContent.chapters.find(ch => ch.day >= region.from && ch.day <= Math.min(region.to, today));
+                setSelectedDay(first ? first.day : Math.min(region.from, today));
+                setViewMode('archive');
+              }}
+            />
           </Panel>
         )}
 
@@ -1574,11 +1599,20 @@ const QuitQuestRPG = () => {
         </Panel>
 
         {/* Environment Card */}
-        <Panel tone="sunken" className="relative z-10">
-          <p className="type-subheading text-indigo-300 text-center">
+        <Panel tone="sunken" className="relative z-10 space-y-2 text-center">
+          <p className="type-subheading text-indigo-300">
             <Icon id={environment.icon} className="mr-2" />
             {environment.text}
           </p>
+          <Button
+            size="sm"
+            onClick={() => {
+              setStoryView('world');
+              setCurrentScreen('story');
+            }}
+          >
+            <Icon id="icon_map" />World Map
+          </Button>
         </Panel>
 
         {/* Stats Grid */}

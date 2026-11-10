@@ -8,10 +8,13 @@ const { Img } = require('./image');
 const { rgbOf } = require('./color');
 
 function grid(rows, legend, size = 16) {
-  if (rows.length !== size) throw new Error(`grid has ${rows.length} rows, expected ${size}`);
-  const img = new Img(size, size);
+  // size: a number for square grids, or { w, h } for other shapes.
+  const w = typeof size === 'number' ? size : size.w;
+  const h = typeof size === 'number' ? size : size.h;
+  if (rows.length !== h) throw new Error(`grid has ${rows.length} rows, expected ${h}`);
+  const img = new Img(w, h);
   rows.forEach((row, y) => {
-    if (row.length > size) throw new Error(`row ${y} "${row}" is ${row.length} wide, max ${size}`);
+    if (row.length > w) throw new Error(`row ${y} "${row}" is ${row.length} wide, max ${w}`);
     [...row].forEach((ch, x) => {
       if (ch === '.' || ch === ' ') return;
       const token = ch === 'X' ? 'indigo950' : legend[ch];

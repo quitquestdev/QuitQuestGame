@@ -1413,6 +1413,246 @@
         }
       }
     },
+    "map_marker": {
+      "category": "map",
+      "frameWidth": 10,
+      "frameHeight": 12,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/map_marker_idle_##.png",
+          "frames": 2,
+          "fps": 3
+        }
+      },
+      "meta": {
+        "anchorX": 1,
+        "anchorY": 11
+      }
+    },
+    "map_world_clear": {
+      "category": "map",
+      "frameWidth": 120,
+      "frameHeight": 180,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/map_world_clear_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "width": 120,
+        "height": 180,
+        "waypoints": [
+          {
+            "day": 0,
+            "x": 60,
+            "y": 174
+          },
+          {
+            "day": 30,
+            "x": 30,
+            "y": 150
+          },
+          {
+            "day": 60,
+            "x": 88,
+            "y": 124
+          },
+          {
+            "day": 90,
+            "x": 36,
+            "y": 98
+          },
+          {
+            "day": 120,
+            "x": 86,
+            "y": 72
+          },
+          {
+            "day": 150,
+            "x": 34,
+            "y": 48
+          },
+          {
+            "day": 180,
+            "x": 82,
+            "y": 26
+          },
+          {
+            "day": 365,
+            "x": 58,
+            "y": 13
+          }
+        ],
+        "regions": [
+          {
+            "id": "temple",
+            "name": "Temple of Clean Air",
+            "chapter": 1,
+            "from": 1,
+            "to": 30
+          },
+          {
+            "id": "woods",
+            "name": "Temptation Woods",
+            "chapter": 2,
+            "from": 31,
+            "to": 60
+          },
+          {
+            "id": "peaks",
+            "name": "The Storm Peaks",
+            "chapter": 3,
+            "from": 61,
+            "to": 90
+          },
+          {
+            "id": "city",
+            "name": "The Royal City",
+            "chapter": 4,
+            "from": 91,
+            "to": 120
+          },
+          {
+            "id": "hall",
+            "name": "Squires' Hall",
+            "chapter": 5,
+            "from": 121,
+            "to": 150
+          },
+          {
+            "id": "statues",
+            "name": "Hall of Statues",
+            "chapter": 6,
+            "from": 151,
+            "to": 180
+          },
+          {
+            "id": "lair",
+            "name": "The Dragon's Lair",
+            "chapter": 7,
+            "from": 181,
+            "to": 365
+          }
+        ]
+      }
+    },
+    "map_world_smog": {
+      "category": "map",
+      "frameWidth": 120,
+      "frameHeight": 180,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/map_world_smog_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "width": 120,
+        "height": 180,
+        "waypoints": [
+          {
+            "day": 0,
+            "x": 60,
+            "y": 174
+          },
+          {
+            "day": 30,
+            "x": 30,
+            "y": 150
+          },
+          {
+            "day": 60,
+            "x": 88,
+            "y": 124
+          },
+          {
+            "day": 90,
+            "x": 36,
+            "y": 98
+          },
+          {
+            "day": 120,
+            "x": 86,
+            "y": 72
+          },
+          {
+            "day": 150,
+            "x": 34,
+            "y": 48
+          },
+          {
+            "day": 180,
+            "x": 82,
+            "y": 26
+          },
+          {
+            "day": 365,
+            "x": 58,
+            "y": 13
+          }
+        ],
+        "regions": [
+          {
+            "id": "temple",
+            "name": "Temple of Clean Air",
+            "chapter": 1,
+            "from": 1,
+            "to": 30
+          },
+          {
+            "id": "woods",
+            "name": "Temptation Woods",
+            "chapter": 2,
+            "from": 31,
+            "to": 60
+          },
+          {
+            "id": "peaks",
+            "name": "The Storm Peaks",
+            "chapter": 3,
+            "from": 61,
+            "to": 90
+          },
+          {
+            "id": "city",
+            "name": "The Royal City",
+            "chapter": 4,
+            "from": 91,
+            "to": 120
+          },
+          {
+            "id": "hall",
+            "name": "Squires' Hall",
+            "chapter": 5,
+            "from": 121,
+            "to": 150
+          },
+          {
+            "id": "statues",
+            "name": "Hall of Statues",
+            "chapter": 6,
+            "from": 151,
+            "to": 180
+          },
+          {
+            "id": "lair",
+            "name": "The Dragon's Lair",
+            "chapter": 7,
+            "from": 181,
+            "to": 365
+          }
+        ]
+      }
+    },
     "ui_bar_fill_brass": {
       "category": "ui",
       "frameWidth": 2,
