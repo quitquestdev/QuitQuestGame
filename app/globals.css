@@ -1,5 +1,5 @@
+/* Poppins is legacy: still used by .pixelated on the current screens until Stage 4. */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,8 +7,32 @@
 
 @layer base {
   body {
-    @apply bg-gray-900 text-white;
+    @apply bg-indigo-900 text-bone;
   }
+}
+
+/*
+ * Pixel-art rendering. Every sprite is drawn with nearest-neighbour scaling.
+ * max-width: none stops Tailwind's preflight from shrinking a sprite to a
+ * non-integer size inside a narrow container, which would blur it.
+ */
+.sprite {
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  max-width: none;
+  flex-shrink: 0;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.sprite-missing {
+  background-color: var(--c-rust600);
+  background-image:
+    linear-gradient(45deg, var(--c-brass500) 25%, transparent 25%, transparent 75%, var(--c-brass500) 75%),
+    linear-gradient(45deg, var(--c-brass500) 25%, transparent 25%, transparent 75%, var(--c-brass500) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+  outline: 1px solid var(--c-rust800);
 }
 
 @layer utilities {
@@ -44,23 +68,23 @@
 
   /* Story text styling */
   .story-text {
-    font-family: 'Merriweather', Georgia, serif;
-    font-weight: 400;
-    font-size: 1rem;
-    line-height: 1.9;
-    letter-spacing: 0.02em;
-    color: #F5E6D3;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    color: var(--c-bone);
+    text-shadow: 0 1px 0 var(--c-indigo950);
   }
 
   .story-text-bold {
-    font-family: 'Merriweather', Georgia, serif;
-    font-weight: 700;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600;
   }
 
   .parchment-bg {
-    background: linear-gradient(135deg, rgba(139, 92, 46, 0.15) 0%, rgba(101, 67, 33, 0.2) 100%);
-    border: 2px solid rgba(180, 140, 90, 0.3);
+    background: linear-gradient(135deg, rgb(132 96 44 / 0.15) 0%, rgb(92 62 30 / 0.2) 100%);
+    border: 2px solid rgb(168 130 61 / 0.3);
   }
 
   .player-attack {

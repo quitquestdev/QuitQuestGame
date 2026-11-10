@@ -1,3 +1,65 @@
+const plugin = require('tailwindcss/plugin');
+const { palette, families } = require('./theme/palette');
+const { fontFamilies, typeRoles } = require('./theme/typography');
+
+/** `.type-<role>` classes generated from theme/typography.js. */
+const typeClasses = Object.fromEntries(
+  Object.entries(typeRoles).map(([role, t]) => [
+    `.type-${role}`,
+    {
+      fontFamily: fontFamilies[t.family],
+      fontWeight: String(t.weight),
+      fontSize: `${t.size}px`,
+      lineHeight: String(t.lineHeight),
+      letterSpacing: `${t.letterSpacing}em`,
+      fontStyle: t.italic ? 'italic' : 'normal',
+      textTransform: 'none',
+    },
+  ]),
+);
+
+/** Every palette token as a CSS variable, e.g. var(--c-brass500). */
+const paletteVars = Object.fromEntries(Object.entries(palette).map(([k, v]) => [`--c-${k}`, v]));
+
+/**
+ * Tailwind's default colours are replaced entirely, so a colour class that is
+ * not in the master palette generates nothing. Use the palette families
+ * (indigo, brass, rust, moss, stone, bone) in new code.
+ *
+ * LEGACY ALIASES: the existing screens still use Tailwind's stock names
+ * (slate, yellow, green...). Those names are remapped here onto the nearest
+ * palette token so the whole UI already renders in palette colours. Stage 4
+ * replaces them with the new components; delete this block when nothing
+ * references a legacy name any more.
+ */
+const STOCK_SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+function alias(scale, overrides = {}) {
+  const keys = Object.keys(scale).map(Number).sort((a, b) => a - b);
+  const out = {};
+  for (const shade of STOCK_SHADES) {
+    const nearest = keys.reduce((best, k) => (Math.abs(k - shade) < Math.abs(best - shade) ? k : best));
+    out[shade] = overrides[shade] || scale[nearest];
+  }
+  return out;
+}
+
+const legacy = {
+  slate: alias(families.indigo),
+  purple: alias(families.indigo),
+  blue: alias(families.indigo),
+  gray: alias(families.stone, { 50: palette.bone, 100: palette.bone, 200: palette.bone, 300: palette.stone400 }),
+  yellow: alias(families.brass),
+  amber: alias(families.brass),
+  red: alias(families.rust),
+  orange: alias(families.rust),
+  pink: alias(families.rust),
+  green: alias(families.moss),
+  emerald: alias(families.moss),
+  white: palette.bone,
+  black: palette.indigo950,
+};
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -5,10 +67,25 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  // Type roles are a small design-system API and may be chosen dynamically.
+  safelist: [{ pattern: /^type-/ }],
   theme: {
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      inherit: 'inherit',
+      ...legacy,
+      // Palette families last, so `indigo-*` resolves to the real tokens.
+      ...families,
+    },
     extend: {
       fontFamily: {
-        'pixel': ['Poppins', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        // Legacy: still used by the current screens until Stage 4.
+        'pixel-legacy': ['Poppins', 'system-ui', 'sans-serif'],
+        // New type system (see theme/typography.js).
+        pixel: [fontFamilies.pixel],
+        display: [fontFamilies.display],
+        body: [fontFamilies.body],
       },
       animation: {
         'shimmer': 'shimmer 2s infinite',
@@ -52,5 +129,10 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addBase, addComponents }) => {
+      addBase({ ':root': paletteVars });
+      addComponents(typeClasses);
+    }),
+  ],
 }
