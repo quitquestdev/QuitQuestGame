@@ -1,0 +1,17 @@
+{
+  "id": "dev-demo",
+  "name": "Dev demo skin pack (not for release)",
+  "version": 1,
+  "baseUrl": "/assets/skins/dev-demo/",
+  "sprites": {
+    "dev_test_gem": {
+      "category": "placeholder",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "animations": {
+        "idle": { "path": "dev_test_gem_idle_##.png", "frames": 4, "fps": 8 }
+      }
+    }
+  }
+}

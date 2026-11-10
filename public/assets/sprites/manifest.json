@@ -1,0 +1,17 @@
+{
+  "id": "default",
+  "name": "Quit Quest default art",
+  "version": 1,
+  "baseUrl": "/assets/sprites/",
+  "sprites": {
+    "dev_test_gem": {
+      "category": "placeholder",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "animations": {
+        "idle": { "path": "placeholder/dev_test_gem_idle_##.png", "frames": 4, "fps": 4 }
+      }
+    }
+  }
+}
