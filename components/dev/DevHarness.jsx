@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sprite from '../Sprite';
 import { useSpriteRegistry, loadSkinManifest } from '../../lib/sprites/SpriteProvider';
 import { families } from '../../theme/palette';
@@ -85,8 +85,8 @@ function SpriteCard({ id }) {
           ))}
         </div>
       )}
-      <div className="flex items-end gap-4 flex-wrap">
-        {[1, 2, 3].map((s) => (
+      <div className="flex items-end gap-4 flex-wrap overflow-x-auto max-w-full">
+        {[1, 2, 3].filter((s) => s === 1 || info.frameWidth * s <= 256).map((s) => (
           <div key={s} className="text-center">
             <div className="bg-indigo-950 p-1 inline-block">
               <Sprite id={id} animation={anim} scale={s} />
@@ -95,6 +95,76 @@ function SpriteCard({ id }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+const CATEGORY_ORDER = ['characters', 'enemies', 'icons', 'ui', 'backgrounds', 'placeholder'];
+
+function useDrift(on) {
+  const [offset, setOffset] = useState(0);
+  useEffect(() => {
+    if (!on) return undefined;
+    const t = setInterval(() => setOffset((o) => o + 1), 40);
+    return () => clearInterval(t);
+  }, [on]);
+  return offset;
+}
+
+/** Stack a scene's layers (from manifest meta) as tiled backgrounds. */
+function ScenePreview({ name, ids }) {
+  const registry = useSpriteRegistry();
+  const [drift, setDrift] = useState(false);
+  const offset = useDrift(drift);
+  const layers = ids
+    .map((id) => {
+      const info = registry.resolve(id);
+      return { id, info, meta: info.meta || {} };
+    })
+    .sort((a, b) => a.meta.layer - b.meta.layer);
+  const height = Math.max(...layers.map((l) => l.info.frameHeight));
+  return (
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-1">
+        <p className="type-label text-bone">{name}</p>
+        <button onClick={() => setDrift((d) => !d)} className="type-micro px-2 py-1 border bg-indigo-800 text-indigo-300 border-indigo-600">
+          {drift ? 'Stop' : 'Drift'}
+        </button>
+      </div>
+      <div className="relative w-full overflow-hidden border border-indigo-600" style={{ height }}>
+        {layers.map(({ id, info, meta }) => (
+          <div
+            key={id}
+            className="absolute inset-0 sprite"
+            style={{
+              backgroundImage: `url(${info.frames[0]})`,
+              backgroundRepeat: 'repeat-x',
+              backgroundPosition: `${-Math.round(offset * (meta.parallax ?? 0))}px bottom`,
+            }}
+          />
+        ))}
+      </div>
+      <p className="type-micro text-stone-500 mt-1">{layers.map((l) => `${l.id.replace(`bg_${name}_`, '')} ×${l.meta.parallax}`).join(' · ')}</p>
+    </div>
+  );
+}
+
+/** Nine-slice UI pieces drawn with CSS border-image at 2x. */
+function NineSlice({ id, animation, children, width = 160 }) {
+  const registry = useSpriteRegistry();
+  const info = registry.resolve(id, animation);
+  return (
+    <div
+      className="sprite inline-flex items-center justify-center type-label text-bone"
+      style={{
+        width,
+        minHeight: 48,
+        borderStyle: 'solid',
+        borderWidth: 16,
+        borderImage: `url(${info.frames[0]}) 8 fill / 16px stretch`,
+      }}
+    >
+      {children}
     </div>
   );
 }
@@ -202,10 +272,51 @@ export default function DevHarness() {
             </span>
             {skinError && <span className="type-caption text-rust-300">{skinError}</span>}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {ids.map((id) => (
-              <SpriteCard key={id} id={id} />
-            ))}
+          {CATEGORY_ORDER.map((cat) => {
+            const inCat = ids.filter((id) => (registry.resolve(id).category || 'placeholder') === cat);
+            if (!inCat.length) return null;
+            const ph = inCat.filter((id) => registry.resolve(id).placeholder).length;
+            return (
+              <div key={cat} className="mb-6">
+                <p className="type-subheading text-brass-400 mb-2">
+                  {cat} <span className="type-micro text-stone-400">({inCat.length}, {ph} placeholder)</span>
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {inCat.map((id) => (
+                    <SpriteCard key={id} id={id} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </Section>
+
+        <Section title="Battle scenes" note="Layers from the manifest, tiled horizontally. Drift moves each layer by its parallax factor in whole pixels.">
+          {Object.entries(
+            ids
+              .filter((id) => registry.resolve(id).meta?.scene)
+              .reduce((acc, id) => {
+                const sc = registry.resolve(id).meta.scene;
+                (acc[sc] = acc[sc] || []).push(id);
+                return acc;
+              }, {}),
+          ).map(([name, sceneIds]) => (
+            <ScenePreview key={name} name={name} ids={sceneIds} />
+          ))}
+        </Section>
+
+        <Section title="UI pieces at 2x" note="Nine-slice frames via CSS border-image. Corners stay crisp; only the centre stretches.">
+          <div className="flex flex-wrap gap-3 mb-3">
+            <NineSlice id="ui_panel_frame" width={200}>Panel</NineSlice>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {['brass', 'moss', 'rust'].map((tone) =>
+              ['normal', 'pressed', 'disabled'].map((state) => (
+                <NineSlice key={tone + state} id={`ui_button_${tone}`} animation={state} width={120}>
+                  {state === 'normal' ? tone : state}
+                </NineSlice>
+              )),
+            )}
           </div>
         </Section>
 
