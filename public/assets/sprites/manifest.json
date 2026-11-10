@@ -396,6 +396,48 @@
         }
       }
     },
+    "fx_dither_25": {
+      "category": "map",
+      "frameWidth": 4,
+      "frameHeight": 4,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/fx_dither_25_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "fx_dither_50": {
+      "category": "map",
+      "frameWidth": 4,
+      "frameHeight": 4,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/fx_dither_50_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "fx_dither_75": {
+      "category": "map",
+      "frameWidth": 4,
+      "frameHeight": 4,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/fx_dither_75_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
     "hero_mage": {
       "category": "characters",
       "frameWidth": 32,
@@ -424,6 +466,11 @@
           "path": "placeholder/characters/knight_mage_victory_##.png",
           "frames": 4,
           "fps": 6
+        },
+        "walk": {
+          "path": "placeholder/characters/knight_mage_walk_##.png",
+          "frames": 4,
+          "fps": 8
         }
       }
     },
@@ -455,6 +502,11 @@
           "path": "placeholder/characters/knight_rogue_victory_##.png",
           "frames": 4,
           "fps": 6
+        },
+        "walk": {
+          "path": "placeholder/characters/knight_rogue_walk_##.png",
+          "frames": 4,
+          "fps": 8
         }
       }
     },
@@ -486,6 +538,11 @@
           "path": "placeholder/characters/knight_warrior_victory_##.png",
           "frames": 4,
           "fps": 6
+        },
+        "walk": {
+          "path": "placeholder/characters/knight_warrior_walk_##.png",
+          "frames": 4,
+          "fps": 8
         }
       }
     },
@@ -1413,245 +1470,305 @@
         }
       }
     },
-    "map_marker": {
+    "journey_camp": {
       "category": "map",
-      "frameWidth": 10,
-      "frameHeight": 12,
+      "frameWidth": 16,
+      "frameHeight": 16,
       "placeholder": true,
       "source": "code",
       "animations": {
         "idle": {
-          "path": "placeholder/map/map_marker_idle_##.png",
+          "path": "placeholder/map/journey_camp_idle_##.png",
           "frames": 2,
           "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/journey_camp_locked_##.png",
+          "frames": 1,
+          "fps": 0
         }
-      },
-      "meta": {
-        "anchorX": 1,
-        "anchorY": 11
       }
     },
-    "map_world_clear": {
+    "journey_far": {
       "category": "map",
-      "frameWidth": 120,
-      "frameHeight": 180,
+      "frameWidth": 940,
+      "frameHeight": 120,
       "placeholder": true,
       "source": "code",
       "animations": {
         "idle": {
-          "path": "placeholder/map/map_world_clear_idle_##.png",
+          "path": "placeholder/map/journey_far_idle_##.png",
           "frames": 1,
           "fps": 0
         }
       },
       "meta": {
-        "width": 120,
-        "height": 180,
-        "waypoints": [
-          {
-            "day": 0,
-            "x": 60,
-            "y": 174
-          },
-          {
-            "day": 30,
-            "x": 30,
-            "y": 150
-          },
-          {
-            "day": 60,
-            "x": 88,
-            "y": 124
-          },
-          {
-            "day": 90,
-            "x": 36,
-            "y": 98
-          },
-          {
-            "day": 120,
-            "x": 86,
-            "y": 72
-          },
-          {
-            "day": 150,
-            "x": 34,
-            "y": 48
-          },
-          {
-            "day": 180,
-            "x": 82,
-            "y": 26
-          },
-          {
-            "day": 365,
-            "x": 58,
-            "y": 13
-          }
-        ],
-        "regions": [
-          {
-            "id": "temple",
-            "name": "Temple of Clean Air",
-            "chapter": 1,
-            "from": 1,
-            "to": 30
-          },
-          {
-            "id": "woods",
-            "name": "Temptation Woods",
-            "chapter": 2,
-            "from": 31,
-            "to": 60
-          },
-          {
-            "id": "peaks",
-            "name": "The Storm Peaks",
-            "chapter": 3,
-            "from": 61,
-            "to": 90
-          },
-          {
-            "id": "city",
-            "name": "The Royal City",
-            "chapter": 4,
-            "from": 91,
-            "to": 120
-          },
-          {
-            "id": "hall",
-            "name": "Squires' Hall",
-            "chapter": 5,
-            "from": 121,
-            "to": 150
-          },
-          {
-            "id": "statues",
-            "name": "Hall of Statues",
-            "chapter": 6,
-            "from": 151,
-            "to": 180
-          },
-          {
-            "id": "lair",
-            "name": "The Dragon's Lair",
-            "chapter": 7,
-            "from": 181,
-            "to": 365
-          }
-        ]
+        "layer": 1,
+        "speed": 0.5,
+        "pad": 80,
+        "worldWidth": 1560
       }
     },
-    "map_world_smog": {
+    "journey_fog": {
       "category": "map",
-      "frameWidth": 120,
-      "frameHeight": 180,
+      "frameWidth": 1560,
+      "frameHeight": 120,
       "placeholder": true,
       "source": "code",
       "animations": {
         "idle": {
-          "path": "placeholder/map/map_world_smog_idle_##.png",
+          "path": "placeholder/map/journey_fog_idle_##.png",
           "frames": 1,
           "fps": 0
         }
       },
       "meta": {
-        "width": 120,
-        "height": 180,
-        "waypoints": [
-          {
-            "day": 0,
-            "x": 60,
-            "y": 174
-          },
-          {
-            "day": 30,
-            "x": 30,
-            "y": 150
-          },
-          {
-            "day": 60,
-            "x": 88,
-            "y": 124
-          },
-          {
-            "day": 90,
-            "x": 36,
-            "y": 98
-          },
-          {
-            "day": 120,
-            "x": 86,
-            "y": 72
-          },
-          {
-            "day": 150,
-            "x": 34,
-            "y": 48
-          },
-          {
-            "day": 180,
-            "x": 82,
-            "y": 26
-          },
-          {
-            "day": 365,
-            "x": 58,
-            "y": 13
-          }
-        ],
-        "regions": [
-          {
-            "id": "temple",
-            "name": "Temple of Clean Air",
-            "chapter": 1,
-            "from": 1,
-            "to": 30
-          },
-          {
-            "id": "woods",
-            "name": "Temptation Woods",
-            "chapter": 2,
-            "from": 31,
-            "to": 60
-          },
-          {
-            "id": "peaks",
-            "name": "The Storm Peaks",
-            "chapter": 3,
-            "from": 61,
-            "to": 90
-          },
-          {
-            "id": "city",
-            "name": "The Royal City",
-            "chapter": 4,
-            "from": 91,
-            "to": 120
-          },
-          {
-            "id": "hall",
-            "name": "Squires' Hall",
-            "chapter": 5,
-            "from": 121,
-            "to": 150
-          },
-          {
-            "id": "statues",
-            "name": "Hall of Statues",
-            "chapter": 6,
-            "from": 151,
-            "to": 180
-          },
-          {
-            "id": "lair",
-            "name": "The Dragon's Lair",
-            "chapter": 7,
-            "from": 181,
-            "to": 365
-          }
-        ]
+        "layer": 5,
+        "speed": 1,
+        "pad": 0
       }
+    },
+    "journey_fore": {
+      "category": "map",
+      "frameWidth": 2030,
+      "frameHeight": 120,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_fore_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "layer": 4,
+        "speed": 1.25,
+        "pad": 40,
+        "worldWidth": 1560
+      }
+    },
+    "journey_fortress": {
+      "category": "map",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_fortress_idle_##.png",
+          "frames": 3,
+          "fps": 2
+        }
+      }
+    },
+    "journey_fortress_far": {
+      "category": "map",
+      "frameWidth": 32,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_fortress_far_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "journey_grass": {
+      "category": "map",
+      "frameWidth": 8,
+      "frameHeight": 8,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_grass_idle_##.png",
+          "frames": 2,
+          "fps": 2
+        }
+      }
+    },
+    "journey_ground": {
+      "category": "map",
+      "frameWidth": 1560,
+      "frameHeight": 120,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_ground_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "layer": 3,
+        "speed": 1,
+        "pad": 0,
+        "worldWidth": 1560
+      }
+    },
+    "journey_lm_beacon": {
+      "category": "map",
+      "frameWidth": 16,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/journey_lm_beacon_lit_##.png",
+          "frames": 3,
+          "fps": 4
+        },
+        "locked": {
+          "path": "placeholder/map/journey_lm_beacon_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "journey_lm_lantern": {
+      "category": "map",
+      "frameWidth": 16,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/journey_lm_lantern_lit_##.png",
+          "frames": 3,
+          "fps": 4
+        },
+        "locked": {
+          "path": "placeholder/map/journey_lm_lantern_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "journey_lm_spring": {
+      "category": "map",
+      "frameWidth": 16,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/journey_lm_spring_lit_##.png",
+          "frames": 3,
+          "fps": 4
+        },
+        "locked": {
+          "path": "placeholder/map/journey_lm_spring_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "journey_lm_stone": {
+      "category": "map",
+      "frameWidth": 16,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/journey_lm_stone_lit_##.png",
+          "frames": 3,
+          "fps": 4
+        },
+        "locked": {
+          "path": "placeholder/map/journey_lm_stone_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "journey_lm_tree": {
+      "category": "map",
+      "frameWidth": 16,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/journey_lm_tree_lit_##.png",
+          "frames": 3,
+          "fps": 4
+        },
+        "locked": {
+          "path": "placeholder/map/journey_lm_tree_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "journey_mid": {
+      "category": "map",
+      "frameWidth": 1250,
+      "frameHeight": 120,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_mid_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "layer": 2,
+        "speed": 0.75,
+        "pad": 40,
+        "worldWidth": 1560
+      }
+    },
+    "journey_sky": {
+      "category": "map",
+      "frameWidth": 630,
+      "frameHeight": 120,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/journey_sky_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "layer": 0,
+        "speed": 0.25,
+        "pad": 120,
+        "worldWidth": 1560
+      }
+    },
+    "journey_story": {
+      "category": "map",
+      "frameWidth": 12,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "unlocked": {
+          "path": "placeholder/map/journey_story_unlocked_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "locked": {
+          "path": "placeholder/map/journey_story_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "unlocked"
     },
     "ui_bar_fill_brass": {
       "category": "ui",

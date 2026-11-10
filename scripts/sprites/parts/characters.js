@@ -49,6 +49,8 @@ module.exports = function buildCharacters() {
     add(id, 'attack', anim.attack(img, 1), { ...o, file: `${file}_attack`, fps: 12, loop: false });
     add(id, 'hurt', anim.hurt(img, 1), { ...o, file: `${file}_hurt`, fps: 10, loop: false });
     add(id, 'victory', anim.victory(img), { ...o, file: `${file}_victory`, fps: 6 });
+    // Walking on the world map: a stepping bob (the source tile is a single still).
+    add(id, 'walk', anim.idleBob(img, [0, -2, 0, -1]), { ...o, file: `${file}_walk`, fps: 8 });
   }
 
   const enemies = {

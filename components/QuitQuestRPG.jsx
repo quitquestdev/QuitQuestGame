@@ -6,7 +6,8 @@ import Button from './ui/Button';
 import ProgressBar from './ui/ProgressBar';
 import { GreeningProvider, greeningStage } from './ui/Greening';
 import BattleField from './battle/BattleField';
-import WorldMap from './WorldMap';
+import JourneyMap from './map/JourneyMap';
+import { buildJourneyLayout } from '../lib/journey/layout';
 
 // Inline icon: a manifest sprite sitting on the text line.
 const Icon = ({ id, scale = 1, className = '' }) => (
@@ -1167,6 +1168,26 @@ const QuitQuestRPG = () => {
     </Tag>
   );
 
+  // The world map is presentation only: this adapter hands it the game's
+  // own progress, health milestones and story beats. Another data source
+  // could produce the same shape (see lib/journey/layout.js).
+  const journeyData = () => ({
+    day: stats.daysSmokeFree,
+    milestones: achievementsList
+      .filter(a => a.category === 'health')
+      .map(a => ({
+        id: a.id,
+        day: a.minutesRequired ? a.minutesRequired / 1440 : a.hoursRequired ? a.hoursRequired / 24 : a.daysRequired,
+        title: a.title,
+        description: a.description,
+        icon: a.icon,
+        experience: a.experience,
+        unlocked: userData.achievements.includes(a.id)
+      })),
+    storyBeats: storyContent.chapters.filter(ch => ch.day > 0).map(ch => ({ day: ch.day, title: ch.title })),
+    encounters: []
+  });
+
   // Story Screen Component
   const StoryScreen = () => {
     // A remembered day never runs past today (e.g. after a progress reset).
@@ -1366,12 +1387,13 @@ const QuitQuestRPG = () => {
         {viewMode === 'world' && (
           <Panel className="space-y-2">
             <Heading icon="icon_map">The World</Heading>
-            <WorldMap
-              daysSmokeFree={stats.daysSmokeFree}
+            <JourneyMap
+              journey={buildJourneyLayout(journeyData())}
+              heroSpriteId={`hero_${['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}`}
               onReadRegion={(region) => {
                 // Open the region's first story chapter you have reached.
                 const today = Math.max(1, stats.daysSmokeFree);
-                const first = storyContent.chapters.find(ch => ch.day >= region.from && ch.day <= Math.min(region.to, today));
+                const first = storyContent.chapters.find(ch => ch.day >= Math.max(1, region.from) && ch.day <= Math.min(region.to, today));
                 setSelectedDay(first ? first.day : Math.min(region.from, today));
                 setViewMode('archive');
               }}
@@ -1949,7 +1971,8 @@ const QuitQuestRPG = () => {
         {/* Content */}
         <main className="max-w-4xl mx-auto p-4 relative">
           {currentScreen === 'dashboard' && <DashboardScreen />}
-          {currentScreen === 'story' && <StoryScreen />}
+          {/* Called as a function (no hooks) so the world map stays mounted between state changes */}
+          {currentScreen === 'story' && StoryScreen()}
           {/* Called as a function (no hooks) so the battle field stays mounted between turns */}
           {currentScreen === 'battle' && BattleScreen()}
           {currentScreen === 'achievements' && <AchievementsScreen />}
