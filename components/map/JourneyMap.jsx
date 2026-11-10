@@ -46,6 +46,22 @@ export default function JourneyMap({
   const [viewW, setViewW] = useState(0); // native pixels
   const [settledCam, setSettledCam] = useState(journey.playerX);
 
+  // ---- The knight -------------------------------------------------------
+  // If the day has advanced since the map was last shown, the knight walks
+  // from where it stood then (frozen at mount) to today's position.
+  const [walkFrom] = useState(() =>
+    typeof journeyState.lastDay === 'number' && journeyState.lastDay < journey.day && !reducedEffects
+      ? journey.dayToX(journeyState.lastDay)
+      : null,
+  );
+  const knightRef = useRef(null);
+  const knightXRef = useRef(walkFrom ?? journey.playerX);
+  const [heroAnim, setHeroAnim] = useState('idle');
+  // How far the knight has got (native x); fog only lifts once it arrives.
+  const [frontierX, setFrontierX] = useState(knightXRef.current);
+  const followRef = useRef(true); // camera follows the knight until the player looks around
+  const horizonRef = useRef(null);
+
   // ---- Fog of war and one-time reveals ---------------------------------
   // Regions shown clear: those whose reveal has played (now or before).
   const [clearIds, setClearIds] = useState(() => {
@@ -77,7 +93,7 @@ export default function JourneyMap({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Queue reveals for reached regions that are still fogged, in road order.
-  const pending = journey.regions.filter((r) => r.reached && !clearIds.has(r.id)).map((r) => r.id);
+  const pending = journey.regions.filter((r) => r.reached && !clearIds.has(r.id) && r.x0 <= frontierX).map((r) => r.id);
   const pendingKey = pending.join(',');
   useEffect(() => {
     if (revealing || !pending.length) return undefined;
@@ -140,19 +156,108 @@ export default function JourneyMap({
         const el = layerRefs.current[name];
         if (el) el.style.transform = `translate3d(${Math.round(viewW / 2 - c) * SCALE}px, 0, 0)`;
       }
+      // The fortress stays on the horizon until the real one comes into view.
+      const h = horizonRef.current;
+      if (h) {
+        const fortressOnScreen = viewW / 2 + (journey.fortressX - c) < viewW + 28;
+        h.style.display = fortressOnScreen ? 'none' : 'block';
+      }
     },
-    [layerInfo, viewW],
+    [layerInfo, viewW, journey.fortressX],
   );
+
+  const placeKnight = (x) => {
+    knightXRef.current = x;
+    if (knightRef.current) knightRef.current.style.left = `${(Math.round(x) - 16) * SCALE}px`;
+  };
 
   const settle = useCallback(() => setSettledCam(Math.round(camRef.current)), []);
 
-  // Centre on the knight when the size or the knight's position changes.
+  // Centre on the knight when the size changes.
   useLayoutEffect(() => {
     if (!viewW) return;
-    camRef.current = clampCam(journey.playerX);
+    camRef.current = clampCam(knightXRef.current);
     apply(camRef.current);
     settle();
-  }, [viewW, journey.playerX, clampCam, apply, settle]);
+  }, [viewW]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Smooth camera moves (instant with Reduced Effects).
+  const tween = useRef(null);
+  const panTo = useCallback(
+    (target, { follow = false } = {}) => {
+      followRef.current = follow;
+      cancelAnimationFrame(tween.current);
+      const to = clampCam(target);
+      if (reducedEffects) {
+        camRef.current = to;
+        apply(to);
+        settle();
+        return;
+      }
+      const from = camRef.current;
+      const t0 = performance.now();
+      const dur = 320;
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / dur);
+        const e = 1 - (1 - p) * (1 - p);
+        camRef.current = from + (to - from) * e;
+        apply(camRef.current);
+        if (p < 1) tween.current = requestAnimationFrame(step);
+        else settle();
+      };
+      tween.current = requestAnimationFrame(step);
+    },
+    [apply, clampCam, reducedEffects, settle],
+  );
+
+  // The walk: from the last day shown to today, the camera following along.
+  useEffect(() => {
+    if (!viewW) return undefined;
+    if (walkFrom === null) {
+      if (journeyState.lastDay !== journey.day) onJourneyStateChange?.({ lastDay: journey.day });
+      return undefined;
+    }
+    const start = walkFrom;
+    const end = journey.playerX;
+    const dur = clamp(Math.abs(end - start) * 12, 900, 4500);
+    let raf;
+    let region = journey.regionAtX(start).id;
+    const t0 = performance.now() + 600; // a beat before setting off
+    setHeroAnim('walk');
+    const step = (now) => {
+      const p = clamp((now - t0) / dur, 0, 1);
+      const x = Math.round(start + (end - start) * p);
+      placeKnight(x);
+      if (followRef.current) {
+        camRef.current = clampCam(x);
+        apply(camRef.current);
+      }
+      const r = journey.regionAtX(x);
+      if (r.id !== region) {
+        region = r.id;
+        setFrontierX(x);
+      }
+      if (p < 1) raf = requestAnimationFrame(step);
+      else {
+        setFrontierX(end);
+        setHeroAnim('idle');
+        settle();
+        onJourneyStateChange?.({ lastDay: journey.day });
+      }
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [viewW]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onKeyDown = (e) => {
+    const stepPx = Math.round(viewW * 0.4);
+    if (e.key === 'ArrowLeft') panTo(camRef.current - stepPx);
+    else if (e.key === 'ArrowRight') panTo(camRef.current + stepPx);
+    else if (e.key === 'Home') panTo(0);
+    else if (e.key === 'End') panTo(journey.width);
+    else return;
+    e.preventDefault();
+  };
 
   // Drag to look around.
   const drag = useRef(null);
@@ -168,6 +273,8 @@ export default function JourneyMap({
     if (d.moved > 4 && !d.captured) {
       viewportRef.current.setPointerCapture?.(e.pointerId);
       d.captured = true;
+      followRef.current = false;
+      cancelAnimationFrame(tween.current);
     }
     if (!d.captured) return;
     camRef.current = clampCam(d.cam - dx / SCALE);
@@ -245,7 +352,9 @@ export default function JourneyMap({
         className="qq-journey relative overflow-hidden qq-inset p-0 mx-auto select-none"
         style={{ height, maxWidth: J.MAX_VIEW_NATIVE * SCALE, touchAction: 'pan-y' }}
         role="region"
-        aria-label={`World map. You are on day ${journey.day} in ${here.name}. Drag to look along the road.`}
+        aria-label={`World map. You are on day ${journey.day} in ${here.name}. Drag or use the arrow keys to look along the road.`}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -274,17 +383,21 @@ export default function JourneyMap({
                     aria-label={labelFor(p)}
                     aria-pressed={isSel}
                     onClick={() => setSelected(isSel ? null : { type: p.type, id: p.id })}
+                    onFocus={() => {
+                      if (!onScreen(p.x)) panTo(p.x);
+                    }}
                   >
                     <Sprite id={sp.id} animation={sp.animation} scale={SCALE} playing={!reducedEffects && onScreen(p.x)} className="block" />
                   </button>
                 );
               })}
               <div
-                className="absolute"
-                style={{ left: (journey.playerX - 16) * SCALE, top: (J.KNIGHT_BASELINE + 1 - 32) * SCALE }}
+                ref={knightRef}
+                className="absolute pointer-events-none"
+                style={{ left: (Math.round(knightXRef.current) - 16) * SCALE, top: (J.KNIGHT_BASELINE + 1 - 32) * SCALE }}
                 aria-hidden="true"
               >
-                <Sprite id={heroSpriteId} animation="idle" scale={SCALE} />
+                <Sprite id={heroSpriteId} animation={heroAnim} scale={SCALE} />
               </div>
             </div>
 
@@ -321,6 +434,11 @@ export default function JourneyMap({
               )}
             </div>
 
+            {/* The destination, always on the horizon until it comes into view */}
+            <div ref={horizonRef} className="absolute pointer-events-none" style={{ left: (viewW - 40) * SCALE, top: 38 * SCALE }} aria-hidden="true">
+              <Sprite id="journey_fortress_far" scale={SCALE} />
+            </div>
+
             <span className="absolute top-2 left-2 qq-chip qq-chip--brass px-2 py-0.5 text-sm pointer-events-none">
               {viewRegion.name}
             </span>
@@ -335,7 +453,20 @@ export default function JourneyMap({
         )}
       </div>
 
-      <p className="qq-label text-center">Drag the map to look along the road. Tap a landmark, signpost or camp.</p>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Button size="sm" onClick={() => panTo(camRef.current - viewW * 0.6)} aria-label="Look back along the road">
+          <Sprite id="icon_arrow_left" scale={1} />Back
+        </Button>
+        {Math.abs(settledCam - clamp(knightXRef.current, viewW / 2, journey.width - viewW / 2)) > viewW * 0.3 && (
+          <Button size="sm" onClick={() => panTo(knightXRef.current, { follow: true })}>
+            <Sprite id="icon_helmet" scale={1} />Return to knight
+          </Button>
+        )}
+        <Button size="sm" onClick={() => panTo(camRef.current + viewW * 0.6)} aria-label="Look ahead along the road">
+          Ahead<Sprite id="icon_arrow_right" scale={1} />
+        </Button>
+      </div>
+      <p className="qq-label text-center">Drag or use the arrows to look around. Tap a landmark, signpost or camp.</p>
 
       {selectedPlace && (
         <PlaceDetail
