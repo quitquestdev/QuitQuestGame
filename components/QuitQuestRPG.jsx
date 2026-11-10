@@ -7,9 +7,13 @@ import ProgressBar from './ui/ProgressBar';
 import { GreeningProvider, greeningStage } from './ui/Greening';
 import BattleField from './battle/BattleField';
 import JourneyMap from './map/JourneyMap';
+import OverworldMap from './map/OverworldMap';
 import { buildJourneyLayout } from '../lib/journey/layout';
+import { REGIONS } from '../lib/journey/regions';
 import { defaultRegistry } from '../lib/sprites/SpriteProvider';
 import { preloadSprites } from '../lib/sprites/preload';
+
+const REGION_IDS = REGIONS.map(r => r.id);
 
 // Inline icon: a manifest sprite sitting on the text line.
 const Icon = ({ id, scale = 1, className = '' }) => (
@@ -451,7 +455,7 @@ const QuitQuestRPG = () => {
   // browser is idle, so opening the map later does not hitch.
   useEffect(() => {
     if (gameState !== 'playing') return;
-    preloadSprites(defaultRegistry, ['journey_sky', 'journey_far', 'journey_mid', 'journey_ground', 'journey_fore', 'journey_fog']);
+    preloadSprites(defaultRegistry, ['overworld_terrain', 'overworld_sea', ...REGION_IDS.map(id => `overworld_shadow_${id}`), 'journey_sky', 'journey_far', 'journey_mid', 'journey_ground', 'journey_fore', 'journey_fog']);
   }, [gameState]);
 
   // Load data from localStorage on mount
@@ -1412,25 +1416,51 @@ const QuitQuestRPG = () => {
         {viewMode === 'world' && (
           <Panel className="space-y-2">
             <Heading icon="icon_map">The World</Heading>
-            <JourneyMap
-              journey={buildJourneyLayout(journeyData())}
-              heroSpriteId={`hero_${['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}`}
-              journeyState={userData.journey || {}}
-              onJourneyStateChange={(patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } }))}
-              reducedEffects={userData.settings?.reducedEffects === true}
-              onOpenStory={(day) => {
-                setSelectedDay(day);
-                setViewMode('archive');
-              }}
-              onFight={(encounter) => (encounter.boss ? startBattleAgainst(encounter.enemyId) : startBattle(encounter.tier))}
-              onReadRegion={(region) => {
-                // Open the region's first story chapter you have reached.
-                const today = Math.max(1, stats.daysSmokeFree);
-                const first = storyContent.chapters.find(ch => ch.day >= Math.max(1, region.from) && ch.day <= Math.min(region.to, today));
-                setSelectedDay(first ? first.day : Math.min(region.from, today));
-                setViewMode('archive');
-              }}
-            />
+            {(() => {
+              // Both views draw the same journey; the choice is remembered with progress.
+              const mapView = userData.journey?.view === 'road' ? 'road' : 'overhead';
+              const heroClass = ['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior';
+              const shared = {
+                journey: buildJourneyLayout(journeyData()),
+                journeyState: userData.journey || {},
+                onJourneyStateChange: (patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } })),
+                reducedEffects: userData.settings?.reducedEffects === true,
+                onOpenStory: (day) => {
+                  setSelectedDay(day);
+                  setViewMode('archive');
+                },
+                onFight: (encounter) => (encounter.boss ? startBattleAgainst(encounter.enemyId) : startBattle(encounter.tier)),
+                onReadRegion: (region) => {
+                  // Open the region's first story chapter you have reached.
+                  const today = Math.max(1, stats.daysSmokeFree);
+                  const first = storyContent.chapters.find(ch => ch.day >= Math.max(1, region.from) && ch.day <= Math.min(region.to, today));
+                  setSelectedDay(first ? first.day : Math.min(region.from, today));
+                  setViewMode('archive');
+                },
+              };
+              return (
+                <>
+                  <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Map view">
+                    {[['overhead', 'From above'], ['road', 'On the road']].map(([v, label]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        aria-pressed={mapView === v}
+                        onClick={() => shared.onJourneyStateChange({ view: v })}
+                        className={`qq-chip px-3 py-1 text-base ${mapView === v ? 'qq-chip--brass' : 'qq-chip--locked'}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {mapView === 'overhead' ? (
+                    <OverworldMap {...shared} heroClass={heroClass} />
+                  ) : (
+                    <JourneyMap {...shared} heroSpriteId={`hero_${heroClass}`} />
+                  )}
+                </>
+              );
+            })()}
           </Panel>
         )}
 

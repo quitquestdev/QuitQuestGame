@@ -281,6 +281,19 @@
   .qq-place.is-selected { outline: 2px dashed var(--c-brass300); outline-offset: 2px; }
 
   /* World map reveal title: bone text with a hard pixel shadow. */
+  /* Overhead map: open sea shows past the edges when zoomed out. */
+  .qq-overworld { background: var(--c-indigo800); }
+
+  /* A cloud drifting across the overhead map in whole-pixel steps. */
+  .qq-cloud {
+    position: absolute;
+    left: 0;
+    pointer-events: none;
+    animation-name: qq-drift;
+    animation-iteration-count: infinite;
+    animation-timing-function: steps(var(--qq-steps, 360), end);
+  }
+
   .qq-reveal-title {
     text-shadow: 2px 2px 0 var(--c-indigo950), -2px 0 0 var(--c-indigo950), 0 -2px 0 var(--c-indigo950), 2px 0 0 var(--c-indigo950);
   }
@@ -332,4 +345,9 @@
   .qq-light--night { background-image: conic-gradient(var(--c-indigo950) 0 25%, transparent 0 50%, var(--c-indigo950) 0 75%, transparent 0); }
   .qq-light--dusk { background-image: conic-gradient(var(--c-rust800) 0 25%, transparent 0); }
   .qq-light--dawn { background-image: conic-gradient(var(--c-brass700) 0 25%, transparent 0); }
+}
+
+@keyframes qq-drift {
+  from { transform: translate3d(var(--qq-from), 0, 0); }
+  to { transform: translate3d(var(--qq-to), 0, 0); }
 }

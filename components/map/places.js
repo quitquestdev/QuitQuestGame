@@ -51,3 +51,11 @@ export const TIER_LABELS = {
   strong: 'Strong cravings',
   boss: 'The Nicotine Lord',
 };
+
+/** Screen-reader name for a place on either map. */
+export function placeLabel(p) {
+  if (p.type === 'landmark') return p.active ? `${p.data.title}, reached` : `Locked landmark, ${durationLabel(p.data.day)}`;
+  if (p.type === 'story') return p.active ? `Story, day ${p.data.day}: ${p.data.title}` : `Locked story, day ${p.data.day}`;
+  if (p.type === 'camp') return `${TIER_LABELS[p.data.tier]} camp`;
+  return "The Nicotine Lord's fortress";
+}
