@@ -728,23 +728,29 @@ const QuitQuestRPG = () => {
   };
 
   // Battle System Functions
+  // `id` doubles as the sprite key: the battle sprite is `enemy_<id>`.
+  // Stats are unchanged from the original five enemies they replace
+  // (Nicotine Imp, Smoke Specter, Craving Demon, Tar Monster, Addiction Dragon).
   const enemyTypes = [
-    { name: 'Nicotine Imp', hp: 60, attack: 8, defense: 5, xp: 50, icon: '👹', color: 'red', weakness: 'light' },
-    { name: 'Smoke Specter', hp: 80, attack: 10, defense: 7, xp: 75, icon: '👻', color: 'gray', weakness: 'wind' },
-    { name: 'Craving Demon', hp: 100, attack: 12, defense: 8, xp: 100, icon: '👺', color: 'purple', weakness: 'fire' },
-    { name: 'Tar Monster', hp: 120, attack: 15, defense: 10, xp: 150, icon: '🦠', color: 'black', weakness: 'water' },
-    { name: 'Addiction Dragon', hp: 150, attack: 18, defense: 12, xp: 200, icon: '🐲', color: 'orange', weakness: 'lightning' }
+    { id: 'social_pressure_imp', name: 'Social Pressure Imp', hp: 60, attack: 8, defense: 5, xp: 50, icon: '👹', color: 'red', weakness: 'light' },
+    { id: 'smoke_wraith', name: 'Smoke Wraith', hp: 80, attack: 10, defense: 7, xp: 75, icon: '👻', color: 'gray', weakness: 'wind' },
+    { id: 'cigarette_butt_goblin', name: 'Cigarette-Butt Goblin', hp: 70, attack: 9, defense: 6, xp: 60, icon: '🚬', color: 'brown', weakness: 'water' },
+    { id: 'stress_demon', name: 'Stress Demon', hp: 100, attack: 12, defense: 8, xp: 100, icon: '👺', color: 'purple', weakness: 'fire' },
+    { id: 'boredom_slime', name: 'Boredom Slime', hp: 120, attack: 15, defense: 10, xp: 150, icon: '🦠', color: 'black', weakness: 'water' },
+    { id: 'nicotine_lord', name: 'The Nicotine Lord', hp: 150, attack: 18, defense: 12, xp: 200, icon: '🐲', color: 'orange', weakness: 'lightning', boss: true }
   ];
 
+  // Craving intensity -> which enemies can appear (picked at random).
+  const enemyTiers = {
+    mild: ['social_pressure_imp', 'smoke_wraith', 'cigarette_butt_goblin'],
+    medium: ['stress_demon'],
+    strong: ['boredom_slime', 'nicotine_lord']
+  };
+
   const startBattle = (intensity = 'medium') => {
-    let enemy;
-    if (intensity === 'mild') {
-      enemy = enemyTypes[Math.floor(Math.random() * 2)];
-    } else if (intensity === 'strong') {
-      enemy = enemyTypes[Math.floor(Math.random() * 2) + 3];
-    } else {
-      enemy = enemyTypes[2];
-    }
+    const pool = enemyTiers[intensity] || enemyTiers.medium;
+    const pickId = pool[Math.floor(Math.random() * pool.length)];
+    const enemy = enemyTypes.find(e => e.id === pickId);
 
     const playerMaxHP = 100 + (stats.knightLevel * 20);
     

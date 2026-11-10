@@ -48,8 +48,8 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - [ ] Decorative emoji background that changes with level
 
 ## Battle
-- [ ] Five enemies with HP, attack, XP: Nicotine Imp, Smoke Specter, Craving Demon, Tar Monster, Addiction Dragon
-- [ ] Intensity picks enemy: mild = first two (random), medium = Craving Demon, strong = last two (random)
+- [ ] Six enemies with HP, attack, XP. Renamed in Stage 2 (stats unchanged): Social Pressure Imp (was Nicotine Imp), Smoke Wraith (was Smoke Specter), Stress Demon (was Craving Demon), Boredom Slime (was Tar Monster), The Nicotine Lord (was Addiction Dragon, now flagged as boss). Added: Cigarette-Butt Goblin (70 HP, 9 atk, 60 XP)
+- [ ] Intensity picks enemy at random from a tier: mild = imp, wraith, goblin; medium = stress demon; strong = slime, Nicotine Lord
 - [ ] Player max HP = 100 + level × 20
 - [ ] Attack: 10 + level × 5 + random 0 to 9 damage; builds combo and +20 special charge
 - [ ] Special at 100 charge: Warrior ×2.5 Mighty Strike, Mage ×2 Fireball, Rogue ×1.8 Shadow Strike
