@@ -18,6 +18,7 @@ import Sprite from '../Sprite';
 import Button from '../ui/Button';
 import { useSpriteRegistry } from '../../lib/sprites/SpriteProvider';
 import J from '../../lib/journey/regions';
+import { landmarkKind, LANDMARK_NAMES, durationLabel, TIER_LABELS } from './places';
 
 const SCALE = 2;
 const LAYERS = ['sky', 'far', 'mid', 'ground', 'fore'];
@@ -28,7 +29,16 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
  * journeyState (saved with progress): { revealsSeen: [regionId], lastDay }
  * onJourneyStateChange(patch) merges into it.
  */
-export default function JourneyMap({ journey, heroSpriteId, onReadRegion, journeyState = {}, onJourneyStateChange, reducedEffects = false }) {
+export default function JourneyMap({
+  journey,
+  heroSpriteId,
+  onReadRegion,
+  onOpenStory,
+  onFight,
+  journeyState = {},
+  onJourneyStateChange,
+  reducedEffects = false,
+}) {
   const registry = useSpriteRegistry();
   const viewportRef = useRef(null);
   const layerRefs = useRef({});
@@ -174,6 +184,52 @@ export default function JourneyMap({ journey, heroSpriteId, onReadRegion, journe
     }, 0);
   };
 
+  // ---- Places on the road ---------------------------------------------
+  const [selected, setSelected] = useState(null); // { type, id }
+  const places = useMemo(() => {
+    const list = [];
+    for (const m of journey.landmarks) {
+      list.push({ type: 'landmark', id: m.id, x: m.x, w: 16, h: 24, data: m, kind: landmarkKind(m), active: m.unlocked });
+    }
+    const taken = list.map((p) => p.x);
+    for (const e of journey.encounters) {
+      if (e.boss) {
+        list.push({ type: 'fortress', id: e.id, x: journey.fortressX, w: 64, h: 64, data: e, active: e.unlocked });
+        continue;
+      }
+      const near = taken.some((x) => Math.abs(x - e.x) < 14);
+      list.push({ type: 'camp', id: e.id, x: e.x + (near ? 16 : 0), w: 16, h: 16, data: e, active: e.unlocked });
+    }
+    for (const st of journey.stories) {
+      // Signposts stand just behind any landmark on the same day.
+      const near = taken.some((x) => Math.abs(x - st.x) < 12);
+      list.push({ type: 'story', id: `story_${st.day}`, x: st.x - (near ? 11 : 0), w: 12, h: 16, data: st, active: st.unlocked });
+    }
+    // Draw smaller things last so they sit in front.
+    return list.sort((a, b) => b.h - a.h || a.x - b.x);
+  }, [journey]);
+
+  // Only animate what is (nearly) on screen.
+  const visibleLo = settledCam - viewW / 2 - 24;
+  const visibleHi = settledCam + viewW / 2 + 24;
+  const onScreen = (x) => x >= visibleLo && x <= visibleHi;
+
+  const spriteFor = (p) => {
+    if (p.type === 'landmark') return { id: `journey_lm_${p.kind}`, animation: p.active ? 'lit' : 'locked' };
+    if (p.type === 'story') return { id: 'journey_story', animation: p.active ? 'unlocked' : 'locked' };
+    if (p.type === 'camp') return { id: 'journey_camp', animation: p.active ? 'idle' : 'locked' };
+    return { id: 'journey_fortress', animation: 'idle' };
+  };
+
+  const labelFor = (p) => {
+    if (p.type === 'landmark') return p.active ? `${p.data.title}, reached` : `Locked landmark, ${durationLabel(p.data.day)}`;
+    if (p.type === 'story') return p.active ? `Story, day ${p.data.day}: ${p.data.title}` : `Locked story, day ${p.data.day}`;
+    if (p.type === 'camp') return `${TIER_LABELS[p.data.tier]} camp`;
+    return "The Nicotine Lord's fortress";
+  };
+
+  const selectedPlace = selected ? places.find((p) => p.type === selected.type && p.id === selected.id) : null;
+
   const height = J.WORLD_HEIGHT * SCALE;
   const here = journey.currentRegion;
   const viewRegion = journey.regionAtX(settledCam);
@@ -206,6 +262,23 @@ export default function JourneyMap({ journey, heroSpriteId, onReadRegion, journe
             {/* The road: ground, props and the knight share the camera exactly. */}
             <div ref={(el) => (layerRefs.current.path = el)} className="absolute top-0 left-0 will-change-transform" style={{ width: journey.width * SCALE, height }}>
               <Sprite id="journey_ground" scale={SCALE} className="block absolute top-0 left-0" />
+              {places.map((p) => {
+                const sp = spriteFor(p);
+                const isSel = selectedPlace === p;
+                return (
+                  <button
+                    key={`${p.type}_${p.id}`}
+                    type="button"
+                    className={`absolute qq-place ${isSel ? 'is-selected' : ''}`}
+                    style={{ left: (p.x - p.w / 2) * SCALE, top: (J.PROP_BASELINE + 1 - p.h) * SCALE, width: p.w * SCALE, height: p.h * SCALE }}
+                    aria-label={labelFor(p)}
+                    aria-pressed={isSel}
+                    onClick={() => setSelected(isSel ? null : { type: p.type, id: p.id })}
+                  >
+                    <Sprite id={sp.id} animation={sp.animation} scale={SCALE} playing={!reducedEffects && onScreen(p.x)} className="block" />
+                  </button>
+                );
+              })}
               <div
                 className="absolute"
                 style={{ left: (journey.playerX - 16) * SCALE, top: (J.KNIGHT_BASELINE + 1 - 32) * SCALE }}
@@ -222,7 +295,18 @@ export default function JourneyMap({ journey, heroSpriteId, onReadRegion, journe
             {/* Smog over land not yet reached, and the one-time reveal. */}
             <div ref={(el) => (layerRefs.current.fog = el)} className="absolute top-0 left-0 will-change-transform pointer-events-none" style={{ width: journey.width * SCALE, height }} aria-hidden="true">
               {fogStartX < journey.width && (
-                <Sprite id="journey_fog" scale={SCALE} className="block absolute top-0 left-0" style={{ clipPath: `inset(0 0 0 ${fogStartX * SCALE}px)` }} />
+                <>
+                  <Sprite id="journey_fog" scale={SCALE} className="block absolute top-0 left-0" style={{ clipPath: `inset(0 0 0 ${fogStartX * SCALE}px)` }} />
+                  {/* A thinner band in front of the edge so the smog dissolves instead of stopping in a line */}
+                  <Sprite
+                    id="journey_fog"
+                    animation="lift"
+                    frame={1}
+                    scale={SCALE}
+                    className="block absolute top-0 left-0"
+                    style={{ clipPath: `inset(0 ${(journey.width - fogStartX) * SCALE}px 0 ${Math.max(0, fogStartX - 14) * SCALE}px)` }}
+                  />
+                </>
               )}
               {revealRegion && (
                 <Sprite
@@ -251,7 +335,17 @@ export default function JourneyMap({ journey, heroSpriteId, onReadRegion, journe
         )}
       </div>
 
-      <p className="qq-label text-center">Drag the map to look along the road</p>
+      <p className="qq-label text-center">Drag the map to look along the road. Tap a landmark, signpost or camp.</p>
+
+      {selectedPlace && (
+        <PlaceDetail
+          place={selectedPlace}
+          day={journey.day}
+          onClose={() => setSelected(null)}
+          onOpenStory={onOpenStory}
+          onFight={onFight}
+        />
+      )}
 
       <ul className="space-y-2">
         {journey.regions.map((r) => (
@@ -271,6 +365,81 @@ export default function JourneyMap({ journey, heroSpriteId, onReadRegion, journe
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function PlaceDetail({ place, day, onClose, onOpenStory, onFight }) {
+  const { type, data, active } = place;
+  let body;
+  if (type === 'landmark') {
+    body = active ? (
+      <>
+        <div className="flex items-center gap-3">
+          <Sprite id={data.icon} scale={2} />
+          <div className="min-w-0">
+            <p className="type-subheading text-brass-300">{data.title}</p>
+            <p className="qq-label text-moss-300">Reached at {durationLabel(data.day)} smoke-free</p>
+          </div>
+        </div>
+        <p className="type-body text-bone">{data.description}</p>
+        <p className="qq-label text-moss-300">+{data.experience} XP</p>
+      </>
+    ) : (
+      <>
+        <p className="type-subheading text-stone-400">A landmark lies ahead</p>
+        <p className="type-body text-bone">
+          Something stirs in {LANDMARK_NAMES[place.kind]} here. It lights up at {durationLabel(data.day)} smoke-free.
+        </p>
+      </>
+    );
+  } else if (type === 'story') {
+    body = active ? (
+      <>
+        <p className="type-subheading text-brass-300">Day {data.day}: {data.title}</p>
+        <Button size="sm" onClick={() => onOpenStory?.(data.day)}>Read this chapter</Button>
+      </>
+    ) : (
+      <>
+        <p className="type-subheading text-stone-400">A story waits here</p>
+        <p className="type-body text-bone">It unlocks on day {data.day}.</p>
+      </>
+    );
+  } else if (type === 'camp') {
+    body = (
+      <>
+        <p className="type-subheading text-rust-300">{TIER_LABELS[data.tier]}</p>
+        <p className="type-body text-bone">{data.enemies.join(', ')} {data.enemies.length === 1 ? 'roams' : 'roam'} this camp.</p>
+        {active ? (
+          <Button tone="moss" onClick={() => onFight?.(data)}>Fight a {data.tier} craving</Button>
+        ) : (
+          <p className="type-caption text-stone-400">The road reaches this camp on day {data.day}. You can fight any craving from the Quest tab at any time.</p>
+        )}
+      </>
+    );
+  } else {
+    body = (
+      <>
+        <p className="type-subheading text-rust-300">The Nicotine Lord's Fortress</p>
+        {active ? (
+          <>
+            <p className="type-body text-bone">Six months free. The Nicotine Lord waits behind these walls.</p>
+            <Button tone="moss" onClick={() => onFight?.(data)}>Challenge the Nicotine Lord</Button>
+          </>
+        ) : (
+          <p className="type-body text-bone">
+            The Nicotine Lord waits here at day 180. {Math.max(0, 180 - day)} day{180 - day === 1 ? '' : 's'} to go.
+          </p>
+        )}
+      </>
+    );
+  }
+  return (
+    <div className="qq-inset space-y-2" role="dialog" aria-label="Place details">
+      {body}
+      <div className="flex justify-end">
+        <Button size="sm" onClick={onClose}>Close</Button>
+      </div>
     </div>
   );
 }

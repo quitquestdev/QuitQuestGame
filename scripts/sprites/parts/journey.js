@@ -455,11 +455,11 @@ function paintFog(keep = 1) {
   for (let x = 0; x < width; x++) {
     for (let y = 0; y < H; y++) {
       const n = noise2(x * 0.045, y * 0.09, 71);
-      const density = 0.74 + 0.22 * n - (y < 20 ? 0.12 : 0);
+      const density = 0.84 + 0.14 * n - (y < 16 ? 0.1 : 0);
       if (bayer(x, y) >= density) continue;
       if (bayer(x + 2, y + 1) >= keep) continue;
       const w = noise2(x * 0.08 + 40, y * 0.14, 72);
-      img.set(x, y, rgbOf(w > 0.64 ? 'stone500' : w < 0.3 ? 'indigo700' : 'stone600'));
+      img.set(x, y, rgbOf(w > 0.66 ? 'stone500' : w < 0.28 ? 'stone700' : 'stone600'));
     }
   }
   return img;

@@ -783,8 +783,17 @@ const QuitQuestRPG = () => {
   const startBattle = (intensity = 'medium') => {
     const pool = enemyTiers[intensity] || enemyTiers.medium;
     const pickId = pool[Math.floor(Math.random() * pool.length)];
-    const enemy = enemyTypes.find(e => e.id === pickId);
+    beginBattle(enemyTypes.find(e => e.id === pickId));
+  };
 
+  // A battle against one specific enemy (the world map's fortress uses this
+  // for the Nicotine Lord). Same setup as any other battle.
+  const startBattleAgainst = (enemyId) => {
+    const enemy = enemyTypes.find(e => e.id === enemyId);
+    if (enemy) beginBattle(enemy);
+  };
+
+  const beginBattle = (enemy) => {
     const playerMaxHP = 100 + (stats.knightLevel * 20);
     
     setBattleState({
@@ -1185,7 +1194,14 @@ const QuitQuestRPG = () => {
         unlocked: userData.achievements.includes(a.id)
       })),
     storyBeats: storyContent.chapters.filter(ch => ch.day > 0).map(ch => ({ day: ch.day, title: ch.title })),
-    encounters: []
+    // Craving camps along the road start the same battles as the Quest tab's
+    // Mild / Medium / Strong buttons; the fortress is the Nicotine Lord.
+    encounters: [
+      { id: 'camp_mild', day: 9, tier: 'mild', enemies: enemyTiers.mild.map(id => enemyTypes.find(e => e.id === id).name) },
+      { id: 'camp_medium', day: 45, tier: 'medium', enemies: enemyTiers.medium.map(id => enemyTypes.find(e => e.id === id).name) },
+      { id: 'camp_strong', day: 100, tier: 'strong', enemies: enemyTiers.strong.map(id => enemyTypes.find(e => e.id === id).name) },
+      { id: 'fortress', day: 180, tier: 'boss', boss: true, enemyId: 'nicotine_lord', enemies: ['The Nicotine Lord'] }
+    ]
   });
 
   // Story Screen Component
@@ -1393,6 +1409,11 @@ const QuitQuestRPG = () => {
               journeyState={userData.journey || {}}
               onJourneyStateChange={(patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } }))}
               reducedEffects={userData.settings?.reducedEffects === true}
+              onOpenStory={(day) => {
+                setSelectedDay(day);
+                setViewMode('archive');
+              }}
+              onFight={(encounter) => (encounter.boss ? startBattleAgainst(encounter.enemyId) : startBattle(encounter.tier))}
               onReadRegion={(region) => {
                 // Open the region's first story chapter you have reached.
                 const today = Math.max(1, stats.daysSmokeFree);
