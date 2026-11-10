@@ -23,42 +23,9 @@ const paletteVars = Object.fromEntries(Object.entries(palette).map(([k, v]) => [
 
 /**
  * Tailwind's default colours are replaced entirely, so a colour class that is
- * not in the master palette generates nothing. Use the palette families
- * (indigo, brass, rust, moss, stone, bone) in new code.
- *
- * LEGACY ALIASES: the existing screens still use Tailwind's stock names
- * (slate, yellow, green...). Those names are remapped here onto the nearest
- * palette token so the whole UI already renders in palette colours. Stage 4
- * replaces them with the new components; delete this block when nothing
- * references a legacy name any more.
+ * not in the master palette generates nothing. Use the palette families:
+ * indigo, brass, rust, moss, stone, bone (see theme/palette.js).
  */
-const STOCK_SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
-
-function alias(scale, overrides = {}) {
-  const keys = Object.keys(scale).map(Number).sort((a, b) => a - b);
-  const out = {};
-  for (const shade of STOCK_SHADES) {
-    const nearest = keys.reduce((best, k) => (Math.abs(k - shade) < Math.abs(best - shade) ? k : best));
-    out[shade] = overrides[shade] || scale[nearest];
-  }
-  return out;
-}
-
-const legacy = {
-  slate: alias(families.indigo),
-  purple: alias(families.indigo),
-  blue: alias(families.indigo),
-  gray: alias(families.stone, { 50: palette.bone, 100: palette.bone, 200: palette.bone, 300: palette.stone400 }),
-  yellow: alias(families.brass),
-  amber: alias(families.brass),
-  red: alias(families.rust),
-  orange: alias(families.rust),
-  pink: alias(families.rust),
-  green: alias(families.moss),
-  emerald: alias(families.moss),
-  white: palette.bone,
-  black: palette.indigo950,
-};
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -68,39 +35,30 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   // Type roles are a small design-system API and may be chosen dynamically.
-  safelist: [{ pattern: /^type-/ }],
+  safelist: [{ pattern: /^type-/ }, { pattern: /^qq-/ }],
   theme: {
     colors: {
       transparent: 'transparent',
       current: 'currentColor',
       inherit: 'inherit',
-      ...legacy,
-      // Palette families last, so `indigo-*` resolves to the real tokens.
       ...families,
     },
     extend: {
       fontFamily: {
-        // Legacy: still used by the current screens until Stage 4.
-        'pixel-legacy': ['Poppins', 'system-ui', 'sans-serif'],
         // New type system (see theme/typography.js).
         pixel: [fontFamilies.pixel],
         display: [fontFamilies.display],
         body: [fontFamilies.body],
       },
+      // Stepped timing and even pixel distances keep pixel art crisp in motion.
       animation: {
-        'shimmer': 'shimmer 2s infinite',
-        'twinkle': 'twinkle 5s infinite',
-        'float': 'float 3s ease-in-out infinite',
-        'scale-up': 'scale-up 0.5s ease-out',
-        'bounce-slow': 'bounce-slow 2s ease-in-out infinite',
-        'fade-in': 'fade-in 0.5s ease-out',
-        'pulse-slow': 'pulse-slow 2s ease-in-out infinite',
+        'twinkle': 'twinkle 5s steps(5, end) infinite',
+        'float': 'float 3s steps(10, end) infinite',
+        'bounce-slow': 'bounce-slow 2s steps(4, end) infinite',
+        'fade-in': 'fade-in 0.4s steps(4, end)',
+        'pulse-slow': 'pulse-slow 2s steps(4, end) infinite',
       },
       keyframes: {
-        shimmer: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(100%)' },
-        },
         twinkle: {
           '0%, 100%': { opacity: '0' },
           '50%': { opacity: '1' },
@@ -109,17 +67,12 @@ module.exports = {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-20px)' },
         },
-        'scale-up': {
-          '0%': { transform: 'scale(0)' },
-          '50%': { transform: 'scale(1.1)' },
-          '100%': { transform: 'scale(1)' },
-        },
         'bounce-slow': {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '50%': { transform: 'translateY(-8px)' },
         },
         'fade-in': {
-          from: { opacity: '0', transform: 'translateY(10px)' },
+          from: { opacity: '0', transform: 'translateY(8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
         'pulse-slow': {

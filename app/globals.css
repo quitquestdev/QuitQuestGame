@@ -1,13 +1,11 @@
-/* Poppins is legacy: still used by .pixelated on the current screens until Stage 4. */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-indigo-900 text-bone;
+    @apply bg-indigo-950 text-bone;
+    font-family: "Cormorant Garamond", Georgia, serif;
   }
 }
 
@@ -31,6 +29,160 @@
   .sprite {
     display: inline-block;
   }
+
+  /* ---------------------------------------------------------------
+   * UI kit (components/ui). Every edge is drawn at the same 2x pixel
+   * scale as the sprites, so bevels are 2px lines. Frames come from
+   * manifest nine-slices passed in as CSS variables.
+   * ------------------------------------------------------------- */
+
+  /* Panel: translucent body, brass nine-slice trim, notched corners. */
+  .qq-panel {
+    --qq-body: color-mix(in srgb, var(--c-indigo900) 88%, transparent);
+    position: relative;
+    border: 8px solid transparent;
+    border-image-source: var(--qq-frame);
+    border-image-slice: 8;
+    border-image-width: 16px;
+    border-image-repeat: stretch;
+    background-color: var(--qq-body);
+    background-clip: border-box;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+    image-rendering: pixelated;
+    padding: 12px;
+    color: var(--c-bone);
+  }
+  .qq-panel--raised { --qq-body: color-mix(in srgb, var(--c-indigo800) 92%, transparent); }
+  .qq-panel--danger { --qq-body: color-mix(in srgb, var(--c-rust800) 92%, transparent); }
+  .qq-panel--parchment { --qq-body: color-mix(in srgb, var(--c-brass800) 88%, transparent); }
+  .qq-panel--legendary { --qq-body: color-mix(in srgb, var(--c-brass700) 92%, transparent); }
+  .qq-panel--sunken { --qq-body: color-mix(in srgb, var(--c-indigo950) 75%, transparent); }
+
+  /* Inset: a sunken well inside a panel (stat tiles, story text). */
+  .qq-inset {
+    background: color-mix(in srgb, var(--c-indigo950) 70%, transparent);
+    box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo700);
+    padding: 10px;
+  }
+  .qq-inset--parchment {
+    background: color-mix(in srgb, var(--c-brass800) 70%, transparent);
+    box-shadow: inset 2px 2px 0 var(--c-brass800), inset -2px -2px 0 var(--c-brass600);
+  }
+
+  /* Chip: small bevelled cell for things too small for the nine-slice
+     (map days, quick-jump days, badges). Same bevel logic: light
+     top/left, dark bottom/right, inverted when pressed. */
+  .qq-chip {
+    --chip: var(--c-indigo700);
+    --chip-hi: var(--c-indigo500);
+    --chip-lo: var(--c-indigo950);
+    background: var(--chip);
+    box-shadow: inset 2px 2px 0 var(--chip-hi), inset -2px -2px 0 var(--chip-lo);
+    color: var(--c-bone);
+    font-family: "Jersey 10", ui-monospace, monospace;
+    letter-spacing: 0.03em;
+  }
+  .qq-chip--moss { --chip: var(--c-moss600); --chip-hi: var(--c-moss400); --chip-lo: var(--c-moss800); }
+  .qq-chip--brass { --chip: var(--c-brass500); --chip-hi: var(--c-brass300); --chip-lo: var(--c-brass700); color: var(--c-indigo950); }
+  .qq-chip--rust { --chip: var(--c-rust600); --chip-hi: var(--c-rust400); --chip-lo: var(--c-rust800); }
+  .qq-chip--locked { --chip: var(--c-stone700); --chip-hi: var(--c-stone600); --chip-lo: var(--c-stone800); color: var(--c-stone400); }
+  .qq-chip--sealed { --chip: var(--c-brass800); --chip-hi: var(--c-brass700); --chip-lo: var(--c-indigo950); color: var(--c-brass500); }
+  button.qq-chip:active:not(:disabled) { box-shadow: inset 2px 2px 0 var(--chip-lo), inset -2px -2px 0 var(--chip-hi); }
+  button.qq-chip:disabled { cursor: not-allowed; }
+
+  /* Button: nine-slice states from the manifest. */
+  .qq-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 2px 6px;
+    border: 8px solid transparent;
+    border-image-source: var(--btn-normal);
+    border-image-slice: 8 fill;
+    border-image-width: 16px;
+    border-image-repeat: stretch;
+    background: transparent;
+    image-rendering: pixelated;
+    font-family: "Jersey 10", ui-monospace, monospace;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    color: var(--c-bone);
+    text-shadow: 0 2px 0 color-mix(in srgb, var(--c-indigo950) 55%, transparent);
+    cursor: pointer;
+    user-select: none;
+  }
+  .qq-btn--brass { color: var(--c-indigo950); text-shadow: 0 2px 0 color-mix(in srgb, var(--c-brass300) 55%, transparent); }
+  .qq-btn--sm { min-height: 32px; font-size: 18px; padding: 0 4px; }
+  .qq-btn:active:not(:disabled),
+  .qq-btn.is-selected { border-image-source: var(--btn-pressed); }
+  .qq-btn--brass.is-selected { color: var(--c-bone); text-shadow: 0 2px 0 color-mix(in srgb, var(--c-indigo950) 55%, transparent); }
+  .qq-btn:active:not(:disabled) .qq-btn__label,
+  .qq-btn.is-selected .qq-btn__label { transform: translateY(2px); }
+  .qq-btn:disabled { border-image-source: var(--btn-disabled); color: var(--c-stone400); text-shadow: none; cursor: not-allowed; }
+  .qq-btn:focus-visible, .qq-chip:focus-visible { outline: 2px solid var(--c-brass300); outline-offset: 2px; }
+  .qq-btn__label { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+  /* Progress bar: pixel end caps + fill tile with a highlight row. */
+  .qq-bar {
+    position: relative;
+    height: 20px;
+    border-style: solid;
+    border-color: transparent;
+    border-width: 6px 8px;
+    border-image-source: var(--bar-frame);
+    border-image-slice: 3 4 fill;
+    border-image-width: 6px 8px;
+    border-image-repeat: stretch;
+    image-rendering: pixelated;
+  }
+  .qq-bar__fill {
+    height: 8px;
+    max-width: 100%;
+    background-image: var(--bar-fill);
+    background-size: 4px 8px;
+    background-repeat: repeat-x;
+    image-rendering: pixelated;
+  }
+  .qq-bar__fill--animate { transition: width 0.6s steps(12, end); }
+
+  /* Portrait: the hero's framed picture (replaces the round avatar). */
+  .qq-portrait {
+    display: grid;
+    place-items: center;
+    background: var(--c-indigo950);
+    box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo700), 0 0 0 2px var(--c-brass600);
+  }
+  .qq-portrait--veteran { box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo700), 0 0 0 2px var(--c-brass400), 0 0 0 4px var(--c-indigo950); }
+  .qq-portrait--legend { box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo700), 0 0 0 2px var(--c-brass300), 0 0 0 4px var(--c-brass600); }
+
+  /* Text input in the pixel style. */
+  .qq-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--c-indigo950);
+    color: var(--c-bone);
+    border: none;
+    box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo600), 0 0 0 2px var(--c-indigo600);
+    font-family: "Jersey 10", ui-monospace, monospace;
+    font-size: 22px;
+    text-align: center;
+    color-scheme: dark;
+  }
+  .qq-input::placeholder { color: var(--c-stone500); }
+  .qq-input:focus { outline: none; box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo600), 0 0 0 2px var(--c-brass400); }
+
+  /* Small-caps eyebrow label over stats. */
+  .qq-label {
+    font-family: "Jersey 10", ui-monospace, monospace;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-stone400);
+  }
 }
 
 .sprite-missing {
@@ -43,38 +195,12 @@
   outline: 1px solid var(--c-rust800);
 }
 
+/*
+ * Motion. Everything moves in whole-pixel steps (steps() timing, distances
+ * that divide evenly) and nothing scales, so pixel art never blurs mid-
+ * animation. Colour never shifts off the palette: no hue/brightness filters.
+ */
 @layer utilities {
-  .pixelated {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 600;
-  }
-
-  /* Font weight utilities for Poppins */
-  .font-light-body {
-    font-weight: 400;
-  }
-
-  .font-medium-text {
-    font-weight: 500;
-  }
-
-  .font-semibold-btn {
-    font-weight: 600;
-  }
-
-  .font-bold-heading {
-    font-weight: 700;
-  }
-
-  .font-extrabold-title {
-    font-weight: 800;
-  }
-
-  .font-black-hero {
-    font-weight: 900;
-  }
-
-  /* Story text styling */
   .story-text {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-weight: 500;
@@ -82,33 +208,23 @@
     line-height: 1.65;
     letter-spacing: 0.005em;
     color: var(--c-bone);
-    text-shadow: 0 1px 0 var(--c-indigo950);
-  }
-
-  .story-text-bold {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-weight: 600;
-  }
-
-  .parchment-bg {
-    background: linear-gradient(135deg, rgb(132 96 44 / 0.15) 0%, rgb(92 62 30 / 0.2) 100%);
-    border: 2px solid rgb(168 130 61 / 0.3);
+    text-shadow: 0 2px 0 var(--c-indigo950);
   }
 
   .player-attack {
-    animation: attack-right 0.5s ease-out;
+    animation: attack-right 0.5s steps(5, end);
   }
 
   .enemy-attack {
-    animation: attack-left 0.5s ease-out;
+    animation: attack-left 0.5s steps(5, end);
   }
 
   .heal {
-    animation: heal-glow 1s ease-out;
+    animation: heal-flash 0.8s steps(4, end);
   }
 
   .animate-achievement-unlock {
-    animation: achievement-unlock 0.6s ease-out;
+    animation: achievement-unlock 0.4s steps(4, end);
   }
 
   @keyframes attack-right {
@@ -121,26 +237,13 @@
     50% { transform: translateX(-20px); }
   }
 
-  @keyframes heal-glow {
-    0% { filter: brightness(1); }
-    50% { filter: brightness(1.5) hue-rotate(120deg); }
-    100% { filter: brightness(1); }
+  @keyframes heal-flash {
+    0%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0.4; }
   }
 
   @keyframes achievement-unlock {
-    0% {
-      transform: scale(0.8) rotateY(-10deg);
-      opacity: 0.7;
-      filter: brightness(0.8);
-    }
-    50% {
-      transform: scale(1.05) rotateY(5deg);
-      filter: brightness(1.3);
-    }
-    100% {
-      transform: scale(1) rotateY(0deg);
-      opacity: 1;
-      filter: brightness(1);
-    }
+    from { opacity: 0.4; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }

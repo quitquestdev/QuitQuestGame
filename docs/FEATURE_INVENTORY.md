@@ -77,6 +77,7 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 
 ## Profile (Hero tab)
 - [ ] Large avatar, name, level and class, "N Days Strong!"
+- [ ] World Regrowth toggle (added Stage 4): streak greening on/off, saved in `userData.settings.worldGreening`, on by default
 
 ## Avatar
 - [ ] Class icon and colour (Warrior shield, Mage sparkles, Rogue sword)
@@ -94,5 +95,5 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - Minute and hour achievements only unlock once a full day has passed, because days are floored before conversion.
 - Screens are defined inside the main component, so the Story tab's selected day and view reset whenever parent state changes.
 - XP bar uses `% 500`, which does not match the XP level thresholds.
-- At 320px the "LV 3" badge wraps onto two lines and the header name wraps.
+- At 320px the "LV 3" badge wraps onto two lines and the header name wraps. (Fixed in Stage 4.)
 - Next.js warns that `viewport` and `themeColor` belong in a `viewport` export.

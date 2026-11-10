@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Sprite from './Sprite';
 import SpriteBackground from './SpriteBackground';
+import Panel from './ui/Panel';
+import Button from './ui/Button';
+import ProgressBar from './ui/ProgressBar';
+import { GreeningProvider, greeningStage } from './ui/Greening';
 
 // Inline icon: a manifest sprite sitting on the text line.
 const Icon = ({ id, scale = 1, className = '' }) => (
@@ -69,8 +73,12 @@ const SetupScreen = React.memo(({
     }));
   }, []);
 
+  const stepHeading = (icon, text) => (
+    <h2 className="type-heading text-brass-300 mb-2 text-balance"><Icon id={icon} scale={2} className="mr-2" />{text}</h2>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 p-6 relative">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 p-4 sm:p-6 relative">
       <PixelBackground environment="castle" />
 
       <div className="max-w-md mx-auto relative z-10">
@@ -91,98 +99,95 @@ const SetupScreen = React.memo(({
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
-          <h1 className="text-3xl font-black-hero text-slate-900 text-center mb-2 relative z-10"><Icon id="icon_castle" scale={2} className="mr-2" />QUIT QUEST</h1>
-          <p className="text-slate-800 text-center relative z-10 font-medium-text">Begin your legendary smoke-free adventure!</p>
-        </div>
+        <Panel tone="legendary" className="mb-4 text-center">
+          <h1 className="type-title text-brass-300 text-balance"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
+          <p className="type-body text-bone mt-1">Begin your legendary smoke-free adventure!</p>
+        </Panel>
 
-        <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-6 mb-4 backdrop-blur-lg bg-opacity-90">
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-yellow-500 text-sm pixelated">Quest Setup Progress</span>
-              <span className="text-gray-400 text-sm pixelated">Step {setupStep} of 5</span>
+        <Panel className="mb-4 space-y-6">
+          <div>
+            <div className="flex justify-between items-center mb-1 qq-label">
+              <span className="text-brass-300">Quest Setup Progress</span>
+              <span>Step {setupStep} of 5</span>
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-yellow-500 to-amber-400 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${(setupStep / 5) * 100}%` }}
-              />
-            </div>
+            <ProgressBar value={setupStep} max={5} tone="brass" label="Setup progress" />
           </div>
 
           {setupStep === 1 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_helmet" scale={2} className="mr-2" />CREATE YOUR HERO</h2>
-              <p className="text-gray-300 mb-6 font-light-body">What shall we call you on this quest?</p>
+              {stepHeading('icon_helmet', 'Create Your Hero')}
+              <label htmlFor="setup-hero-name" className="type-body text-bone block mb-4">What shall we call you on this quest?</label>
               <input
+                id="setup-hero-name"
                 ref={heroNameRef}
                 type="text"
                 placeholder="Enter your hero name"
                 value={setupForm.heroName}
                 onChange={(e) => setSetupForm({...setupForm, heroName: e.target.value})}
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
                 maxLength={20}
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">Choose a name that inspires you!</p>
+              <p className="type-caption text-stone-400 mt-2">Choose a name that inspires you!</p>
             </div>
           )}
 
           {setupStep === 2 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_swords" scale={2} className="mr-2" />CHOOSE YOUR CLASS</h2>
-              <p className="text-gray-300 mb-6 font-light-body">Select your hero's class</p>
-              <div className="space-y-3">
+              {stepHeading('icon_swords', 'Choose Your Class')}
+              <p className="type-body text-bone mb-4">Select your hero's class</p>
+              <div className="space-y-2">
                 {[
                   { id: 'warrior', name: 'Warrior', icon: 'hero_warrior', desc: 'Strong and resilient' },
                   { id: 'mage', name: 'Mage', icon: 'hero_mage', desc: 'Wise and mystical' },
                   { id: 'rogue', name: 'Rogue', icon: 'hero_rogue', desc: 'Swift and cunning' }
-                ].map(cls => (
-                  <button
-                    key={cls.id}
-                    onClick={() => setSetupForm({...setupForm, avatarClass: cls.id})}
-                    className={`w-full p-4 rounded-lg border-2 transition-all pixelated ${
-                      setupForm.avatarClass === cls.id
-                        ? 'bg-yellow-600 border-yellow-500 text-slate-900'
-                        : 'bg-slate-700 border-slate-600 text-white hover:border-yellow-500'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Sprite id={cls.icon} scale={1} playing={setupForm.avatarClass === cls.id} />
-                        <div className="text-left">
-                          <p className="font-bold-heading">{cls.name}</p>
-                          <p className="text-sm opacity-80 font-light-body">{cls.desc}</p>
+                ].map(cls => {
+                  const chosen = setupForm.avatarClass === cls.id;
+                  return (
+                    <button
+                      key={cls.id}
+                      onClick={() => setSetupForm({...setupForm, avatarClass: cls.id})}
+                      aria-pressed={chosen}
+                      className={`qq-chip w-full p-3 text-left ${chosen ? 'qq-chip--brass' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <Sprite id={cls.icon} scale={1} playing={chosen} />
+                          <div>
+                            <p className="type-subheading">{cls.name}</p>
+                            <p className={`type-caption ${chosen ? 'text-indigo-900' : 'text-stone-400'}`}>{cls.desc}</p>
+                          </div>
                         </div>
+                        {chosen && <Sprite id="icon_check" scale={1} label="Selected" />}
                       </div>
-                      {setupForm.avatarClass === cls.id && <Sprite id="icon_check" scale={1} label="Selected" />}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {setupStep === 3 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_calendar" scale={2} className="mr-2" />QUIT DATE</h2>
-              <p className="text-gray-300 mb-6 font-light-body">When did you start your smoke-free journey?</p>
+              {stepHeading('icon_calendar', 'Quit Date')}
+              <label htmlFor="setup-quit-date" className="type-body text-bone block mb-4">When did you start your smoke-free journey?</label>
               <input
+                id="setup-quit-date"
                 type="date"
                 value={setupForm.quitDate}
                 onChange={(e) => setSetupForm({...setupForm, quitDate: e.target.value})}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">This can be today or a past date</p>
+              <p className="type-caption text-stone-400 mt-2">This can be today or a past date</p>
             </div>
           )}
 
           {setupStep === 4 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_cigarette" scale={2} className="mr-2" />DAILY HABIT</h2>
-              <p className="text-gray-300 mb-6 font-light-body">How many cigarettes did you smoke per day?</p>
+              {stepHeading('icon_cigarette', 'Daily Habit')}
+              <label htmlFor="setup-cigarettes" className="type-body text-bone block mb-4">How many cigarettes did you smoke per day?</label>
               <input
+                id="setup-cigarettes"
                 ref={cigarettesRef}
                 type="number"
                 placeholder="20"
@@ -190,17 +195,18 @@ const SetupScreen = React.memo(({
                 onChange={(e) => setSetupForm({...setupForm, cigarettesPerDay: e.target.value})}
                 min="1"
                 max="100"
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">Be honest - we'll track your victories!</p>
+              <p className="type-caption text-stone-400 mt-2">Be honest - we'll track your victories!</p>
             </div>
           )}
 
           {setupStep === 5 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_coin_bag" scale={2} className="mr-2" />COST PER PACK</h2>
-              <p className="text-gray-300 mb-6 font-light-body">How much did you spend on a pack?</p>
+              {stepHeading('icon_coin_bag', 'Cost Per Pack')}
+              <label htmlFor="setup-price" className="type-body text-bone block mb-4">How much did you spend on a pack?</label>
               <input
+                id="setup-price"
                 ref={priceRef}
                 type="number"
                 placeholder="12.50"
@@ -209,38 +215,31 @@ const SetupScreen = React.memo(({
                 min="0.01"
                 max="100"
                 step="0.01"
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">We'll track your gold savings!</p>
+              <p className="type-caption text-stone-400 mt-2">We'll track your gold savings!</p>
             </div>
           )}
 
-          <div className="flex gap-3 mt-8">
+          <div className="flex gap-3">
             {setupStep > 1 && (
-              <button
-                onClick={() => setSetupStep(setupStep - 1)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg border-2 border-slate-600 transition-all transform hover:scale-105 pixelated"
-              >
-                Previous
-              </button>
+              <Button className="flex-1" onClick={() => setSetupStep(setupStep - 1)}>
+                <Icon id="icon_arrow_left" />Previous
+              </Button>
             )}
-            <button
+            {/* Beginning the quest is a positive commitment, so the last step is moss */}
+            <Button
+              className="flex-1"
+              tone={setupStep === 5 ? 'moss' : 'brass'}
               onClick={nextStep}
               disabled={!validateStep()}
-              className={`flex-1 py-3 rounded-lg border-2 transition-all transform hover:scale-105 pixelated ${
-                validateStep()
-                  ? setupStep === 5
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 border-green-500 text-white'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-blue-500 text-white'
-                  : 'bg-slate-700 border-slate-600 text-gray-500 cursor-not-allowed'
-              }`}
             >
               {setupStep === 5
-                ? <><Icon id="icon_swords" className="mr-2" />Begin Quest!</>
-                : <>Next<Icon id="icon_arrow_right" className="ml-2" /></>}
-            </button>
+                ? <><Icon id="icon_swords" />Begin Quest!</>
+                : <>Next<Icon id="icon_arrow_right" /></>}
+            </Button>
           </div>
-        </div>
+        </Panel>
       </div>
     </div>
   );
@@ -1080,111 +1079,35 @@ const QuitQuestRPG = () => {
     }
   };
 
-  // Character Avatar Component with SVG Icons
+  // Character portrait: the class-coloured knight in a bevelled frame.
+  // Level 4 adds a brass ring, level 5 a bright ring and a crown.
   const CharacterAvatar = ({ level, className, size = 'large', animate = false }) => {
     const baseClass = className || userData.avatarClass;
 
-    // Size configurations
-    // Hero sprite is 32px; scale is a whole number that fits the circle.
+    // Hero sprite is 32px; scale is a whole number that fits the frame.
     const sizeConfig = {
-      small: { container: 'w-12 h-12', scale: 1, badge: 'text-xs px-1.5 py-0.5' },
-      medium: { container: 'w-20 h-20', scale: 2, badge: 'text-xs px-2 py-1' },
-      large: { container: 'w-28 h-28', scale: 3, badge: 'text-sm px-2 py-1' }
+      small: { box: 'w-12 h-12', scale: 1 },
+      medium: { box: 'w-20 h-20', scale: 2 },
+      large: { box: 'w-28 h-28', scale: 3 }
     };
-
     const config = sizeConfig[size];
-
-    // Class-based icon and color
-    const classConfig = {
-      warrior: {
-        sprite: 'hero_warrior',
-        baseColor: 'from-red-600 to-red-700',
-        glowColor: 'shadow-red-500/50',
-        borderColor: 'border-red-400'
-      },
-      mage: {
-        sprite: 'hero_mage',
-        baseColor: 'from-purple-600 to-purple-700',
-        glowColor: 'shadow-purple-500/50',
-        borderColor: 'border-purple-400'
-      },
-      rogue: {
-        sprite: 'hero_rogue',
-        baseColor: 'from-gray-700 to-gray-800',
-        glowColor: 'shadow-gray-500/50',
-        borderColor: 'border-gray-400'
-      }
-    };
-
-    const avatarConfig = classConfig[baseClass] || classConfig.warrior;
-
-    // Level progression effects
-    const getLevelEffects = () => {
-      if (level >= 5) {
-        return {
-          border: 'border-4 border-yellow-400',
-          glow: 'shadow-xl shadow-yellow-500/70',
-          ring: 'ring-4 ring-yellow-300 ring-offset-2 ring-offset-slate-900'
-        };
-      } else if (level >= 4) {
-        return {
-          border: 'border-4 border-yellow-500',
-          glow: 'shadow-lg shadow-yellow-500/50',
-          ring: 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-slate-900'
-        };
-      } else if (level >= 3) {
-        return {
-          border: `border-3 ${avatarConfig.borderColor}`,
-          glow: `shadow-lg ${avatarConfig.glowColor}`,
-          ring: ''
-        };
-      } else {
-        return {
-          border: `border-2 ${avatarConfig.borderColor}`,
-          glow: `shadow-md ${avatarConfig.glowColor}`,
-          ring: ''
-        };
-      }
-    };
-
-    const effects = getLevelEffects();
+    const sprite = { warrior: 'hero_warrior', mage: 'hero_mage', rogue: 'hero_rogue' }[baseClass] || 'hero_warrior';
+    const frame = level >= 5 ? 'qq-portrait--legend' : level >= 4 ? 'qq-portrait--veteran' : '';
 
     return (
-      <div className={`relative inline-block ${animate ? 'animate-bounce' : ''}`}>
-        {/* Avatar Circle */}
-        <div className={`
-          ${config.container}
-          rounded-full
-          bg-gradient-to-br ${avatarConfig.baseColor}
-          ${effects.border}
-          ${effects.glow}
-          ${effects.ring}
-          flex items-center justify-center
-          transition-all duration-300
-          hover:scale-110
-        `}>
-          <Sprite id={avatarConfig.sprite} scale={config.scale} label={`${baseClass} avatar`} />
-
-          {/* Crown for max level */}
-          {level >= 5 && (
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Sprite id="icon_crown" scale={2} className="animate-pulse" />
-            </div>
-          )}
+      <div className={`relative inline-block ${animate ? 'animate-bounce-slow' : ''}`}>
+        <div className={`qq-portrait ${frame} ${config.box}`}>
+          <Sprite id={sprite} scale={config.scale} label={`${baseClass} avatar`} />
         </div>
 
-        {/* Level badge */}
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-          <span className={`
-            ${config.badge}
-            bg-gradient-to-r from-yellow-500 to-amber-500
-            text-slate-900
-            rounded-full
-            font-bold-heading
-            pixelated
-            shadow-lg
-            border-2 border-yellow-300
-          `}>
+        {level >= 5 && (
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+            <Sprite id="icon_crown" scale={size === 'small' ? 1 : 2} />
+          </div>
+        )}
+
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
+          <span className={`qq-chip qq-chip--brass whitespace-nowrap px-1.5 ${size === 'small' ? 'text-sm' : 'text-base'}`}>
             LV {level}
           </span>
         </div>
@@ -1195,7 +1118,7 @@ const QuitQuestRPG = () => {
   // Particle Effects Component
   const ParticleEffect = () => {
     if (!showParticles) return null;
-    
+
     return (
       <div className="fixed inset-0 pointer-events-none z-50">
         {[...Array(20)].map((_, i) => (
@@ -1219,30 +1142,38 @@ const QuitQuestRPG = () => {
   // Level Up Animation
   const LevelUpAnimation = () => {
     if (!isLevelingUp) return null;
-    
+
     return (
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-        <div className="bg-yellow-600 text-slate-900 px-8 py-4 rounded-lg animate-scale-up pixelated">
-          <h2 className="text-3xl font-black-hero">LEVEL UP!</h2>
-          <p className="text-center mt-2 font-medium-text">Knight Level {stats.knightLevel}</p>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50 px-4">
+        <Panel tone="legendary" className="animate-fade-in text-center px-6">
+          <h2 className="type-title text-brass-300">Level Up!</h2>
+          <p className="type-stat text-bone mt-1">Knight Level {stats.knightLevel}</p>
+        </Panel>
       </div>
     );
   };
+
+  // Shared heading for screens and panels.
+  const Heading = ({ icon, children, as: Tag = 'h2', className = '' }) => (
+    <Tag className={`type-heading text-brass-300 text-center text-balance ${className}`}>
+      {icon && <Icon id={icon} scale={2} className="mr-2" />}
+      {children}
+    </Tag>
+  );
 
   // Story Screen Component
   const StoryScreen = () => {
     const [selectedDay, setSelectedDay] = useState(stats.daysSmokeFree || 1);
     const [viewMode, setViewMode] = useState('today'); // 'today', 'archive', 'map'
-    
+
     const availableStories = storyContent.chapters.filter(
       ch => ch.day > 0 && ch.day <= stats.daysSmokeFree
     );
-    
+
     const getCurrentStory = () => {
       const todayStory = storyContent.chapters.find(ch => ch.day === stats.daysSmokeFree);
       if (todayStory) return todayStory;
-      
+
       // Return a random motivational snippet
       const snippets = storyContent.chapters.find(ch => ch.day === -1)?.snippets || [];
       const randomSnippet = snippets[Math.floor(Math.random() * snippets.length)];
@@ -1251,7 +1182,7 @@ const QuitQuestRPG = () => {
         text: randomSnippet.replace('{heroName}', userData.heroName)
       };
     };
-    
+
     const getStoryForDay = (day) => {
       const story = storyContent.chapters.find(ch => ch.day === day);
       if (story) {
@@ -1260,7 +1191,7 @@ const QuitQuestRPG = () => {
           text: story.text.replace('{heroName}', userData.heroName)
         };
       }
-      
+
       // Return daily wisdom for days without specific stories
       const snippets = storyContent.chapters.find(ch => ch.day === -1)?.snippets || [];
       const snippetIndex = day % snippets.length;
@@ -1269,123 +1200,96 @@ const QuitQuestRPG = () => {
         text: snippets[snippetIndex].replace('{heroName}', userData.heroName)
       };
     };
-    
+
     const currentStory = getCurrentStory();
     const selectedStory = getStoryForDay(selectedDay);
-    
+
+    const chapters = [
+      { n: 1, name: 'Awakening', days: '1-30' },
+      { n: 2, name: 'Journey', days: '31-60' },
+      { n: 3, name: 'Trials', days: '61-90' },
+      { n: 4, name: 'Transform', days: '91-120' },
+      { n: 5, name: 'Mastery', days: '121-150' },
+      { n: 6, name: 'Legend', days: '151-180' }
+    ];
+
     return (
       <div className="space-y-4">
         {/* Story Header */}
-        <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900 border-4 border-purple-700 rounded-lg p-6 relative overflow-hidden">
+        <Panel tone="raised" className="relative overflow-hidden">
           <PixelBackground environment={
             storyChapter <= 2 ? 'forest' :
             storyChapter <= 4 ? 'mountain' :
             storyChapter <= 6 ? 'castle' :
             'dragon'
           } />
-          
+
           <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold-title text-yellow-400 text-center mb-4 pixelated">
-              <Icon id="icon_scroll" scale={2} className="mr-2" />THE LEGEND OF {userData.heroName.toUpperCase()}<Icon id="icon_scroll" scale={2} className="ml-2" />
+            <h2 className="type-heading text-brass-300 text-center text-balance mb-1">
+              <Icon id="icon_scroll" scale={2} className="mr-2" />The Legend of {userData.heroName}
             </h2>
-            <p className="text-purple-200 text-center pixelated text-xs font-medium-text">
+            <p className="type-caption text-indigo-300 text-center">
               Chapter {storyChapter}: Day {stats.daysSmokeFree} of Your Epic Journey
             </p>
-            
+
             {/* View Mode Tabs */}
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                onClick={() => setViewMode('today')}
-                className={`px-3 py-1 rounded pixelated text-xs ${
-                  viewMode === 'today' 
-                    ? 'bg-yellow-500 text-slate-900' 
-                    : 'bg-purple-800 text-purple-200 hover:bg-purple-700'
-                }`}
-              >
-                Today's Story
-              </button>
-              <button
-                onClick={() => setViewMode('archive')}
-                className={`px-3 py-1 rounded pixelated text-xs ${
-                  viewMode === 'archive' 
-                    ? 'bg-yellow-500 text-slate-900' 
-                    : 'bg-purple-800 text-purple-200 hover:bg-purple-700'
-                }`}
-              >
-                Story Archive
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`px-3 py-1 rounded pixelated text-xs ${
-                  viewMode === 'map' 
-                    ? 'bg-yellow-500 text-slate-900' 
-                    : 'bg-purple-800 text-purple-200 hover:bg-purple-700'
-                }`}
-              >
-                Journey Map
-              </button>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              {[['today', "Today's Story"], ['archive', 'Story Archive'], ['map', 'Journey Map']].map(([mode, label]) => (
+                <Button key={mode} size="sm" selected={viewMode === mode} onClick={() => setViewMode(mode)}>
+                  {label}
+                </Button>
+              ))}
             </div>
           </div>
-        </div>
+        </Panel>
 
         {/* Today's Story View */}
         {viewMode === 'today' && currentStory && (
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
-            <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4 mb-4">
-              <h3 className="text-2xl font-extrabold-title text-yellow-400 mb-4 pixelated text-center">
-                {currentStory.title}
-              </h3>
-              <div className="parchment-bg rounded-lg p-6 shadow-lg">
-                <p className="story-text text-center">
-                  {currentStory.text.replace('{heroName}', userData.heroName)}
-                </p>
-              </div>
+          <Panel className="space-y-4">
+            <h3 className="type-heading text-brass-300 text-center text-balance">{currentStory.title}</h3>
+            <div className="qq-inset qq-inset--parchment p-5">
+              <p className="story-text text-center">
+                {currentStory.text.replace('{heroName}', userData.heroName)}
+              </p>
             </div>
-            
+
             {/* Story Stats */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-purple-900 bg-opacity-50 rounded p-2">
-                <p className="text-purple-300 text-xs pixelated">Stories Read</p>
-                <p className="text-yellow-400 text-lg font-bold pixelated">{availableStories.length}</p>
-              </div>
-              <div className="bg-purple-900 bg-opacity-50 rounded p-2">
-                <p className="text-purple-300 text-xs pixelated">Chapter</p>
-                <p className="text-yellow-400 text-lg font-bold pixelated">{storyChapter}</p>
-              </div>
-              <div className="bg-purple-900 bg-opacity-50 rounded p-2">
-                <p className="text-purple-300 text-xs pixelated">Days Total</p>
-                <p className="text-yellow-400 text-lg font-bold pixelated">{stats.daysSmokeFree}</p>
-              </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {[['Stories Read', availableStories.length], ['Chapter', storyChapter], ['Days Total', stats.daysSmokeFree]].map(([label, value]) => (
+                <div key={label} className="qq-inset p-2">
+                  <p className="qq-label">{label}</p>
+                  <p className="type-stat text-brass-300">{value}</p>
+                </div>
+              ))}
             </div>
-            
+
             {!todayStoryViewed && stats.daysSmokeFree === currentStory.day && (
-              <div className="mt-4 text-center">
-                <span className="text-yellow-400 animate-pulse pixelated text-sm"><Icon id="icon_sparkle" className="mr-1" />New chapter unlocked!<Icon id="icon_sparkle" className="ml-1" /></span>
-              </div>
+              <p className="text-center animate-pulse type-label text-brass-300">
+                <Icon id="icon_sparkle" className="mr-1" />New chapter unlocked!<Icon id="icon_sparkle" className="ml-1" />
+              </p>
             )}
-          </div>
+          </Panel>
         )}
 
         {/* Story Archive View */}
         {viewMode === 'archive' && (
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold-heading text-yellow-400 mb-4 pixelated text-center">
-              <Icon id="icon_book" scale={2} className="mr-2" />YOUR STORY COLLECTION
-            </h3>
-            
+          <Panel className="space-y-4">
+            <Heading icon="icon_book">Your Story Collection</Heading>
+
             {/* Day Selector */}
-            <div className="mb-4">
-              <label className="text-yellow-400 text-xs pixelated block mb-2">Select Day to Read:</label>
+            <div>
+              <label htmlFor="story-day" className="qq-label block mb-2">Select Day to Read</label>
               <div className="flex gap-2 items-center">
-                <button
+                <Button
+                  size="sm"
                   onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
                   disabled={selectedDay <= 1}
-                  className="px-3 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-700 disabled:opacity-50 text-white rounded pixelated"
                   aria-label="Previous day"
                 >
                   <Icon id="icon_arrow_left" />
-                </button>
+                </Button>
                 <input
+                  id="story-day"
                   type="number"
                   value={selectedDay}
                   onChange={(e) => {
@@ -1394,32 +1298,32 @@ const QuitQuestRPG = () => {
                   }}
                   min="1"
                   max={stats.daysSmokeFree}
-                  className="w-20 p-1 bg-slate-700 border-2 border-slate-600 rounded text-white text-center pixelated"
+                  className="qq-input w-20 py-1"
                 />
-                <button
+                <Button
+                  size="sm"
                   onClick={() => setSelectedDay(Math.min(stats.daysSmokeFree, selectedDay + 1))}
                   disabled={selectedDay >= stats.daysSmokeFree}
-                  className="px-3 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-700 disabled:opacity-50 text-white rounded pixelated"
                   aria-label="Next day"
                 >
                   <Icon id="icon_arrow_right" />
-                </button>
-                <span className="text-gray-400 text-xs pixelated">of {stats.daysSmokeFree} days</span>
+                </Button>
+                <span className="qq-label">of {stats.daysSmokeFree} days</span>
               </div>
             </div>
-            
+
             {/* Selected Story Display */}
-            <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4">
-              <h4 className="text-xl font-bold-heading text-yellow-400 mb-3 pixelated text-center">
+            <div className="space-y-3">
+              <h4 className="type-subheading text-brass-300 text-center text-balance">
                 Day {selectedDay}: {selectedStory.title}
               </h4>
-              <div className="parchment-bg rounded-lg p-6 shadow-lg">
+              <div className="qq-inset qq-inset--parchment p-5">
                 <p className="story-text text-center">
                   {selectedStory.text}
                 </p>
               </div>
               {selectedStory.day > 0 && (
-                <p className="text-yellow-500 text-xs text-center mt-3 pixelated font-medium-text">
+                <p className="type-caption text-brass-400 text-center">
                   {selectedStory.day <= 30 ? 'Chapter 1: The Awakening' :
                    selectedStory.day <= 60 ? 'Chapter 2: The Journey' :
                    selectedStory.day <= 90 ? 'Chapter 3: The Trials' :
@@ -1429,77 +1333,51 @@ const QuitQuestRPG = () => {
                 </p>
               )}
             </div>
-            
+
             {/* Quick Jump to Milestone Days */}
-            <div className="mt-4">
-              <p className="text-yellow-400 text-xs pixelated mb-2">Quick Jump to Milestones:</p>
-              <div className="flex flex-wrap gap-2">
+            <div>
+              <p className="qq-label mb-2">Quick Jump to Milestones</p>
+              <div className="flex flex-wrap gap-1.5">
                 {[1, 3, 7, 14, 21, 30, 50, 60, 90, 100, 120, 150, 180, 365].map(day => (
                   <button
                     key={day}
                     onClick={() => setSelectedDay(day)}
                     disabled={day > stats.daysSmokeFree}
-                    className={`px-2 py-1 rounded text-xs pixelated ${
-                      day <= stats.daysSmokeFree
-                        ? 'bg-purple-700 hover:bg-purple-600 text-white'
-                        : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    }`}
+                    className={`qq-chip px-2 py-1 text-base ${day <= stats.daysSmokeFree ? '' : 'qq-chip--locked'}`}
                   >
                     Day {day}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
+          </Panel>
         )}
 
         {/* Journey Map View */}
         {viewMode === 'map' && (
-          <div className="bg-gradient-to-br from-amber-900 to-amber-800 border-4 border-amber-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold-heading text-amber-300 mb-4 pixelated text-center">
-              <Icon id="icon_map" scale={2} className="mr-2" />YOUR HEROIC JOURNEY
-            </h3>
-            
-            {/* Chapter Progress */}
-            <div className="mb-4">
-              <div className="grid grid-cols-3 gap-2 text-center mb-4">
-                <div className={`p-2 rounded ${storyChapter >= 1 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.1: Awakening</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 1-30</p>
+          <Panel tone="parchment" className="space-y-4">
+            <Heading icon="icon_map">Your Heroic Journey</Heading>
+
+            {/* Chapter Progress: reached chapters are progress, so moss */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {chapters.map(ch => (
+                <div key={ch.n} className={`qq-chip p-2 ${storyChapter >= ch.n ? 'qq-chip--moss' : 'qq-chip--locked'}`}>
+                  <p className="text-sm leading-tight">Ch.{ch.n}: {ch.name}</p>
+                  <p className="text-lg leading-tight">Days {ch.days}</p>
                 </div>
-                <div className={`p-2 rounded ${storyChapter >= 2 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.2: Journey</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 31-60</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 3 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.3: Trials</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 61-90</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 4 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.4: Transform</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 91-120</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 5 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.5: Mastery</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 121-150</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 6 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.6: Legend</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 151-180</p>
-                </div>
-              </div>
+              ))}
             </div>
-            
+
             {/* Interactive Day Grid */}
-            <div className="bg-slate-900 bg-opacity-50 rounded p-4">
-              <p className="text-amber-300 text-xs pixelated mb-2">Click any unlocked day to read its story:</p>
+            <div className="qq-inset p-3">
+              <p className="type-caption text-brass-300 mb-2">Tap any unlocked day to read its story:</p>
               <div className="grid grid-cols-10 gap-1">
                 {[...Array(180)].map((_, i) => {
                   const day = i + 1;
                   const hasStory = storyContent.chapters.some(ch => ch.day === day);
                   const isUnlocked = day <= stats.daysSmokeFree;
                   const isCurrent = day === stats.daysSmokeFree;
-                  
+
                   return (
                     <button
                       key={day}
@@ -1510,15 +1388,14 @@ const QuitQuestRPG = () => {
                         }
                       }}
                       disabled={!isUnlocked}
-                      className={`
-                        h-8 rounded flex items-center justify-center text-xs font-bold pixelated transition-all
-                        ${isCurrent ? 'bg-yellow-500 text-slate-900 animate-pulse ring-2 ring-yellow-300' :
-                          isUnlocked ? (hasStory ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' : 'bg-blue-700 hover:bg-blue-600 text-blue-200 cursor-pointer') :
-                          hasStory ? 'bg-amber-800 text-amber-600 cursor-not-allowed' :
-                          'bg-gray-700 text-gray-500 cursor-not-allowed'}
-                      `}
+                      className={`qq-chip h-8 flex items-center justify-center text-sm ${
+                        isCurrent ? 'qq-chip--brass animate-pulse' :
+                        isUnlocked ? (hasStory ? 'qq-chip--moss' : '') :
+                        hasStory ? 'qq-chip--sealed' :
+                        'qq-chip--locked'
+                      }`}
                       title={
-                        isUnlocked ? `Day ${day} - Click to read` : 
+                        isUnlocked ? `Day ${day} - Tap to read` :
                         `Day ${day} - Locked (${day - stats.daysSmokeFree} days to unlock)`
                       }
                     >
@@ -1528,31 +1405,26 @@ const QuitQuestRPG = () => {
                 })}
               </div>
             </div>
-            
+
             {/* Legend */}
-            <div className="mt-4 flex justify-around text-xs pixelated">
-              <span className="text-green-400"><Icon id="icon_scroll" className="mr-1" />Story Day ({availableStories.length})</span>
-              <span className="text-blue-400"><Icon id="icon_check" className="mr-1" />Completed Day</span>
-              <span className="text-yellow-400 animate-pulse"><Icon id="icon_star" className="mr-1" />Today</span>
-              <span className="text-gray-400"><Icon id="icon_lock" className="mr-1" />Locked</span>
+            <div className="flex flex-wrap justify-around gap-2 qq-label">
+              <span className="text-moss-300"><Icon id="icon_scroll" className="mr-1" />Story Day ({availableStories.length})</span>
+              <span className="text-indigo-300"><Icon id="icon_check" className="mr-1" />Completed Day</span>
+              <span className="text-brass-300 animate-pulse"><Icon id="icon_star" className="mr-1" />Today</span>
+              <span className="text-stone-400"><Icon id="icon_lock" className="mr-1" />Locked</span>
             </div>
-            
+
             {/* Progress Summary */}
-            <div className="mt-4 bg-slate-900 bg-opacity-50 rounded p-3 text-center">
-              <p className="text-amber-300 pixelated text-sm">
+            <div className="qq-inset text-center space-y-2">
+              <p className="type-caption text-bone">
                 You've unlocked {availableStories.length} of {storyContent.chapters.filter(ch => ch.day > 0).length} story entries
               </p>
-              <div className="w-full bg-amber-800 rounded-full h-3 mt-2">
-                <div 
-                  className="bg-gradient-to-r from-green-500 to-yellow-500 h-3 rounded-full transition-all"
-                  style={{ width: `${(stats.daysSmokeFree / 180) * 100}%` }}
-                />
-              </div>
-              <p className="text-amber-400 text-xs mt-1 pixelated">
+              <ProgressBar value={stats.daysSmokeFree} max={180} tone="moss" label="Six-month journey" />
+              <p className="qq-label text-moss-300">
                 {Math.round((stats.daysSmokeFree / 180) * 100)}% of 6-month journey complete
               </p>
             </div>
-          </div>
+          </Panel>
         )}
       </div>
     );
@@ -1563,7 +1435,7 @@ const QuitQuestRPG = () => {
     const logActivity = (activityType) => {
       const newActivities = { ...userData.activities };
       const newSpecialEvents = { ...userData.specialEvents };
-      
+
       // Update activity counts
       switch(activityType) {
         case 'walk':
@@ -1607,18 +1479,27 @@ const QuitQuestRPG = () => {
           newSpecialEvents.drivingWithout++;
           break;
       }
-      
+
       setUserData(prev => ({
         ...prev,
         activities: newActivities,
         specialEvents: newSpecialEvents,
         totalExperience: prev.totalExperience + 10 // Small XP for activities
       }));
-      
+
       // Check for new achievements
       checkAchievements(stats.daysSmokeFree);
     };
-    
+
+    const environment = [
+      null,
+      { icon: 'icon_hut', text: 'The Humble Beginning - Forest Path' },
+      { icon: 'icon_tree', text: 'The Enchanted Forest - Growing Stronger' },
+      { icon: 'icon_mountain', text: 'The Mountain Peak - Rising Above' },
+      { icon: 'icon_castle', text: 'The Royal Castle - Nearly There' },
+      { icon: 'icon_volcano', text: 'The Dragon\'s Lair - Ultimate Power' }
+    ][Math.min(5, Math.max(1, stats.knightLevel))];
+
     return (
       <div className="space-y-4 relative">
         <PixelBackground environment={
@@ -1628,204 +1509,133 @@ const QuitQuestRPG = () => {
           stats.knightLevel === 4 ? 'castle' :
           'dragon'
         } />
-        
+
         {/* Story Alert if new story available */}
         {userData.storyProgress.includes(stats.daysSmokeFree) && !todayStoryViewed && (
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 border-4 border-purple-500 rounded-lg p-3 text-center animate-pulse">
-            <p className="text-white font-bold pixelated"><Icon id="icon_scroll" className="mr-2" />New Story Chapter Unlocked!<Icon id="icon_scroll" className="ml-2" /></p>
-            <button
-              onClick={() => setCurrentScreen('story')}
-              className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-slate-900 rounded font-bold transition-all pixelated"
-            >
+          <Panel tone="raised" className="text-center relative z-10 space-y-2">
+            <p className="type-subheading text-brass-300">
+              <Icon id="icon_scroll" className="mr-2" />New Story Chapter Unlocked!<Icon id="icon_scroll" className="ml-2" />
+            </p>
+            <Button size="sm" onClick={() => setCurrentScreen('story')}>
               Read Now
-            </button>
-          </div>
+            </Button>
+          </Panel>
         )}
-        
-        {/* Craving Emergency Button */}
-        <div className="bg-gradient-to-r from-red-600 to-orange-600 border-4 border-red-500 rounded-lg p-4 text-center animate-pulse-slow relative z-10">
-          <h3 className="text-white font-bold-heading mb-2 pixelated"><Icon id="icon_alert" className="mr-2" />CRAVING EMERGENCY?<Icon id="icon_alert" className="ml-2" /></h3>
-          <p className="text-red-100 text-sm mb-3 font-light-body">Fight the urge with an epic battle!</p>
+
+        {/* Craving Emergency: fighting a craving is a positive action, so moss */}
+        <Panel tone="danger" className="text-center relative z-10 space-y-3">
+          <h3 className="type-heading text-rust-300">
+            <Icon id="icon_alert" className="mr-2" />Craving Emergency?
+          </h3>
+          <p className="type-body text-bone">Fight the urge with an epic battle!</p>
           <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => startBattle('mild')}
-              className="py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-900 rounded-lg font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              Mild
-            </button>
-            <button
-              onClick={() => startBattle('medium')}
-              className="py-2 bg-orange-500 hover:bg-orange-400 text-white rounded-lg font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              Medium
-            </button>
-            <button
-              onClick={() => startBattle('strong')}
-              className="py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              Strong
-            </button>
+            <Button tone="moss" onClick={() => startBattle('mild')}>Mild</Button>
+            <Button tone="moss" onClick={() => startBattle('medium')}>Medium</Button>
+            <Button tone="moss" onClick={() => startBattle('strong')}>Strong</Button>
           </div>
-        </div>
+        </Panel>
 
         {/* Hero Card with Avatar */}
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-shimmer"></div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-6">
-                <CharacterAvatar level={stats.knightLevel} size="large" animate={isLevelingUp} />
-                <div>
-                  <h2 className="text-2xl font-extrabold-title text-slate-900 pixelated">{userData.heroName}</h2>
-                  <p className="text-slate-800 pixelated font-medium-text">Level {stats.knightLevel} {userData.avatarClass}</p>
-                  <div className="mt-2">
-                    <p className="text-4xl font-black-hero text-slate-900 pixelated">{stats.daysSmokeFree}</p>
-                    <p className="text-sm text-slate-800 pixelated font-medium-text">DAYS SMOKE-FREE</p>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Sprite id="icon_swords" scale={1} />
-                    <span className="text-sm text-slate-800 pixelated font-medium-text">Battles Won: {userData.battlesWon}</span>
-                  </div>
-                </div>
+        <Panel tone="raised" className="relative z-10">
+          <div className="flex items-center gap-5 flex-wrap">
+            <CharacterAvatar level={stats.knightLevel} size="large" animate={isLevelingUp} />
+            <div className="min-w-0 flex-1">
+              <h2 className="type-heading text-bone break-words">{userData.heroName}</h2>
+              <p className="type-caption text-indigo-300 capitalize">Level {stats.knightLevel} {userData.avatarClass}</p>
+              <div className="mt-2">
+                <p className="type-statXL text-moss-300">{stats.daysSmokeFree}</p>
+                <p className="qq-label">Days Smoke-Free</p>
               </div>
-            </div>
-            
-            {/* Health & XP Bars */}
-            <div className="space-y-2 mt-4">
-              <div>
-                <div className="flex justify-between text-xs text-slate-800 mb-1 pixelated">
-                  <span>Health</span>
-                  <span>{Math.round(stats.healthPercentage)}%</span>
-                </div>
-                <div className="w-full bg-slate-800 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-red-500 to-pink-500 h-3 rounded-full transition-all duration-1000"
-                    style={{ width: `${stats.healthPercentage}%` }}
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <div className="flex justify-between text-xs text-slate-800 mb-1 pixelated">
-                  <span>Experience</span>
-                  <span>{stats.experienceToNext} to next level</span>
-                </div>
-                <div className="w-full bg-slate-800 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-1000"
-                    style={{ 
-                      width: `${((userData.totalExperience % 500) / 500) * 100}%` 
-                    }}
-                  />
-                </div>
-              </div>
+              <p className="mt-2 qq-label text-bone flex items-center gap-2">
+                <Sprite id="icon_swords" scale={1} />
+                Battles Won: <span className="type-stat text-brass-300">{userData.battlesWon}</span>
+              </p>
             </div>
           </div>
-        </div>
+
+          {/* Health & XP Bars: both are positive progress, so moss */}
+          <div className="space-y-3 mt-5">
+            <div>
+              <div className="flex justify-between qq-label mb-1">
+                <span>Health</span>
+                <span className="text-moss-300">{Math.round(stats.healthPercentage)}%</span>
+              </div>
+              <ProgressBar value={stats.healthPercentage} tone="moss" label="Health" />
+            </div>
+            <div>
+              <div className="flex justify-between qq-label mb-1">
+                <span>Experience</span>
+                <span className="text-moss-300">{stats.experienceToNext} to next level</span>
+              </div>
+              <ProgressBar value={userData.totalExperience % 500} max={500} tone="moss" label="Experience" />
+            </div>
+          </div>
+        </Panel>
 
         {/* Environment Card */}
-        <div className={`rounded-lg p-4 border-4 relative z-10 ${
-          stats.knightLevel === 1 ? 'bg-gradient-to-br from-gray-700 to-gray-800 border-gray-600' :
-          stats.knightLevel === 2 ? 'bg-gradient-to-br from-green-700 to-green-800 border-green-600' :
-          stats.knightLevel === 3 ? 'bg-gradient-to-br from-blue-700 to-blue-800 border-blue-600' :
-          stats.knightLevel === 4 ? 'bg-gradient-to-br from-purple-700 to-purple-800 border-purple-600' :
-          'bg-gradient-to-br from-orange-700 to-red-800 border-orange-600'
-        }`}>
-          <p className="text-white text-center text-sm pixelated">
-            <Icon
-              id={stats.knightLevel === 1 ? 'icon_hut' :
-                  stats.knightLevel === 2 ? 'icon_tree' :
-                  stats.knightLevel === 3 ? 'icon_mountain' :
-                  stats.knightLevel === 4 ? 'icon_castle' :
-                  'icon_volcano'}
-              className="mr-2"
-            />
-            {stats.knightLevel === 1 ? 'The Humble Beginning - Forest Path' :
-             stats.knightLevel === 2 ? 'The Enchanted Forest - Growing Stronger' :
-             stats.knightLevel === 3 ? 'The Mountain Peak - Rising Above' :
-             stats.knightLevel === 4 ? 'The Royal Castle - Nearly There' :
-             'The Dragon\'s Lair - Ultimate Power'}
+        <Panel tone="sunken" className="relative z-10">
+          <p className="type-subheading text-indigo-300 text-center">
+            <Icon id={environment.icon} className="mr-2" />
+            {environment.text}
           </p>
-        </div>
+        </Panel>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 relative z-10">
-          <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-4 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <Sprite id="icon_coins" scale={2} className="mx-auto mb-2 block" />
-            <p className="text-sm text-slate-800 pixelated font-medium-text">GOLD SAVED</p>
-            <p className="text-2xl font-extrabold-title text-slate-900 pixelated">${stats.moneySaved.toFixed(2)}</p>
-            <div className="mt-2 flex justify-center gap-1">
+        <div className="grid grid-cols-2 gap-3 relative z-10">
+          <Panel className="text-center">
+            <Sprite id="icon_coins" scale={2} className="mx-auto mb-1 block" />
+            <p className="qq-label">Gold Saved</p>
+            <p className="type-statL text-brass-300">${stats.moneySaved.toFixed(2)}</p>
+            <div className="mt-2 flex justify-center gap-1 min-h-4">
               {[...Array(Math.min(5, Math.floor(stats.moneySaved / 100)))].map((_, i) => (
                 <Sprite key={i} id="icon_coin_bag" scale={1} />
               ))}
             </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-amber-700 to-amber-800 border-4 border-amber-600 rounded-lg p-4 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <Sprite id="icon_shield" scale={2} className="mx-auto mb-2 block" />
-            <p className="text-sm text-amber-200 pixelated font-medium-text">ENEMIES DEFEATED</p>
-            <p className="text-2xl font-extrabold-title text-white pixelated">{stats.cigarettesAvoided.toLocaleString()}</p>
-            <div className="mt-2 flex justify-center gap-1">
+          </Panel>
+
+          <Panel className="text-center">
+            <Sprite id="icon_shield" scale={2} className="mx-auto mb-1 block" />
+            <p className="qq-label">Enemies Defeated</p>
+            <p className="type-statL text-bone">{stats.cigarettesAvoided.toLocaleString()}</p>
+            <div className="mt-2 flex justify-center gap-1 min-h-4">
               {[...Array(Math.min(5, Math.floor(stats.cigarettesAvoided / 500)))].map((_, i) => (
                 <Sprite key={i} id="icon_skull" scale={1} />
               ))}
             </div>
-          </div>
+          </Panel>
         </div>
 
-        {/* Real-World Activities Section */}
-        <div className="bg-gradient-to-br from-green-800 to-green-900 border-4 border-green-700 rounded-lg p-4 relative z-10">
-          <h3 className="text-xl font-bold-heading text-green-300 mb-3 flex items-center gap-2 pixelated">
-            <Sprite id="icon_heartbeat" scale={1} /> HEALTHY ACTIVITIES
+        {/* Real-World Activities Section: logging one is a positive action */}
+        <Panel className="relative z-10 space-y-3">
+          <h3 className="type-heading text-brass-300 flex items-center gap-2">
+            <Sprite id="icon_heartbeat" scale={2} /> Healthy Activities
           </h3>
-          <p className="text-green-200 text-sm mb-3 font-light-body">Log activities to earn achievements!</p>
-          <div className="grid grid-cols-4 gap-2">
-            <button
-              onClick={() => logActivity('walk')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              <Icon id="icon_walk" className="mr-1" />Walk
-            </button>
-            <button
-              onClick={() => logActivity('exercise')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              <Icon id="icon_strength" className="mr-1" />Exercise
-            </button>
-            <button
-              onClick={() => logActivity('meditate')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              <Icon id="icon_meditate" className="mr-1" />Meditate
-            </button>
-            <button
-              onClick={() => logActivity('water')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              <Icon id="icon_droplet" className="mr-1" />Water
-            </button>
+          <p className="type-body text-bone">Log activities to earn achievements!</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[['walk', 'icon_walk', 'Walk'], ['exercise', 'icon_strength', 'Exercise'], ['meditate', 'icon_meditate', 'Meditate'], ['water', 'icon_droplet', 'Water']].map(([type, icon, label]) => (
+              <Button key={type} tone="moss" size="sm" onClick={() => logActivity(type)}>
+                <Icon id={icon} />{label}
+              </Button>
+            ))}
           </div>
-        </div>
+        </Panel>
 
         {/* Health Status */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6 relative overflow-hidden z-10">
-          <div className="absolute top-0 right-0 opacity-20">
+        <Panel className="relative overflow-hidden z-10 space-y-3">
+          <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
             <Sprite id="icon_heart" scale={5} className="animate-pulse" />
           </div>
-          <h3 className="text-xl font-bold-heading text-yellow-500 mb-3 flex items-center gap-2 relative z-10 pixelated">
-            <Sprite id="icon_heart" scale={1} /> HEALTH STATUS
+          <h3 className="type-heading text-brass-300 flex items-center gap-2 relative z-10">
+            <Sprite id="icon_heart" scale={2} /> Health Status
           </h3>
-          <p className="text-gray-300 relative z-10 font-light-body"><Icon id={getHealthIcon(stats.daysSmokeFree)} className="mr-2" />{stats.healthStatus}</p>
-          <div className="mt-4 grid grid-cols-4 gap-2">
+          <p className="type-body text-bone relative z-10"><Icon id={getHealthIcon(stats.daysSmokeFree)} className="mr-2" />{stats.healthStatus}</p>
+          <div className="grid grid-cols-4 gap-2 relative z-10">
             {stats.daysSmokeFree >= 1 && <span className="animate-bounce-slow"><Sprite id="icon_lung" scale={2} label="Lungs recovering" /></span>}
             {stats.daysSmokeFree >= 7 && <span className="animate-bounce-slow" style={{animationDelay: '0.1s'}}><Sprite id="icon_heartbeat" scale={2} label="Heart rate normal" /></span>}
             {stats.daysSmokeFree >= 30 && <span className="animate-bounce-slow" style={{animationDelay: '0.2s'}}><Sprite id="icon_strength" scale={2} label="Lung function improving" /></span>}
             {stats.daysSmokeFree >= 100 && <span className="animate-bounce-slow" style={{animationDelay: '0.3s'}}><Sprite id="icon_shield" scale={2} label="Heart disease risk dropping" /></span>}
           </div>
-        </div>
+        </Panel>
       </div>
     );
   };
@@ -1833,31 +1643,24 @@ const QuitQuestRPG = () => {
   // Battle Screen Component
   const BattleScreen = () => {
     if (!battleState.currentEnemy) return null;
-    
+
     return (
       <div className="space-y-4">
         {/* Battle Arena */}
-        <div className="bg-gradient-to-br from-red-900 to-purple-900 border-4 border-red-700 rounded-lg p-6 relative overflow-hidden">
+        <Panel tone="danger" className="relative overflow-hidden">
           <PixelBackground environment="dungeon" />
-          
-          {/* Battle Status */}
+
           <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold-title text-yellow-500 text-center mb-4 pixelated"><Icon id="icon_swords" scale={2} className="mr-2" />BATTLE MODE<Icon id="icon_swords" scale={2} className="ml-2" /></h2>
-            
-            {/* Enemy Section */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-red-400 font-bold pixelated">{battleState.currentEnemy.name}</span>
-                <span className="text-white pixelated">{battleState.enemyHP}/{battleState.enemyMaxHP} HP</span>
+            <Heading icon="icon_swords" className="mb-4">Battle Mode</Heading>
+
+            {/* Enemy Section: enemy health is danger, so rust */}
+            <div className="mb-4">
+              <div className="flex items-baseline justify-between gap-2 mb-1">
+                <span className="type-subheading text-rust-300">{battleState.currentEnemy.name}</span>
+                <span className="type-stat text-bone whitespace-nowrap">{battleState.enemyHP}/{battleState.enemyMaxHP} HP</span>
               </div>
-              <div className="w-full bg-gray-800 rounded-full h-4">
-                <div 
-                  className="bg-gradient-to-r from-red-600 to-red-500 h-4 rounded-full transition-all duration-500"
-                  style={{ width: `${(battleState.enemyHP / battleState.enemyMaxHP) * 100}%` }}
-                />
-              </div>
-              
-              {/* Enemy Avatar */}
+              <ProgressBar value={battleState.enemyHP} max={battleState.enemyMaxHP} tone="rust" label="Enemy health" />
+
               <div className={`text-center mt-4 ${enemyAnimation}`}>
                 <Sprite
                   id={enemySpriteId(battleState.currentEnemy)}
@@ -1866,76 +1669,57 @@ const QuitQuestRPG = () => {
                 />
               </div>
             </div>
-            
+
             {/* VS Divider */}
-            <div className="text-center my-4">
-              <span className="text-yellow-400 text-2xl font-bold pixelated"><Icon id="icon_lightning" className="mr-2" />VS<Icon id="icon_lightning" className="ml-2" /></span>
-            </div>
-            
-            {/* Player Section */}
-            <div className="mb-6">
-              <div className={`text-center mb-4 ${battleAnimation}`}>
+            <p className="text-center my-3 type-statL text-brass-300">
+              <Icon id="icon_lightning" className="mr-2" />VS<Icon id="icon_lightning" className="ml-2" />
+            </p>
+
+            {/* Player Section: your health is positive, so moss */}
+            <div className="mb-2">
+              <div className={`text-center mb-5 ${battleAnimation}`}>
                 <CharacterAvatar level={stats.knightLevel} size="medium" />
               </div>
-              
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-green-400 font-bold pixelated">{userData.heroName}</span>
-                <span className="text-white pixelated">{battleState.playerHP}/{battleState.playerMaxHP} HP</span>
+
+              <div className="flex items-baseline justify-between gap-2 mb-1">
+                <span className="type-subheading text-bone">{userData.heroName}</span>
+                <span className="type-stat text-bone whitespace-nowrap">{battleState.playerHP}/{battleState.playerMaxHP} HP</span>
               </div>
-              <div className="w-full bg-gray-800 rounded-full h-4">
-                <div 
-                  className="bg-gradient-to-r from-green-600 to-green-500 h-4 rounded-full transition-all duration-500"
-                  style={{ width: `${(battleState.playerHP / battleState.playerMaxHP) * 100}%` }}
-                />
-              </div>
+              <ProgressBar value={battleState.playerHP} max={battleState.playerMaxHP} tone="moss" label="Your health" />
             </div>
           </div>
-        </div>
-        
+        </Panel>
+
         {/* Battle Actions */}
         {battleState.inBattle ? (
-          <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-4">
-            <h3 className="text-yellow-500 font-bold mb-3 pixelated">Your Actions</h3>
+          <Panel className="space-y-3">
+            <h3 className="type-subheading text-brass-300">Your Actions</h3>
             <div className="grid grid-cols-2 gap-3">
-              <button
+              <Button
                 onClick={() => playerAttack('normal')}
                 disabled={!battleState.playerTurn}
-                className={`py-3 px-4 rounded-lg border-2 transition-all pixelated ${
-                  battleState.playerTurn 
-                    ? 'bg-blue-600 hover:bg-blue-500 border-blue-500 text-white transform hover:scale-105' 
-                    : 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
-                }`}
               >
-                <Sprite id="icon_sword" scale={1} className="mx-auto mb-1 block" />
-                <span className="text-sm">Attack</span>
-              </button>
-              
-              <button
+                <Icon id="icon_sword" />Attack
+              </Button>
+
+              <Button
                 onClick={() => playerAttack('special')}
                 disabled={!battleState.playerTurn || battleState.specialCharge < 100}
-                className={`py-3 px-4 rounded-lg border-2 transition-all pixelated ${
-                  battleState.playerTurn && battleState.specialCharge >= 100
-                    ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-500 text-white transform hover:scale-105 animate-pulse' 
-                    : 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
-                }`}
+                className={battleState.playerTurn && battleState.specialCharge >= 100 ? 'animate-pulse' : ''}
               >
-                <Sprite id="icon_lightning" scale={1} className="mx-auto mb-1 block" />
-                <span className="text-sm">Special</span>
-              </button>
+                <Icon id="icon_lightning" />Special
+              </Button>
             </div>
-          </div>
+          </Panel>
         ) : (
-          <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-4 text-center">
-            <p className="text-yellow-400 font-bold mb-3 pixelated">
+          <Panel className="text-center space-y-3">
+            <p className="type-subheading text-brass-300 text-balance">
               {battleState.battleLog[battleState.battleLog.length - 1]}
             </p>
-            <button
-              onClick={() => setCurrentScreen('dashboard')}
-              className="py-3 px-6 bg-green-600 hover:bg-green-500 text-white rounded-lg border-2 border-green-500 transition-all transform hover:scale-105 pixelated"
-            >
+            <Button onClick={() => setCurrentScreen('dashboard')}>
               Continue Quest
-            </button>
-          </div>
+            </Button>
+          </Panel>
         )}
       </div>
     );
@@ -1950,18 +1734,6 @@ const QuitQuestRPG = () => {
     // Helper to check if achievement is unlocked
     const isUnlocked = (achievementId) => userData.achievements.includes(achievementId);
 
-    // Rarity colors
-    const getRarityColor = (rarity) => {
-      switch (rarity) {
-        case 'common': return 'from-gray-600 to-gray-700';
-        case 'uncommon': return 'from-green-600 to-green-700';
-        case 'rare': return 'from-blue-600 to-blue-700';
-        case 'epic': return 'from-purple-600 to-purple-700';
-        case 'legendary': return 'from-yellow-600 to-orange-600';
-        default: return 'from-gray-600 to-gray-700';
-      }
-    };
-
     const getRarityBadge = (rarity) => {
       const names = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
       const key = names[rarity] ? rarity : 'common';
@@ -1971,329 +1743,195 @@ const QuitQuestRPG = () => {
     return (
       <div className="space-y-4 max-w-4xl mx-auto pb-8">
         {/* Header Stats */}
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 sticky top-0 z-10">
-          <h2 className="text-2xl font-extrabold-title text-slate-900 text-center mb-4 pixelated"><Icon id="icon_trophy" scale={2} className="mr-2" />HALL OF GLORY</h2>
-          <div className="flex justify-around mb-4">
+        <Panel tone="raised" className="sticky top-0 z-10 space-y-3">
+          <Heading icon="icon_trophy">Hall of Glory</Heading>
+          <div className="flex justify-around">
             <div className="text-center">
-              <p className="text-3xl font-black-hero text-slate-900 pixelated">{unlockedCount}</p>
-              <p className="text-sm text-slate-800 pixelated font-medium-text">UNLOCKED</p>
+              <p className="type-statL text-moss-300">{unlockedCount}</p>
+              <p className="qq-label">Unlocked</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-black-hero text-slate-900 pixelated">{totalCount}</p>
-              <p className="text-sm text-slate-800 pixelated font-medium-text">TOTAL</p>
+              <p className="type-statL text-bone">{totalCount}</p>
+              <p className="qq-label">Total</p>
             </div>
           </div>
-          <div className="w-full bg-yellow-800 rounded-full h-3">
-            <div
-              className="bg-gradient-to-r from-yellow-300 to-amber-300 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
-        </div>
+          <ProgressBar value={completionPercentage} tone="moss" label="Achievements unlocked" />
+        </Panel>
 
-        {/* Achievement Gallery Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
+        {/* Achievement Gallery Grid: completed achievements carry the moss meaning */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {achievementsList.map((achievement) => {
             const unlocked = isUnlocked(achievement.id);
 
             return (
-              <div
+              <Panel
                 key={achievement.id}
-                className={`rounded-lg border-4 p-4 transition-all duration-300 ${
-                  unlocked
-                    ? `bg-gradient-to-br ${getRarityColor(achievement.rarity)} border-yellow-500 transform hover:scale-105 hover:shadow-xl animate-achievement-unlock`
-                    : 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-600 opacity-60'
-                }`}
+                tone={unlocked ? (achievement.rarity === 'legendary' ? 'legendary' : 'default') : 'sunken'}
+                className={`text-center ${unlocked ? 'animate-achievement-unlock' : 'opacity-60'}`}
               >
-                {/* Icon */}
-                <div className="text-center mb-3">
-                  <span className={`inline-block ${unlocked ? 'animate-bounce-slow' : 'opacity-50'}`}>
+                <div className="mb-2">
+                  <span className={`inline-block ${unlocked ? 'animate-bounce-slow' : ''}`}>
                     <Sprite id={unlocked ? achievement.icon : 'icon_lock'} scale={3} label={unlocked ? achievement.title : 'Locked'} />
                   </span>
                 </div>
 
-                {/* Title */}
-                <h3 className={`text-center font-bold-heading mb-2 pixelated text-sm ${
-                  unlocked ? 'text-yellow-300' : 'text-gray-400'
-                }`}>
+                <h3 className={`type-subheading mb-1 text-balance ${unlocked ? 'text-brass-300' : 'text-stone-400'}`}>
                   {unlocked ? achievement.title : '???'}
                 </h3>
 
-                {/* Description */}
-                <p className={`text-center text-xs mb-3 font-light-body ${
-                  unlocked ? 'text-gray-200' : 'text-gray-500'
-                }`}>
+                <p className={`type-caption mb-3 ${unlocked ? 'text-bone' : 'text-stone-500'}`}>
                   {unlocked ? achievement.description : 'Keep questing to unlock!'}
                 </p>
 
-                {/* Footer - XP and Rarity */}
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`pixelated font-medium-text ${
-                    unlocked ? 'text-green-300' : 'text-gray-500'
-                  }`}>
-                    +{achievement.experience} XP
+                <div className="flex items-center justify-between qq-label">
+                  <span className={unlocked ? 'text-moss-300' : 'text-stone-500'}>
+                    {unlocked && <Icon id="icon_check" className="mr-1" />}+{achievement.experience} XP
                   </span>
-                  <span className={`pixelated font-medium-text ${
-                    unlocked ? 'text-white' : 'text-gray-500'
-                  }`}>
+                  <span className={unlocked ? 'text-bone' : 'text-stone-500'}>
                     {getRarityBadge(achievement.rarity)}
                   </span>
                 </div>
-
-                {/* Unlocked shine effect */}
-                {unlocked && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 hover:opacity-20 transition-opacity pointer-events-none rounded-lg"></div>
-                )}
-              </div>
+              </Panel>
             );
           })}
         </div>
 
         {/* Motivational Footer */}
         {unlockedCount < totalCount && (
-          <div className="bg-gradient-to-br from-purple-900 to-purple-800 border-4 border-purple-700 rounded-lg p-4 text-center mx-4">
-            <p className="text-purple-200 pixelated font-light-body">
+          <Panel tone="sunken" className="text-center">
+            <p className="type-body text-indigo-300">
               <Icon id="icon_swords" className="mr-2" />{totalCount - unlockedCount} achievements await you, brave hero!<Icon id="icon_swords" className="ml-2" />
             </p>
-          </div>
+          </Panel>
         )}
 
         {/* Completion Message */}
         {unlockedCount === totalCount && (
-          <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 text-center mx-4 animate-pulse-slow">
-            <Sprite id="icon_special" scale={2} className="mx-auto mb-2 block" />
-            <h3 className="text-xl font-extrabold-title text-slate-900 pixelated mb-2">
-              LEGENDARY HERO!
-            </h3>
-            <p className="text-slate-800 font-light-body">
+          <Panel tone="legendary" className="text-center space-y-2 animate-pulse-slow">
+            <Sprite id="icon_special" scale={2} className="mx-auto block" />
+            <h3 className="type-title text-brass-300">Legendary Hero!</h3>
+            <p className="type-body text-bone">
               You've unlocked every achievement! You are a true legend of Quit Quest!
             </p>
-          </div>
+          </Panel>
         )}
       </div>
     );
   };
 
-  // Profile Screen Component (simplified for space)
+  // World regrowth (streak greening) is on unless the player turned it off.
+  const worldGreeningOn = userData.settings?.worldGreening !== false;
+  const toggleWorldGreening = () => {
+    setUserData(prev => ({
+      ...prev,
+      settings: { ...(prev.settings || {}), worldGreening: prev.settings?.worldGreening === false }
+    }));
+  };
+
+  // Profile Screen Component
   const ProfileScreen = () => (
     <div className="space-y-4">
-      <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6">
-        <div className="flex flex-col items-center text-center">
+      <Panel tone="raised">
+        <div className="flex flex-col items-center text-center gap-1 pb-2">
           <CharacterAvatar level={stats.knightLevel} size="large" />
-          <h2 className="text-2xl font-extrabold-title text-slate-900 mt-4 pixelated">{userData.heroName}</h2>
-          <p className="text-slate-800 pixelated font-medium-text">Level {stats.knightLevel} {userData.avatarClass}</p>
-          <p className="text-lg font-bold-heading text-slate-900 mt-2 pixelated">{stats.daysSmokeFree} Days Strong!</p>
+          <h2 className="type-title text-bone mt-5 break-words max-w-full">{userData.heroName}</h2>
+          <p className="type-caption text-indigo-300 capitalize">Level {stats.knightLevel} {userData.avatarClass}</p>
+          <p className="type-statL text-moss-300 mt-1">{stats.daysSmokeFree} Days Strong!</p>
         </div>
-      </div>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300">World Regrowth</h3>
+        <p className="type-body text-bone">
+          As your streak grows, moss creeps into the brass trim and the world turns greener: from day 30, 90 and 150.
+        </p>
+        <Button tone={worldGreeningOn ? 'moss' : 'brass'} selected={worldGreeningOn} onClick={toggleWorldGreening}>
+          {worldGreeningOn ? 'Regrowth on' : 'Regrowth off'}
+        </Button>
+      </Panel>
     </div>
   );
 
+  const tabs = [
+    { screen: 'dashboard', label: 'Quest', icon: 'icon_shield' },
+    { screen: 'story', label: 'Story', icon: 'icon_book', dot: !todayStoryViewed && userData.storyProgress.includes(stats.daysSmokeFree) ? 'brass' : null },
+    { screen: 'battle', label: 'Battle', icon: 'icon_swords', dot: battleState.inBattle ? 'rust' : null },
+    { screen: 'achievements', label: 'Glory', icon: 'icon_trophy' },
+    { screen: 'profile', label: 'Hero', icon: 'icon_helmet' }
+  ];
+
+  const greening = greeningStage(stats.daysSmokeFree, worldGreeningOn);
+
   // Main Game Screen
   const GameScreen = () => (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900">
-      {/* Particle Effects */}
-      <ParticleEffect />
-      
-      {/* Level Up Animation */}
-      <LevelUpAnimation />
-      
-      {/* Header */}
-      <div className="bg-slate-900 border-b-4 border-slate-700 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-transparent to-purple-900 opacity-30"></div>
-        <div className="max-w-4xl mx-auto p-4 relative z-10">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-extrabold-title text-yellow-500 pixelated"><Icon id="icon_castle" scale={2} className="mr-2" />QUIT QUEST</h1>
-            <div className="flex items-center gap-3">
+    <GreeningProvider stage={greening}>
+      <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 relative">
+        {/* World regrowth: a faint moss glow that rises with the streak */}
+        {greening > 0 && (
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{ background: `radial-gradient(ellipse at 50% 115%, color-mix(in srgb, var(--c-moss700) ${greening * 14}%, transparent), transparent 65%)` }}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Particle Effects */}
+        <ParticleEffect />
+
+        {/* Level Up Animation */}
+        <LevelUpAnimation />
+
+        {/* Header */}
+        <header className="bg-indigo-950 border-b-2 border-brass-700 relative">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <h1 className="type-heading text-brass-300 whitespace-nowrap"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
+            <div className="flex items-center gap-3 min-w-0">
               <CharacterAvatar level={stats.knightLevel} size="small" />
-              <div className="text-right">
-                <p className="text-yellow-500 font-bold-heading pixelated">{userData.heroName}</p>
-                <p className="text-gray-400 text-xs pixelated font-medium-text">Day {stats.daysSmokeFree}</p>
+              <div className="text-right min-w-0">
+                <p className="type-caption text-brass-300 truncate">{userData.heroName}</p>
+                <p className="qq-label">Day {stats.daysSmokeFree}</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Navigation Tabs */}
-      <div className="bg-slate-800 border-b-4 border-slate-700">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-5">
-            <button
-              onClick={() => setCurrentScreen('dashboard')}
-              className={`py-3 text-center transition-all pixelated ${
-                currentScreen === 'dashboard' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Sprite id="icon_shield" scale={2} className="mx-auto mb-1 block" />
-              <span className="text-xs font-bold">QUEST</span>
-            </button>
-            <button
-              onClick={() => setCurrentScreen('story')}
-              className={`py-3 text-center transition-all relative pixelated ${
-                currentScreen === 'story' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Sprite id="icon_book" scale={2} className="mx-auto mb-1 block" />
-              <span className="text-xs font-bold">STORY</span>
-              {!todayStoryViewed && userData.storyProgress.includes(stats.daysSmokeFree) && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setCurrentScreen('battle')}
-              className={`py-3 text-center transition-all relative pixelated ${
-                currentScreen === 'battle' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Sprite id="icon_swords" scale={2} className="mx-auto mb-1 block" />
-              <span className="text-xs font-bold">BATTLE</span>
-              {battleState.inBattle && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setCurrentScreen('achievements')}
-              className={`py-3 text-center transition-all pixelated ${
-                currentScreen === 'achievements' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Sprite id="icon_trophy" scale={2} className="mx-auto mb-1 block" />
-              <span className="text-xs font-bold">GLORY</span>
-            </button>
-            <button
-              onClick={() => setCurrentScreen('profile')}
-              className={`py-3 text-center transition-all pixelated ${
-                currentScreen === 'profile' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Sprite id="icon_helmet" scale={2} className="mx-auto mb-1 block" />
-              <span className="text-xs font-bold">HERO</span>
-            </button>
+        {/* Navigation Tabs */}
+        <nav className="bg-indigo-900 border-b-2 border-indigo-950 relative" aria-label="Main">
+          <div className="max-w-4xl mx-auto grid grid-cols-5">
+            {tabs.map(tab => {
+              const active = currentScreen === tab.screen;
+              return (
+                <button
+                  key={tab.screen}
+                  onClick={() => setCurrentScreen(tab.screen)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative py-2 text-center ${active ? 'qq-chip qq-chip--brass' : 'text-stone-400'}`}
+                >
+                  <Sprite id={tab.icon} scale={2} className="mx-auto mb-0.5 block" />
+                  <span className={`qq-label ${active ? 'text-indigo-950' : ''}`}>{tab.label}</span>
+                  {tab.dot && (
+                    <span className={`absolute top-1 right-2 w-2 h-2 animate-pulse ${tab.dot === 'rust' ? 'bg-rust-400' : 'bg-brass-300'}`} />
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </div>
+        </nav>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto p-4">
-        {currentScreen === 'dashboard' && <DashboardScreen />}
-        {currentScreen === 'story' && <StoryScreen />}
-        {currentScreen === 'battle' && <BattleScreen />}
-        {currentScreen === 'achievements' && <AchievementsScreen />}
-        {currentScreen === 'profile' && <ProfileScreen />}
+        {/* Content */}
+        <main className="max-w-4xl mx-auto p-4 relative">
+          {currentScreen === 'dashboard' && <DashboardScreen />}
+          {currentScreen === 'story' && <StoryScreen />}
+          {currentScreen === 'battle' && <BattleScreen />}
+          {currentScreen === 'achievements' && <AchievementsScreen />}
+          {currentScreen === 'profile' && <ProfileScreen />}
+        </main>
       </div>
-    </div>
+    </GreeningProvider>
   );
 
   return (
     <>
-      <style jsx>{`
-        .pixelated {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-weight: 600;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        
-        @keyframes twinkle {
-          0%, 100% { opacity: 0; }
-          50% { opacity: 1; }
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        
-        @keyframes scale-up {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-        
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-        
-        .animate-twinkle {
-          animation: twinkle 5s infinite;
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animate-scale-up {
-          animation: scale-up 0.5s ease-out;
-        }
-        
-        .animate-bounce-slow {
-          animation: bounce-slow 2s ease-in-out infinite;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 2s ease-in-out infinite;
-        }
-        
-        .player-attack {
-          animation: attack-right 0.5s ease-out;
-        }
-        
-        .enemy-attack {
-          animation: attack-left 0.5s ease-out;
-        }
-        
-        .heal {
-          animation: heal-glow 1s ease-out;
-        }
-        
-        @keyframes attack-right {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(20px); }
-        }
-        
-        @keyframes attack-left {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(-20px); }
-        }
-        
-        @keyframes heal-glow {
-          0% { filter: brightness(1); }
-          50% { filter: brightness(1.5) hue-rotate(120deg); }
-          100% { filter: brightness(1); }
-        }
-      `}</style>
       {gameState === 'setup' ? (
         <SetupScreen
           setupStep={setupStep}
