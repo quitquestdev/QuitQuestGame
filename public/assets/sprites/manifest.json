@@ -1734,6 +1734,454 @@
       },
       "defaultAnimation": "unlocked"
     },
+    "overworld_camp": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 9,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_camp_idle_##.png",
+          "frames": 2,
+          "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_camp_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "overworld_cloud": {
+      "category": "map",
+      "frameWidth": 36,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_cloud_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "overworld_fortress": {
+      "category": "map",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_fortress_idle_##.png",
+          "frames": 3,
+          "fps": 2
+        }
+      }
+    },
+    "overworld_knight_mage": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 13,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_knight_mage_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "walk": {
+          "path": "placeholder/map/overworld_knight_mage_walk_##.png",
+          "frames": 2,
+          "fps": 6
+        }
+      }
+    },
+    "overworld_knight_rogue": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 13,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_knight_rogue_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "walk": {
+          "path": "placeholder/map/overworld_knight_rogue_walk_##.png",
+          "frames": 2,
+          "fps": 6
+        }
+      }
+    },
+    "overworld_knight_warrior": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 13,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_knight_warrior_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "walk": {
+          "path": "placeholder/map/overworld_knight_warrior_walk_##.png",
+          "frames": 2,
+          "fps": 6
+        }
+      }
+    },
+    "overworld_lm_beacon": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 11,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/overworld_lm_beacon_lit_##.png",
+          "frames": 2,
+          "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_lm_beacon_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "overworld_lm_lantern": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 11,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/overworld_lm_lantern_lit_##.png",
+          "frames": 2,
+          "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_lm_lantern_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "overworld_lm_spring": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 11,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/overworld_lm_spring_lit_##.png",
+          "frames": 2,
+          "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_lm_spring_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "overworld_lm_stone": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 11,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/overworld_lm_stone_lit_##.png",
+          "frames": 2,
+          "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_lm_stone_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "overworld_lm_tree": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 11,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "lit": {
+          "path": "placeholder/map/overworld_lm_tree_lit_##.png",
+          "frames": 2,
+          "fps": 3
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_lm_tree_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "lit"
+    },
+    "overworld_sea": {
+      "category": "map",
+      "frameWidth": 320,
+      "frameHeight": 240,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_sea_idle_##.png",
+          "frames": 3,
+          "fps": 2
+        }
+      }
+    },
+    "overworld_shadow_ashen": {
+      "category": "map",
+      "frameWidth": 101,
+      "frameHeight": 112,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_ashen_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_ashen_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 0,
+        "y": 128
+      }
+    },
+    "overworld_shadow_epilogue": {
+      "category": "map",
+      "frameWidth": 114,
+      "frameHeight": 182,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_epilogue_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_epilogue_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 206,
+        "y": 58
+      }
+    },
+    "overworld_shadow_fields": {
+      "category": "map",
+      "frameWidth": 155,
+      "frameHeight": 145,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_fields_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_fields_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    "overworld_shadow_fortress": {
+      "category": "map",
+      "frameWidth": 82,
+      "frameHeight": 97,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_fortress_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_fortress_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 238,
+        "y": 0
+      }
+    },
+    "overworld_shadow_haze": {
+      "category": "map",
+      "frameWidth": 149,
+      "frameHeight": 97,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_haze_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_haze_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 0,
+        "y": 96
+      }
+    },
+    "overworld_shadow_heights": {
+      "category": "map",
+      "frameWidth": 189,
+      "frameHeight": 119,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_heights_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_heights_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 76,
+        "y": 0
+      }
+    },
+    "overworld_shadow_marsh": {
+      "category": "map",
+      "frameWidth": 147,
+      "frameHeight": 97,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_marsh_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_marsh_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 70,
+        "y": 143
+      }
+    },
+    "overworld_shadow_woods": {
+      "category": "map",
+      "frameWidth": 117,
+      "frameHeight": 112,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_shadow_woods_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/overworld_shadow_woods_lift_##.png",
+          "frames": 4,
+          "fps": 5,
+          "loop": false
+        }
+      },
+      "meta": {
+        "x": 132,
+        "y": 81
+      }
+    },
+    "overworld_story": {
+      "category": "map",
+      "frameWidth": 7,
+      "frameHeight": 9,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "unlocked": {
+          "path": "placeholder/map/overworld_story_unlocked_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "locked": {
+          "path": "placeholder/map/overworld_story_locked_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "defaultAnimation": "unlocked"
+    },
+    "overworld_terrain": {
+      "category": "map",
+      "frameWidth": 320,
+      "frameHeight": 240,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/map/overworld_terrain_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "mapWidth": 320,
+        "mapHeight": 240
+      }
+    },
     "ui_bar_fill_brass": {
       "category": "ui",
       "frameWidth": 2,
