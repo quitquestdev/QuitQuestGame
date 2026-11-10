@@ -145,7 +145,12 @@ Every `Sprite`, panel, button and battle scene updates without code changes. A p
 
 ## World map
 
-The world map (Story tab > World Map, or the World Map button on the Quest tab's location card) is a side-scrolling road through eight regions:
+The world map (Story tab > World Map, or the World Map button on the Quest tab's location card) has two views of the same journey, chosen with the toggle above the map and remembered with progress:
+
+- **From above** (the default): the whole land seen from above. You can drag, zoom and walk the knight along the road, and land you haven't reached yet is in shadow.
+- **On the road**: a side-scrolling road with parallax layers.
+
+Both show eight regions:
 
 | Region | Quit days |
 |---|---|
@@ -183,9 +188,43 @@ The ranges follow the health milestones already in the game (the first three day
   - shows reveals, the knight's walk and camera moves instantly;
   - pauses prop animations.
 
+### The view from above
+
+- **Geometry** (`lib/journey/overworld.js`, shared by the renderer and the art script):
+  - The map is 320x240 native pixels.
+  - `ROUTE` holds the road's waypoints for each region.
+  - `pointForJourneyX()` projects any position from `layout.js` onto the map. The data layer is the same as the road view's, and it knows nothing about either view.
+  - `TERRITORY` sets how far each region's land reaches from its stretch of road.
+- **Renderer** (`components/map/OverworldMap.jsx`):
+  - **Scale:** whole numbers only (Wider is 1x, then 2x, Closer is 3x). It starts at 2x, or 1x on very narrow screens.
+  - **Moving around:** drag to pan; pinch, the buttons, `+`/`-` or ctrl + wheel to zoom; arrow keys to pan; Home to return to the knight.
+  - **Shadow:** land not yet reached is shown by one shadow sprite per region. Its soft edge reaches a few pixels onto land already lit, and where two shadows meet they join without a seam. The first time the knight arrives in a region, its `lift` animation plays once, drawing the shadow back from the land you came from.
+  - **Places:** milestone landmarks, camps and the fortress stay visible above the shadow as goals. Story signposts sit under it, so a region's chapters show once you arrive. Signposts are hidden at 1x so the zoomed-out view stays readable. Places are set beside the road, clear of each other.
+  - **Ambience:** the knight walks the road from the last day you saw, glints move on the sea, two clouds drift over the land, and the time-of-day light follows the device clock.
+- **Shared by both views** (`components/map/useJourneyMap.js`, `PlaceDetail.jsx`, `places.js`): reveals, Reduced Effects, the time of day and the place details panel. Reveals and the saved state (`revealsSeen`, `lastDay`) work the same in both views, so a region revealed in one is clear in the other.
+- **Reduced Effects** turns off the walk, clouds and sea glints, and shows reveals and camera moves instantly.
+
 ### Map art in the manifest
 
-All map art is code-drawn placeholder art (`npm run sprites:placeholders`, `scripts/sprites/parts/journey.js`). To replace it, keep the ID and the size and point the manifest entry at the new files.
+All map art is code-drawn placeholder art (`npm run sprites:placeholders`, `scripts/sprites/parts/journey.js` for the road and `scripts/sprites/parts/overworld.js` for the view from above). To replace it, keep the ID and the size and point the manifest entry at the new files.
+
+View from above:
+
+| ID | Size | Animations | Notes |
+|---|---|---|---|
+| `overworld_terrain` | 320x240 | idle | The whole land, lit from the north-west; the road follows `ROUTE` |
+| `overworld_sea` | 320x240 | idle (3) | Glints on open water, transparent elsewhere |
+| `overworld_shadow_<region>` | varies | idle, lift (4) | One region's shadow, cropped; `meta.x`/`meta.y` place it on the map |
+| `overworld_lm_beacon`, `_lantern`, `_spring`, `_tree`, `_stone` | 9x11 | lit, locked | Milestone landmarks |
+| `overworld_story` | 7x9 | unlocked, locked | Story signpost |
+| `overworld_camp` | 9x9 | idle, locked | Craving camp |
+| `overworld_fortress` | 24x24 | idle | The Nicotine Lord's fortress |
+| `overworld_knight_warrior`, `_mage`, `_rogue` | 9x13 | idle, walk | The knight on the map |
+| `overworld_cloud` | 36x16 | idle | A drifting cloud |
+
+A repainted terrain must keep the road where `ROUTE` puts it. The shadow sprites are built from the terrain (each pixel pushed down into the indigo family), so rebuild or redraw them together with it.
+
+On the road:
 
 | ID | Size | Animations | Notes |
 |---|---|---|---|

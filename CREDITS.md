@@ -66,7 +66,8 @@ summarised below.
 
 ### Code-drawn (Quit Quest, no third-party source)
 - `enemy_nicotine_lord` (64x64 boss), all `ui_*` pieces, `bg_forest_smog`, `bg_lair_smog`
-- World map: the parallax layers `journey_sky`, `journey_far`, `journey_mid`, `journey_ground`, `journey_fore`, the smog `journey_fog`, the landmarks `journey_lm_*`, `journey_story`, `journey_camp`, `journey_fortress`, `journey_fortress_far`, `journey_grass`, and the knight's `walk` frames (built from the CC0 knight tile above)
+- World map from above: `overworld_terrain`, `overworld_sea`, the shadows `overworld_shadow_*`, the markers `overworld_lm_*`, `overworld_story`, `overworld_camp`, `overworld_fortress`, the knight tokens `overworld_knight_*` and `overworld_cloud`
+- World map on the road: the parallax layers `journey_sky`, `journey_far`, `journey_mid`, `journey_ground`, `journey_fore`, the smog `journey_fog`, the landmarks `journey_lm_*`, `journey_story`, `journey_camp`, `journey_fortress`, `journey_fortress_far`, `journey_grass`, and the knight's `walk` frames (built from the CC0 knight tile above)
 - Icons: every `icon_*` sprite except the eight listed under the CC0 packs above (sword, chest, book, potion, water, strength, flame, special). That includes the hearts, coins, XP, shield, lung, trophies and medals, rarity gems, activity, health-milestone and location icons, arrows, check and lock.
 - `dev_test_gem` (dev harness only)
 

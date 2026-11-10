@@ -60,7 +60,7 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - [ ] Battle log (only the last line is shown after the battle)
 
 ## Story
-- [ ] Four views: Today's Story, Story Archive, Journey Map, World Map (world map added on `feature/world-map`)
+- [ ] Four views: Today's Story, Story Archive, Journey Map, World Map (world map added on `feature/world-map`; view from above and road view toggle on `feature/world-map-overhead`)
 - [ ] World Map (rebuilt on `feature/world-map-journey`): one road through eight regions from day 0 to the fortress at 180 and an epilogue to 15 years; also opened from the dashboard location card
   - [ ] Region list: Restored / Here / Shrouded, and Read opens the region's first reached story chapter
   - [ ] Parallax layers; drag, Back / Ahead, arrow keys, Home / End; Return to knight when out of view

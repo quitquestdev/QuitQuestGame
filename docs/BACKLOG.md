@@ -4,7 +4,10 @@ Requests to pick up after the current restyle stage. Newest first.
 
 ## In-game world map (requested during Stage 4)
 
-**Status: first version on `feature/world-map`; rebuilt as a healing journey on `feature/world-map-journey`, awaiting review.** Possible later phase: branching side regions (out of scope for now).
+**Status:** three versions, each on its own branch and awaiting review:
+- `feature/world-map`: the first version.
+- `feature/world-map-journey`: rebuilt as a healing journey along a side-scrolling road.
+- `feature/world-map-overhead`: adds a view from above, with land not yet reached in shadow. It is the default view; the road view stays one tap away. Possible later phase: branching side regions (out of scope for now).
 
 Original notes:
 
