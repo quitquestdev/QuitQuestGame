@@ -1,23 +1,26 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Calendar, Trophy, User, Shield, Sword, Crown, Heart, Star, TrendingUp, Award, AlertCircle, Settings, DollarSign, Target, Sparkles, Flame, Wind, Zap, Swords, AlertTriangle, Activity, BookOpen, Scroll, Map } from 'lucide-react';
+import Sprite from './Sprite';
+import SpriteBackground from './SpriteBackground';
+
+// Inline icon: a manifest sprite sitting on the text line.
+const Icon = ({ id, scale = 1, className = '' }) => (
+  <Sprite id={id} scale={scale} className={`align-middle ${className}`} />
+);
 
 // Pixel Background Component (extracted to prevent re-renders)
 const PixelBackground = React.memo(({ environment = 'forest' }) => {
+  // Faint scenery behind the content, drawn from the battle-scene layers.
   const backgrounds = {
-    forest: '🌲🌳🌲🌳🌲',
-    mountain: '🏔️⛰️🏔️⛰️🏔️',
-    castle: '🏰🏯🏰🏯🏰',
-    dungeon: '⬛🟫⬛🟫⬛',
-    dragon: '🌋🔥🌋🔥🌋'
+    forest: 'bg_forest_trees',
+    mountain: 'bg_village_mountains',
+    castle: 'bg_village_town',
+    dungeon: 'bg_lair_town',
+    dragon: 'bg_lair_sky'
   };
 
   return (
     <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
-      <div className="text-6xl leading-none">
-        {[...Array(20)].map((_, i) => (
-          <div key={i}>{backgrounds[environment]}</div>
-        ))}
-      </div>
+      <SpriteBackground id={backgrounds[environment] || backgrounds.forest} className="absolute inset-0" />
     </div>
   );
 });
@@ -83,14 +86,14 @@ const SetupScreen = React.memo(({
                 animationDelay: `${star.delay}s`
               }}
             >
-              ⭐
+              <Sprite id="icon_star" scale={1} />
             </div>
           ))}
         </div>
 
         <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
-          <h1 className="text-3xl font-black-hero text-slate-900 text-center mb-2 relative z-10">🏰 QUIT QUEST</h1>
+          <h1 className="text-3xl font-black-hero text-slate-900 text-center mb-2 relative z-10"><Icon id="icon_castle" scale={2} className="mr-2" />QUIT QUEST</h1>
           <p className="text-slate-800 text-center relative z-10 font-medium-text">Begin your legendary smoke-free adventure!</p>
         </div>
 
@@ -110,7 +113,7 @@ const SetupScreen = React.memo(({
 
           {setupStep === 1 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_helmet" scale={2} className="mr-2" />CREATE YOUR HERO</h2>
               <p className="text-gray-300 mb-6 font-light-body">What shall we call you on this quest?</p>
               <input
                 ref={heroNameRef}
@@ -127,13 +130,13 @@ const SetupScreen = React.memo(({
 
           {setupStep === 2 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">⚔️ CHOOSE YOUR CLASS</h2>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_swords" scale={2} className="mr-2" />CHOOSE YOUR CLASS</h2>
               <p className="text-gray-300 mb-6 font-light-body">Select your hero's class</p>
               <div className="space-y-3">
                 {[
-                  { id: 'warrior', name: 'Warrior', icon: '🛡️', desc: 'Strong and resilient' },
-                  { id: 'mage', name: 'Mage', icon: '🔮', desc: 'Wise and mystical' },
-                  { id: 'rogue', name: 'Rogue', icon: '🗡️', desc: 'Swift and cunning' }
+                  { id: 'warrior', name: 'Warrior', icon: 'hero_warrior', desc: 'Strong and resilient' },
+                  { id: 'mage', name: 'Mage', icon: 'hero_mage', desc: 'Wise and mystical' },
+                  { id: 'rogue', name: 'Rogue', icon: 'hero_rogue', desc: 'Swift and cunning' }
                 ].map(cls => (
                   <button
                     key={cls.id}
@@ -146,13 +149,13 @@ const SetupScreen = React.memo(({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{cls.icon}</span>
+                        <Sprite id={cls.icon} scale={1} playing={setupForm.avatarClass === cls.id} />
                         <div className="text-left">
                           <p className="font-bold-heading">{cls.name}</p>
                           <p className="text-sm opacity-80 font-light-body">{cls.desc}</p>
                         </div>
                       </div>
-                      {setupForm.avatarClass === cls.id && <span>✓</span>}
+                      {setupForm.avatarClass === cls.id && <Sprite id="icon_check" scale={1} label="Selected" />}
                     </div>
                   </button>
                 ))}
@@ -162,7 +165,7 @@ const SetupScreen = React.memo(({
 
           {setupStep === 3 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">📅 QUIT DATE</h2>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_calendar" scale={2} className="mr-2" />QUIT DATE</h2>
               <p className="text-gray-300 mb-6 font-light-body">When did you start your smoke-free journey?</p>
               <input
                 type="date"
@@ -177,7 +180,7 @@ const SetupScreen = React.memo(({
 
           {setupStep === 4 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_cigarette" scale={2} className="mr-2" />DAILY HABIT</h2>
               <p className="text-gray-300 mb-6 font-light-body">How many cigarettes did you smoke per day?</p>
               <input
                 ref={cigarettesRef}
@@ -195,7 +198,7 @@ const SetupScreen = React.memo(({
 
           {setupStep === 5 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
+              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated"><Icon id="icon_coin_bag" scale={2} className="mr-2" />COST PER PACK</h2>
               <p className="text-gray-300 mb-6 font-light-body">How much did you spend on a pack?</p>
               <input
                 ref={priceRef}
@@ -232,7 +235,9 @@ const SetupScreen = React.memo(({
                   : 'bg-slate-700 border-slate-600 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {setupStep === 5 ? '⚔️ Begin Quest!' : 'Next →'}
+              {setupStep === 5
+                ? <><Icon id="icon_swords" className="mr-2" />Begin Quest!</>
+                : <>Next<Icon id="icon_arrow_right" className="ml-2" /></>}
             </button>
           </div>
         </div>
@@ -464,7 +469,7 @@ const QuitQuestRPG = () => {
           setUnlockedStoryDays(parsed.unlockedStoryDays);
         }
 
-        console.log('✅ Progress loaded from localStorage');
+        console.log('Progress loaded from localStorage');
       }
     } catch (error) {
       console.error('Failed to load data from localStorage:', error);
@@ -485,7 +490,7 @@ const QuitQuestRPG = () => {
         };
 
         localStorage.setItem('quitQuestData', JSON.stringify(dataToSave));
-        console.log('💾 Progress auto-saved');
+        console.log('Progress auto-saved');
       } catch (error) {
         console.error('Failed to save data to localStorage:', error);
       }
@@ -568,13 +573,24 @@ const QuitQuestRPG = () => {
   };
 
   const getHealthMessage = (days) => {
-    if (days === 0) return "🏰 Your quest begins now! Every moment counts.";
-    if (days === 1) return "🫁 Your oxygen levels are improving!";
-    if (days < 7) return "💓 Your heart rate is normalizing!";
-    if (days < 30) return "🌟 Your energy levels are increasing!";
-    if (days < 90) return "💪 Your lung function is improving significantly!";
-    if (days < 365) return "🛡️ Your risk of heart disease is dropping!";
-    return "👑 You're a legendary smoke-free hero!";
+    if (days === 0) return "Your quest begins now! Every moment counts.";
+    if (days === 1) return "Your oxygen levels are improving!";
+    if (days < 7) return "Your heart rate is normalizing!";
+    if (days < 30) return "Your energy levels are increasing!";
+    if (days < 90) return "Your lung function is improving significantly!";
+    if (days < 365) return "Your risk of heart disease is dropping!";
+    return "You're a legendary smoke-free hero!";
+  };
+
+  // Sprite shown beside the health message (same day bands as above).
+  const getHealthIcon = (days) => {
+    if (days === 0) return 'icon_castle';
+    if (days === 1) return 'icon_lung';
+    if (days < 7) return 'icon_heartbeat';
+    if (days < 30) return 'icon_star';
+    if (days < 90) return 'icon_strength';
+    if (days < 365) return 'icon_shield';
+    return 'icon_crown';
   };
 
   const getNextGoal = (days) => {
@@ -588,86 +604,86 @@ const QuitQuestRPG = () => {
 
   const achievementsList = [
     // Health-Based Achievements (Real Medical Milestones)
-    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate & blood pressure normalizing!', icon: '💓', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide levels dropping!', icon: '🩸', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'CO levels normal, oxygen levels rising!', icon: '💨', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Heart attack risk begins to drop!', icon: '❤️', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings regrowing! Taste & smell improving!', icon: '👃', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Bronchial tubes relaxing! Breathing easier!', icon: '🫁', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Blood circulation improving dramatically!', icon: '🔄', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function increasing significantly!', icon: '🌬️', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia regrowing! Coughing decreasing!', icon: '🌱', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Major lung healing! Shortness of breath gone!', icon: '💪', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
-    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Heart disease risk cut by 50%!', icon: '💚', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
-    { id: 'HEALTH_5YEAR', title: 'Stroke Survivor', description: 'Stroke risk reduced to non-smoker level!', icon: '🧠', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
-    { id: 'HEALTH_10YEAR', title: 'Cancer Conqueror', description: 'Lung cancer risk cut by 50%!', icon: '🛡️', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
-    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk equals non-smoker!', icon: '🔥', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate & blood pressure normalizing!', icon: 'icon_heartbeat', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide levels dropping!', icon: 'icon_blood_drop', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'CO levels normal, oxygen levels rising!', icon: 'icon_breath', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Heart attack risk begins to drop!', icon: 'icon_heart', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings regrowing! Taste & smell improving!', icon: 'icon_nose', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Bronchial tubes relaxing! Breathing easier!', icon: 'icon_lung', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Blood circulation improving dramatically!', icon: 'icon_circulation', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function increasing significantly!', icon: 'icon_breath', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia regrowing! Coughing decreasing!', icon: 'icon_sprout', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Major lung healing! Shortness of breath gone!', icon: 'icon_strength', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Heart disease risk cut by 50%!', icon: 'icon_heart_healed', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_5YEAR', title: 'Stroke Survivor', description: 'Stroke risk reduced to non-smoker level!', icon: 'icon_brain', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_10YEAR', title: 'Cancer Conqueror', description: 'Lung cancer risk cut by 50%!', icon: 'icon_shield', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk equals non-smoker!', icon: 'icon_flame', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
 
     // Time-Based Achievements
-    { id: 'HOUR_1', title: 'The First Hour', description: 'One hour smoke-free!', icon: '⏰', hoursRequired: 1, experience: 10, rarity: 'common', category: 'time' },
-    { id: 'HOUR_12', title: 'Half Day Hero', description: '12 hours smoke-free!', icon: '🌓', hoursRequired: 12, experience: 25, rarity: 'common', category: 'time' },
-    { id: 'DAY_1', title: 'First Victory', description: 'Survived your first day!', icon: '🛡️', daysRequired: 1, experience: 100, rarity: 'common', category: 'time' },
-    { id: 'DAY_3', title: 'Three Day Trial', description: '3 days smoke-free!', icon: '🥉', daysRequired: 3, experience: 200, rarity: 'common', category: 'time' },
-    { id: 'WEEK_1', title: 'Weekly Warrior', description: 'One week of freedom!', icon: '⚔️', daysRequired: 7, experience: 500, rarity: 'uncommon', category: 'time' },
-    { id: 'WEEK_2', title: 'Fortnight Fighter', description: 'Two weeks strong!', icon: '🏹', daysRequired: 14, experience: 750, rarity: 'uncommon', category: 'time' },
-    { id: 'DAY_21', title: 'Habit Breaker', description: '21 days - new habits formed!', icon: '🔨', daysRequired: 21, experience: 900, rarity: 'uncommon', category: 'time' },
-    { id: 'MONTH_1', title: 'Monthly Champion', description: 'A full month smoke-free!', icon: '🏆', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'time' },
-    { id: 'DAY_50', title: 'Half Century', description: '50 days of victory!', icon: '5️⃣0️⃣', daysRequired: 50, experience: 1500, rarity: 'rare', category: 'time' },
-    { id: 'MONTH_2', title: 'Two Moon Warrior', description: 'Two months conquered!', icon: '🌙', daysRequired: 60, experience: 1800, rarity: 'rare', category: 'time' },
-    { id: 'DAY_90', title: 'Season Master', description: '90 days - a full season!', icon: '🍂', daysRequired: 90, experience: 2200, rarity: 'rare', category: 'time' },
-    { id: 'MILESTONE_100', title: 'Century Mark', description: '100 days of triumph!', icon: '💯', daysRequired: 100, experience: 2500, rarity: 'epic', category: 'time' },
-    { id: 'MONTH_6', title: 'Half Year Hero', description: 'Six months smoke-free!', icon: '🌟', daysRequired: 180, experience: 5000, rarity: 'epic', category: 'time' },
-    { id: 'DAY_300', title: 'Almost There', description: '300 days strong!', icon: '🎯', daysRequired: 300, experience: 7500, rarity: 'epic', category: 'time' },
-    { id: 'YEAR_1', title: 'Dragon Slayer', description: 'One year smoke-free!', icon: '🐉', daysRequired: 365, experience: 10000, rarity: 'legendary', category: 'time' },
-    { id: 'DAY_500', title: 'Eternal Warrior', description: '500 days of freedom!', icon: '♾️', daysRequired: 500, experience: 12500, rarity: 'legendary', category: 'time' },
-    { id: 'YEAR_2', title: 'Legend Reborn', description: 'Two years smoke-free!', icon: '🔥', daysRequired: 730, experience: 20000, rarity: 'legendary', category: 'time' },
-    { id: 'DAY_1000', title: 'Millennial Master', description: '1000 days - truly legendary!', icon: '🌌', daysRequired: 1000, experience: 25000, rarity: 'legendary', category: 'time' },
+    { id: 'HOUR_1', title: 'The First Hour', description: 'One hour smoke-free!', icon: 'icon_hourglass', hoursRequired: 1, experience: 10, rarity: 'common', category: 'time' },
+    { id: 'HOUR_12', title: 'Half Day Hero', description: '12 hours smoke-free!', icon: 'icon_moon', hoursRequired: 12, experience: 25, rarity: 'common', category: 'time' },
+    { id: 'DAY_1', title: 'First Victory', description: 'Survived your first day!', icon: 'icon_shield', daysRequired: 1, experience: 100, rarity: 'common', category: 'time' },
+    { id: 'DAY_3', title: 'Three Day Trial', description: '3 days smoke-free!', icon: 'icon_medal_bronze', daysRequired: 3, experience: 200, rarity: 'common', category: 'time' },
+    { id: 'WEEK_1', title: 'Weekly Warrior', description: 'One week of freedom!', icon: 'icon_swords', daysRequired: 7, experience: 500, rarity: 'uncommon', category: 'time' },
+    { id: 'WEEK_2', title: 'Fortnight Fighter', description: 'Two weeks strong!', icon: 'icon_bow', daysRequired: 14, experience: 750, rarity: 'uncommon', category: 'time' },
+    { id: 'DAY_21', title: 'Habit Breaker', description: '21 days - new habits formed!', icon: 'icon_hammer', daysRequired: 21, experience: 900, rarity: 'uncommon', category: 'time' },
+    { id: 'MONTH_1', title: 'Monthly Champion', description: 'A full month smoke-free!', icon: 'icon_trophy', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'time' },
+    { id: 'DAY_50', title: 'Half Century', description: '50 days of victory!', icon: 'icon_medal_silver', daysRequired: 50, experience: 1500, rarity: 'rare', category: 'time' },
+    { id: 'MONTH_2', title: 'Two Moon Warrior', description: 'Two months conquered!', icon: 'icon_moon', daysRequired: 60, experience: 1800, rarity: 'rare', category: 'time' },
+    { id: 'DAY_90', title: 'Season Master', description: '90 days - a full season!', icon: 'icon_leaf', daysRequired: 90, experience: 2200, rarity: 'rare', category: 'time' },
+    { id: 'MILESTONE_100', title: 'Century Mark', description: '100 days of triumph!', icon: 'icon_medal_gold', daysRequired: 100, experience: 2500, rarity: 'epic', category: 'time' },
+    { id: 'MONTH_6', title: 'Half Year Hero', description: 'Six months smoke-free!', icon: 'icon_star', daysRequired: 180, experience: 5000, rarity: 'epic', category: 'time' },
+    { id: 'DAY_300', title: 'Almost There', description: '300 days strong!', icon: 'icon_target', daysRequired: 300, experience: 7500, rarity: 'epic', category: 'time' },
+    { id: 'YEAR_1', title: 'Dragon Slayer', description: 'One year smoke-free!', icon: 'icon_dragon', daysRequired: 365, experience: 10000, rarity: 'legendary', category: 'time' },
+    { id: 'DAY_500', title: 'Eternal Warrior', description: '500 days of freedom!', icon: 'icon_infinity', daysRequired: 500, experience: 12500, rarity: 'legendary', category: 'time' },
+    { id: 'YEAR_2', title: 'Legend Reborn', description: 'Two years smoke-free!', icon: 'icon_flame', daysRequired: 730, experience: 20000, rarity: 'legendary', category: 'time' },
+    { id: 'DAY_1000', title: 'Millennial Master', description: '1000 days - truly legendary!', icon: 'icon_special', daysRequired: 1000, experience: 25000, rarity: 'legendary', category: 'time' },
 
     // Money Saved Achievements
-    { id: 'SAVE_10', title: 'Copper Collector', description: 'Saved $10!', icon: '🪙', moneySaved: 10, experience: 50, rarity: 'common', category: 'money' },
-    { id: 'SAVE_25', title: 'Silver Saver', description: 'Saved $25!', icon: '🥈', moneySaved: 25, experience: 100, rarity: 'common', category: 'money' },
-    { id: 'SAVE_50', title: 'Gold Getter', description: 'Saved $50!', icon: '🥇', moneySaved: 50, experience: 200, rarity: 'uncommon', category: 'money' },
-    { id: 'SAVE_100', title: 'Treasure Hunter', description: 'Saved $100!', icon: '💰', moneySaved: 100, experience: 400, rarity: 'uncommon', category: 'money' },
-    { id: 'SAVE_250', title: 'Vault Builder', description: 'Saved $250!', icon: '🏦', moneySaved: 250, experience: 750, rarity: 'rare', category: 'money' },
-    { id: 'SAVE_500', title: 'Fortune Finder', description: 'Saved $500!', icon: '💎', moneySaved: 500, experience: 1500, rarity: 'rare', category: 'money' },
-    { id: 'SAVE_1000', title: 'Wealth Warrior', description: 'Saved $1,000!', icon: '👑', moneySaved: 1000, experience: 3000, rarity: 'epic', category: 'money' },
-    { id: 'SAVE_2500', title: 'Treasury Master', description: 'Saved $2,500!', icon: '🏰', moneySaved: 2500, experience: 6000, rarity: 'epic', category: 'money' },
-    { id: 'SAVE_5000', title: 'Dragon\'s Hoard', description: 'Saved $5,000!', icon: '🐲', moneySaved: 5000, experience: 10000, rarity: 'legendary', category: 'money' },
-    { id: 'SAVE_10000', title: 'Kingdom\'s Fortune', description: 'Saved $10,000!', icon: '🌍', moneySaved: 10000, experience: 20000, rarity: 'legendary', category: 'money' },
+    { id: 'SAVE_10', title: 'Copper Collector', description: 'Saved $10!', icon: 'icon_coin', moneySaved: 10, experience: 50, rarity: 'common', category: 'money' },
+    { id: 'SAVE_25', title: 'Silver Saver', description: 'Saved $25!', icon: 'icon_medal_silver', moneySaved: 25, experience: 100, rarity: 'common', category: 'money' },
+    { id: 'SAVE_50', title: 'Gold Getter', description: 'Saved $50!', icon: 'icon_medal_gold', moneySaved: 50, experience: 200, rarity: 'uncommon', category: 'money' },
+    { id: 'SAVE_100', title: 'Treasure Hunter', description: 'Saved $100!', icon: 'icon_coin_bag', moneySaved: 100, experience: 400, rarity: 'uncommon', category: 'money' },
+    { id: 'SAVE_250', title: 'Vault Builder', description: 'Saved $250!', icon: 'icon_chest', moneySaved: 250, experience: 750, rarity: 'rare', category: 'money' },
+    { id: 'SAVE_500', title: 'Fortune Finder', description: 'Saved $500!', icon: 'icon_gem', moneySaved: 500, experience: 1500, rarity: 'rare', category: 'money' },
+    { id: 'SAVE_1000', title: 'Wealth Warrior', description: 'Saved $1,000!', icon: 'icon_crown', moneySaved: 1000, experience: 3000, rarity: 'epic', category: 'money' },
+    { id: 'SAVE_2500', title: 'Treasury Master', description: 'Saved $2,500!', icon: 'icon_castle', moneySaved: 2500, experience: 6000, rarity: 'epic', category: 'money' },
+    { id: 'SAVE_5000', title: 'Dragon\'s Hoard', description: 'Saved $5,000!', icon: 'icon_dragon', moneySaved: 5000, experience: 10000, rarity: 'legendary', category: 'money' },
+    { id: 'SAVE_10000', title: 'Kingdom\'s Fortune', description: 'Saved $10,000!', icon: 'icon_coins', moneySaved: 10000, experience: 20000, rarity: 'legendary', category: 'money' },
 
     // Battle Achievements
-    { id: 'BATTLE_1', title: 'First Blood', description: 'Won your first battle!', icon: '🩸', battlesRequired: 1, experience: 50, rarity: 'common', category: 'battle' },
-    { id: 'BATTLE_10', title: 'Craving Fighter', description: 'Defeated 10 cravings!', icon: '⚔️', battlesRequired: 10, experience: 300, rarity: 'uncommon', category: 'battle' },
-    { id: 'BATTLE_25', title: 'Demon Hunter', description: 'Defeated 25 cravings!', icon: '👹', battlesRequired: 25, experience: 800, rarity: 'uncommon', category: 'battle' },
-    { id: 'BATTLE_50', title: 'Craving Slayer', description: 'Defeated 50 cravings!', icon: '🗡️', battlesRequired: 50, experience: 1500, rarity: 'rare', category: 'battle' },
-    { id: 'BATTLE_100', title: 'Centurion', description: 'Won 100 battles!', icon: '🏛️', battlesRequired: 100, experience: 3000, rarity: 'epic', category: 'battle' },
-    { id: 'BATTLE_250', title: 'War Legend', description: 'Defeated 250 cravings!', icon: '⚡', battlesRequired: 250, experience: 7500, rarity: 'epic', category: 'battle' },
-    { id: 'PERFECT_5', title: 'Flawless Fighter', description: '5 perfect victories!', icon: '✨', perfectRequired: 5, experience: 500, rarity: 'uncommon', category: 'battle' },
-    { id: 'PERFECT_10', title: 'Perfect Warrior', description: '10 flawless victories!', icon: '💫', perfectRequired: 10, experience: 1000, rarity: 'rare', category: 'battle' },
-    { id: 'PERFECT_25', title: 'Untouchable Champion', description: '25 perfect victories!', icon: '🌟', perfectRequired: 25, experience: 2500, rarity: 'epic', category: 'battle' },
+    { id: 'BATTLE_1', title: 'First Blood', description: 'Won your first battle!', icon: 'icon_blood_drop', battlesRequired: 1, experience: 50, rarity: 'common', category: 'battle' },
+    { id: 'BATTLE_10', title: 'Craving Fighter', description: 'Defeated 10 cravings!', icon: 'icon_swords', battlesRequired: 10, experience: 300, rarity: 'uncommon', category: 'battle' },
+    { id: 'BATTLE_25', title: 'Demon Hunter', description: 'Defeated 25 cravings!', icon: 'icon_skull', battlesRequired: 25, experience: 800, rarity: 'uncommon', category: 'battle' },
+    { id: 'BATTLE_50', title: 'Craving Slayer', description: 'Defeated 50 cravings!', icon: 'icon_sword', battlesRequired: 50, experience: 1500, rarity: 'rare', category: 'battle' },
+    { id: 'BATTLE_100', title: 'Centurion', description: 'Won 100 battles!', icon: 'icon_helmet', battlesRequired: 100, experience: 3000, rarity: 'epic', category: 'battle' },
+    { id: 'BATTLE_250', title: 'War Legend', description: 'Defeated 250 cravings!', icon: 'icon_lightning', battlesRequired: 250, experience: 7500, rarity: 'epic', category: 'battle' },
+    { id: 'PERFECT_5', title: 'Flawless Fighter', description: '5 perfect victories!', icon: 'icon_sparkle', perfectRequired: 5, experience: 500, rarity: 'uncommon', category: 'battle' },
+    { id: 'PERFECT_10', title: 'Perfect Warrior', description: '10 flawless victories!', icon: 'icon_star', perfectRequired: 10, experience: 1000, rarity: 'rare', category: 'battle' },
+    { id: 'PERFECT_25', title: 'Untouchable Champion', description: '25 perfect victories!', icon: 'icon_special', perfectRequired: 25, experience: 2500, rarity: 'epic', category: 'battle' },
 
     // Activity Achievements
-    { id: 'WALK_10', title: 'Wanderer', description: 'Logged 10 walks!', icon: '🚶', activityRequired: { type: 'walks', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
-    { id: 'WALK_50', title: 'Pathfinder', description: 'Logged 50 walks!', icon: '🥾', activityRequired: { type: 'walks', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
-    { id: 'EXERCISE_10', title: 'Fitness Initiate', description: 'Completed 10 workouts!', icon: '💪', activityRequired: { type: 'exercises', count: 10 }, experience: 250, rarity: 'common', category: 'activity' },
-    { id: 'EXERCISE_50', title: 'Gym Champion', description: 'Completed 50 workouts!', icon: '🏋️', activityRequired: { type: 'exercises', count: 50 }, experience: 1250, rarity: 'uncommon', category: 'activity' },
-    { id: 'MEDITATE_10', title: 'Inner Peace Seeker', description: 'Meditated 10 times!', icon: '🧘', activityRequired: { type: 'meditations', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
-    { id: 'MEDITATE_50', title: 'Zen Master', description: 'Meditated 50 times!', icon: '☮️', activityRequired: { type: 'meditations', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
-    { id: 'WATER_25', title: 'Hydration Hero', description: 'Drank water 25 times!', icon: '💧', activityRequired: { type: 'waterDrinks', count: 25 }, experience: 300, rarity: 'common', category: 'activity' },
-    { id: 'WATER_100', title: 'Aqua Champion', description: 'Drank water 100 times!', icon: '💦', activityRequired: { type: 'waterDrinks', count: 100 }, experience: 1200, rarity: 'uncommon', category: 'activity' },
+    { id: 'WALK_10', title: 'Wanderer', description: 'Logged 10 walks!', icon: 'icon_walk', activityRequired: { type: 'walks', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
+    { id: 'WALK_50', title: 'Pathfinder', description: 'Logged 50 walks!', icon: 'icon_walk', activityRequired: { type: 'walks', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
+    { id: 'EXERCISE_10', title: 'Fitness Initiate', description: 'Completed 10 workouts!', icon: 'icon_strength', activityRequired: { type: 'exercises', count: 10 }, experience: 250, rarity: 'common', category: 'activity' },
+    { id: 'EXERCISE_50', title: 'Gym Champion', description: 'Completed 50 workouts!', icon: 'icon_strength', activityRequired: { type: 'exercises', count: 50 }, experience: 1250, rarity: 'uncommon', category: 'activity' },
+    { id: 'MEDITATE_10', title: 'Inner Peace Seeker', description: 'Meditated 10 times!', icon: 'icon_meditate', activityRequired: { type: 'meditations', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
+    { id: 'MEDITATE_50', title: 'Zen Master', description: 'Meditated 50 times!', icon: 'icon_meditate', activityRequired: { type: 'meditations', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
+    { id: 'WATER_25', title: 'Hydration Hero', description: 'Drank water 25 times!', icon: 'icon_droplet', activityRequired: { type: 'waterDrinks', count: 25 }, experience: 300, rarity: 'common', category: 'activity' },
+    { id: 'WATER_100', title: 'Aqua Champion', description: 'Drank water 100 times!', icon: 'icon_water', activityRequired: { type: 'waterDrinks', count: 100 }, experience: 1200, rarity: 'uncommon', category: 'activity' },
 
     // Streak Achievements
-    { id: 'STREAK_7', title: 'Week Streak', description: '7 day streak maintained!', icon: '🔥', streakDays: 7, experience: 500, rarity: 'uncommon', category: 'streak' },
-    { id: 'STREAK_30', title: 'Unstoppable', description: '30 day streak!', icon: '⚡', streakDays: 30, experience: 1500, rarity: 'rare', category: 'streak' },
-    { id: 'STREAK_100', title: 'Unbreakable', description: '100 day streak!', icon: '💎', streakDays: 100, experience: 5000, rarity: 'epic', category: 'streak' },
-    { id: 'STREAK_365', title: 'Year of Iron Will', description: '365 day streak!', icon: '🏆', streakDays: 365, experience: 15000, rarity: 'legendary', category: 'streak' },
+    { id: 'STREAK_7', title: 'Week Streak', description: '7 day streak maintained!', icon: 'icon_flame', streakDays: 7, experience: 500, rarity: 'uncommon', category: 'streak' },
+    { id: 'STREAK_30', title: 'Unstoppable', description: '30 day streak!', icon: 'icon_lightning', streakDays: 30, experience: 1500, rarity: 'rare', category: 'streak' },
+    { id: 'STREAK_100', title: 'Unbreakable', description: '100 day streak!', icon: 'icon_gem', streakDays: 100, experience: 5000, rarity: 'epic', category: 'streak' },
+    { id: 'STREAK_365', title: 'Year of Iron Will', description: '365 day streak!', icon: 'icon_trophy', streakDays: 365, experience: 15000, rarity: 'legendary', category: 'streak' },
 
     // Cigarette Avoidance Achievements
-    { id: 'CIGS_100', title: 'Century Saver', description: 'Avoided 100 cigarettes!', icon: '🚭', cigarettesAvoided: 100, experience: 300, rarity: 'common', category: 'avoidance' },
-    { id: 'CIGS_500', title: 'Half Thousand', description: 'Avoided 500 cigarettes!', icon: '🛡️', cigarettesAvoided: 500, experience: 1000, rarity: 'uncommon', category: 'avoidance' },
-    { id: 'CIGS_1000', title: 'Thousand Strong', description: 'Avoided 1,000 cigarettes!', icon: '⭐', cigarettesAvoided: 1000, experience: 2000, rarity: 'rare', category: 'avoidance' },
-    { id: 'CIGS_5000', title: 'Five Thousand Victory', description: 'Avoided 5,000 cigarettes!', icon: '🌟', cigarettesAvoided: 5000, experience: 5000, rarity: 'epic', category: 'avoidance' },
-    { id: 'CIGS_10000', title: 'Ten Thousand Triumph', description: 'Avoided 10,000 cigarettes!', icon: '👑', cigarettesAvoided: 10000, experience: 10000, rarity: 'legendary', category: 'avoidance' },
+    { id: 'CIGS_100', title: 'Century Saver', description: 'Avoided 100 cigarettes!', icon: 'icon_no_smoking', cigarettesAvoided: 100, experience: 300, rarity: 'common', category: 'avoidance' },
+    { id: 'CIGS_500', title: 'Half Thousand', description: 'Avoided 500 cigarettes!', icon: 'icon_shield', cigarettesAvoided: 500, experience: 1000, rarity: 'uncommon', category: 'avoidance' },
+    { id: 'CIGS_1000', title: 'Thousand Strong', description: 'Avoided 1,000 cigarettes!', icon: 'icon_star', cigarettesAvoided: 1000, experience: 2000, rarity: 'rare', category: 'avoidance' },
+    { id: 'CIGS_5000', title: 'Five Thousand Victory', description: 'Avoided 5,000 cigarettes!', icon: 'icon_special', cigarettesAvoided: 5000, experience: 5000, rarity: 'epic', category: 'avoidance' },
+    { id: 'CIGS_10000', title: 'Ten Thousand Triumph', description: 'Avoided 10,000 cigarettes!', icon: 'icon_crown', cigarettesAvoided: 10000, experience: 10000, rarity: 'legendary', category: 'avoidance' },
   ];
 
   const checkAchievements = (days) => {
@@ -732,13 +748,24 @@ const QuitQuestRPG = () => {
   // Stats are unchanged from the original five enemies they replace
   // (Nicotine Imp, Smoke Specter, Craving Demon, Tar Monster, Addiction Dragon).
   const enemyTypes = [
-    { id: 'social_pressure_imp', name: 'Social Pressure Imp', hp: 60, attack: 8, defense: 5, xp: 50, icon: '👹', color: 'red', weakness: 'light' },
-    { id: 'smoke_wraith', name: 'Smoke Wraith', hp: 80, attack: 10, defense: 7, xp: 75, icon: '👻', color: 'gray', weakness: 'wind' },
-    { id: 'cigarette_butt_goblin', name: 'Cigarette-Butt Goblin', hp: 70, attack: 9, defense: 6, xp: 60, icon: '🚬', color: 'brown', weakness: 'water' },
-    { id: 'stress_demon', name: 'Stress Demon', hp: 100, attack: 12, defense: 8, xp: 100, icon: '👺', color: 'purple', weakness: 'fire' },
-    { id: 'boredom_slime', name: 'Boredom Slime', hp: 120, attack: 15, defense: 10, xp: 150, icon: '🦠', color: 'black', weakness: 'water' },
-    { id: 'nicotine_lord', name: 'The Nicotine Lord', hp: 150, attack: 18, defense: 12, xp: 200, icon: '🐲', color: 'orange', weakness: 'lightning', boss: true }
+    { id: 'social_pressure_imp', name: 'Social Pressure Imp', hp: 60, attack: 8, defense: 5, xp: 50, color: 'red', weakness: 'light' },
+    { id: 'smoke_wraith', name: 'Smoke Wraith', hp: 80, attack: 10, defense: 7, xp: 75, color: 'gray', weakness: 'wind' },
+    { id: 'cigarette_butt_goblin', name: 'Cigarette-Butt Goblin', hp: 70, attack: 9, defense: 6, xp: 60, color: 'brown', weakness: 'water' },
+    { id: 'stress_demon', name: 'Stress Demon', hp: 100, attack: 12, defense: 8, xp: 100, color: 'purple', weakness: 'fire' },
+    { id: 'boredom_slime', name: 'Boredom Slime', hp: 120, attack: 15, defense: 10, xp: 150, color: 'black', weakness: 'water' },
+    { id: 'nicotine_lord', name: 'The Nicotine Lord', hp: 150, attack: 18, defense: 12, xp: 200, color: 'orange', weakness: 'lightning', boss: true }
   ];
+
+  // Battle sprite for an enemy. Battles saved before the Stage 2 rename have
+  // no id, so map the old names onto the new roster.
+  const legacyEnemySprites = {
+    'Nicotine Imp': 'social_pressure_imp',
+    'Smoke Specter': 'smoke_wraith',
+    'Craving Demon': 'stress_demon',
+    'Tar Monster': 'boredom_slime',
+    'Addiction Dragon': 'nicotine_lord'
+  };
+  const enemySpriteId = (enemy) => `enemy_${enemy.id || legacyEnemySprites[enemy.name] || 'stress_demon'}`;
 
   // Craving intensity -> which enemies can appear (picked at random).
   const enemyTiers = {
@@ -1049,7 +1076,7 @@ const QuitQuestRPG = () => {
 
       // Clear localStorage
       localStorage.removeItem('quitQuestData');
-      console.log('🗑️ Progress reset - localStorage cleared');
+      console.log('Progress reset - localStorage cleared');
     }
   };
 
@@ -1058,10 +1085,11 @@ const QuitQuestRPG = () => {
     const baseClass = className || userData.avatarClass;
 
     // Size configurations
+    // Hero sprite is 32px; scale is a whole number that fits the circle.
     const sizeConfig = {
-      small: { container: 'w-12 h-12', icon: 'w-6 h-6', badge: 'text-xs px-1.5 py-0.5' },
-      medium: { container: 'w-20 h-20', icon: 'w-10 h-10', badge: 'text-xs px-2 py-1' },
-      large: { container: 'w-28 h-28', icon: 'w-14 h-14', badge: 'text-sm px-2 py-1' }
+      small: { container: 'w-12 h-12', scale: 1, badge: 'text-xs px-1.5 py-0.5' },
+      medium: { container: 'w-20 h-20', scale: 2, badge: 'text-xs px-2 py-1' },
+      large: { container: 'w-28 h-28', scale: 3, badge: 'text-sm px-2 py-1' }
     };
 
     const config = sizeConfig[size];
@@ -1069,19 +1097,19 @@ const QuitQuestRPG = () => {
     // Class-based icon and color
     const classConfig = {
       warrior: {
-        icon: Shield,
+        sprite: 'hero_warrior',
         baseColor: 'from-red-600 to-red-700',
         glowColor: 'shadow-red-500/50',
         borderColor: 'border-red-400'
       },
       mage: {
-        icon: Sparkles,
+        sprite: 'hero_mage',
         baseColor: 'from-purple-600 to-purple-700',
         glowColor: 'shadow-purple-500/50',
         borderColor: 'border-purple-400'
       },
       rogue: {
-        icon: Sword,
+        sprite: 'hero_rogue',
         baseColor: 'from-gray-700 to-gray-800',
         glowColor: 'shadow-gray-500/50',
         borderColor: 'border-gray-400'
@@ -1089,7 +1117,6 @@ const QuitQuestRPG = () => {
     };
 
     const avatarConfig = classConfig[baseClass] || classConfig.warrior;
-    const IconComponent = avatarConfig.icon;
 
     // Level progression effects
     const getLevelEffects = () => {
@@ -1136,12 +1163,12 @@ const QuitQuestRPG = () => {
           transition-all duration-300
           hover:scale-110
         `}>
-          <IconComponent className={`${config.icon} text-white`} />
+          <Sprite id={avatarConfig.sprite} scale={config.scale} label={`${baseClass} avatar`} />
 
           {/* Crown for max level */}
           {level >= 5 && (
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Crown className="w-6 h-6 text-yellow-400 animate-pulse" />
+              <Sprite id="icon_crown" scale={2} className="animate-pulse" />
             </div>
           )}
         </div>
@@ -1182,7 +1209,7 @@ const QuitQuestRPG = () => {
               animationDuration: `${3 + Math.random() * 2}s`
             }}
           >
-            <Sparkles className="text-yellow-400 w-6 h-6" />
+            <Sprite id="icon_sparkle" scale={2} />
           </div>
         ))}
       </div>
@@ -1259,7 +1286,7 @@ const QuitQuestRPG = () => {
           
           <div className="relative z-10">
             <h2 className="text-2xl font-extrabold-title text-yellow-400 text-center mb-4 pixelated">
-              📜 THE LEGEND OF {userData.heroName.toUpperCase()} 📜
+              <Icon id="icon_scroll" scale={2} className="mr-2" />THE LEGEND OF {userData.heroName.toUpperCase()}<Icon id="icon_scroll" scale={2} className="ml-2" />
             </h2>
             <p className="text-purple-200 text-center pixelated text-xs font-medium-text">
               Chapter {storyChapter}: Day {stats.daysSmokeFree} of Your Epic Journey
@@ -1333,7 +1360,7 @@ const QuitQuestRPG = () => {
             
             {!todayStoryViewed && stats.daysSmokeFree === currentStory.day && (
               <div className="mt-4 text-center">
-                <span className="text-yellow-400 animate-pulse pixelated text-sm">✨ New chapter unlocked! ✨</span>
+                <span className="text-yellow-400 animate-pulse pixelated text-sm"><Icon id="icon_sparkle" className="mr-1" />New chapter unlocked!<Icon id="icon_sparkle" className="ml-1" /></span>
               </div>
             )}
           </div>
@@ -1343,7 +1370,7 @@ const QuitQuestRPG = () => {
         {viewMode === 'archive' && (
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
             <h3 className="text-xl font-bold-heading text-yellow-400 mb-4 pixelated text-center">
-              📚 YOUR STORY COLLECTION
+              <Icon id="icon_book" scale={2} className="mr-2" />YOUR STORY COLLECTION
             </h3>
             
             {/* Day Selector */}
@@ -1354,8 +1381,9 @@ const QuitQuestRPG = () => {
                   onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
                   disabled={selectedDay <= 1}
                   className="px-3 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-700 disabled:opacity-50 text-white rounded pixelated"
+                  aria-label="Previous day"
                 >
-                  ←
+                  <Icon id="icon_arrow_left" />
                 </button>
                 <input
                   type="number"
@@ -1372,8 +1400,9 @@ const QuitQuestRPG = () => {
                   onClick={() => setSelectedDay(Math.min(stats.daysSmokeFree, selectedDay + 1))}
                   disabled={selectedDay >= stats.daysSmokeFree}
                   className="px-3 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-700 disabled:opacity-50 text-white rounded pixelated"
+                  aria-label="Next day"
                 >
-                  →
+                  <Icon id="icon_arrow_right" />
                 </button>
                 <span className="text-gray-400 text-xs pixelated">of {stats.daysSmokeFree} days</span>
               </div>
@@ -1428,7 +1457,7 @@ const QuitQuestRPG = () => {
         {viewMode === 'map' && (
           <div className="bg-gradient-to-br from-amber-900 to-amber-800 border-4 border-amber-700 rounded-lg p-6">
             <h3 className="text-xl font-bold-heading text-amber-300 mb-4 pixelated text-center">
-              🗺️ YOUR HEROIC JOURNEY
+              <Icon id="icon_map" scale={2} className="mr-2" />YOUR HEROIC JOURNEY
             </h3>
             
             {/* Chapter Progress */}
@@ -1493,7 +1522,7 @@ const QuitQuestRPG = () => {
                         `Day ${day} - Locked (${day - stats.daysSmokeFree} days to unlock)`
                       }
                     >
-                      {hasStory && isUnlocked ? '📜' : day}
+                      {hasStory && isUnlocked ? <Sprite id="icon_scroll" scale={1} label={`Day ${day} story`} /> : day}
                     </button>
                   );
                 })}
@@ -1502,10 +1531,10 @@ const QuitQuestRPG = () => {
             
             {/* Legend */}
             <div className="mt-4 flex justify-around text-xs pixelated">
-              <span className="text-green-400">📜 Story Day ({availableStories.length})</span>
-              <span className="text-blue-400">✓ Completed Day</span>
-              <span className="text-yellow-400 animate-pulse">★ Today</span>
-              <span className="text-gray-400">🔒 Locked</span>
+              <span className="text-green-400"><Icon id="icon_scroll" className="mr-1" />Story Day ({availableStories.length})</span>
+              <span className="text-blue-400"><Icon id="icon_check" className="mr-1" />Completed Day</span>
+              <span className="text-yellow-400 animate-pulse"><Icon id="icon_star" className="mr-1" />Today</span>
+              <span className="text-gray-400"><Icon id="icon_lock" className="mr-1" />Locked</span>
             </div>
             
             {/* Progress Summary */}
@@ -1603,7 +1632,7 @@ const QuitQuestRPG = () => {
         {/* Story Alert if new story available */}
         {userData.storyProgress.includes(stats.daysSmokeFree) && !todayStoryViewed && (
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 border-4 border-purple-500 rounded-lg p-3 text-center animate-pulse">
-            <p className="text-white font-bold pixelated">📜 New Story Chapter Unlocked! 📜</p>
+            <p className="text-white font-bold pixelated"><Icon id="icon_scroll" className="mr-2" />New Story Chapter Unlocked!<Icon id="icon_scroll" className="ml-2" /></p>
             <button
               onClick={() => setCurrentScreen('story')}
               className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-slate-900 rounded font-bold transition-all pixelated"
@@ -1615,7 +1644,7 @@ const QuitQuestRPG = () => {
         
         {/* Craving Emergency Button */}
         <div className="bg-gradient-to-r from-red-600 to-orange-600 border-4 border-red-500 rounded-lg p-4 text-center animate-pulse-slow relative z-10">
-          <h3 className="text-white font-bold-heading mb-2 pixelated">🚨 CRAVING EMERGENCY? 🚨</h3>
+          <h3 className="text-white font-bold-heading mb-2 pixelated"><Icon id="icon_alert" className="mr-2" />CRAVING EMERGENCY?<Icon id="icon_alert" className="ml-2" /></h3>
           <p className="text-red-100 text-sm mb-3 font-light-body">Fight the urge with an epic battle!</p>
           <div className="grid grid-cols-3 gap-2">
             <button
@@ -1655,7 +1684,7 @@ const QuitQuestRPG = () => {
                     <p className="text-sm text-slate-800 pixelated font-medium-text">DAYS SMOKE-FREE</p>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <Swords className="w-4 h-4 text-slate-800" />
+                    <Sprite id="icon_swords" scale={1} />
                     <span className="text-sm text-slate-800 pixelated font-medium-text">Battles Won: {userData.battlesWon}</span>
                   </div>
                 </div>
@@ -1704,11 +1733,19 @@ const QuitQuestRPG = () => {
           'bg-gradient-to-br from-orange-700 to-red-800 border-orange-600'
         }`}>
           <p className="text-white text-center text-sm pixelated">
-            {stats.knightLevel === 1 ? '🏚️ The Humble Beginning - Forest Path' :
-             stats.knightLevel === 2 ? '🌲 The Enchanted Forest - Growing Stronger' :
-             stats.knightLevel === 3 ? '🏔️ The Mountain Peak - Rising Above' :
-             stats.knightLevel === 4 ? '🏰 The Royal Castle - Nearly There' :
-             '🌋 The Dragon\'s Lair - Ultimate Power'}
+            <Icon
+              id={stats.knightLevel === 1 ? 'icon_hut' :
+                  stats.knightLevel === 2 ? 'icon_tree' :
+                  stats.knightLevel === 3 ? 'icon_mountain' :
+                  stats.knightLevel === 4 ? 'icon_castle' :
+                  'icon_volcano'}
+              className="mr-2"
+            />
+            {stats.knightLevel === 1 ? 'The Humble Beginning - Forest Path' :
+             stats.knightLevel === 2 ? 'The Enchanted Forest - Growing Stronger' :
+             stats.knightLevel === 3 ? 'The Mountain Peak - Rising Above' :
+             stats.knightLevel === 4 ? 'The Royal Castle - Nearly There' :
+             'The Dragon\'s Lair - Ultimate Power'}
           </p>
         </div>
 
@@ -1716,24 +1753,24 @@ const QuitQuestRPG = () => {
         <div className="grid grid-cols-2 gap-4 relative z-10">
           <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-4 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <DollarSign className="w-8 h-8 mx-auto mb-2 text-slate-900" />
+            <Sprite id="icon_coins" scale={2} className="mx-auto mb-2 block" />
             <p className="text-sm text-slate-800 pixelated font-medium-text">GOLD SAVED</p>
             <p className="text-2xl font-extrabold-title text-slate-900 pixelated">${stats.moneySaved.toFixed(2)}</p>
             <div className="mt-2 flex justify-center gap-1">
               {[...Array(Math.min(5, Math.floor(stats.moneySaved / 100)))].map((_, i) => (
-                <span key={i} className="text-yellow-300">💰</span>
+                <Sprite key={i} id="icon_coin_bag" scale={1} />
               ))}
             </div>
           </div>
           
           <div className="bg-gradient-to-br from-amber-700 to-amber-800 border-4 border-amber-600 rounded-lg p-4 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <Shield className="w-8 h-8 mx-auto mb-2 text-amber-100" />
+            <Sprite id="icon_shield" scale={2} className="mx-auto mb-2 block" />
             <p className="text-sm text-amber-200 pixelated font-medium-text">ENEMIES DEFEATED</p>
             <p className="text-2xl font-extrabold-title text-white pixelated">{stats.cigarettesAvoided.toLocaleString()}</p>
             <div className="mt-2 flex justify-center gap-1">
               {[...Array(Math.min(5, Math.floor(stats.cigarettesAvoided / 500)))].map((_, i) => (
-                <span key={i}>💀</span>
+                <Sprite key={i} id="icon_skull" scale={1} />
               ))}
             </div>
           </div>
@@ -1742,7 +1779,7 @@ const QuitQuestRPG = () => {
         {/* Real-World Activities Section */}
         <div className="bg-gradient-to-br from-green-800 to-green-900 border-4 border-green-700 rounded-lg p-4 relative z-10">
           <h3 className="text-xl font-bold-heading text-green-300 mb-3 flex items-center gap-2 pixelated">
-            <Activity className="w-5 h-5" /> HEALTHY ACTIVITIES
+            <Sprite id="icon_heartbeat" scale={1} /> HEALTHY ACTIVITIES
           </h3>
           <p className="text-green-200 text-sm mb-3 font-light-body">Log activities to earn achievements!</p>
           <div className="grid grid-cols-4 gap-2">
@@ -1750,25 +1787,25 @@ const QuitQuestRPG = () => {
               onClick={() => logActivity('walk')}
               className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
             >
-              🚶 Walk
+              <Icon id="icon_walk" className="mr-1" />Walk
             </button>
             <button
               onClick={() => logActivity('exercise')}
               className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
             >
-              💪 Exercise
+              <Icon id="icon_strength" className="mr-1" />Exercise
             </button>
             <button
               onClick={() => logActivity('meditate')}
               className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
             >
-              🧘 Meditate
+              <Icon id="icon_meditate" className="mr-1" />Meditate
             </button>
             <button
               onClick={() => logActivity('water')}
               className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
             >
-              💧 Water
+              <Icon id="icon_droplet" className="mr-1" />Water
             </button>
           </div>
         </div>
@@ -1776,17 +1813,17 @@ const QuitQuestRPG = () => {
         {/* Health Status */}
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6 relative overflow-hidden z-10">
           <div className="absolute top-0 right-0 opacity-20">
-            <Heart className="w-20 h-20 text-red-500 animate-pulse" />
+            <Sprite id="icon_heart" scale={5} className="animate-pulse" />
           </div>
           <h3 className="text-xl font-bold-heading text-yellow-500 mb-3 flex items-center gap-2 relative z-10 pixelated">
-            <Heart className="w-5 h-5" /> HEALTH STATUS
+            <Sprite id="icon_heart" scale={1} /> HEALTH STATUS
           </h3>
-          <p className="text-gray-300 relative z-10 font-light-body">{stats.healthStatus}</p>
+          <p className="text-gray-300 relative z-10 font-light-body"><Icon id={getHealthIcon(stats.daysSmokeFree)} className="mr-2" />{stats.healthStatus}</p>
           <div className="mt-4 grid grid-cols-4 gap-2">
-            {stats.daysSmokeFree >= 1 && <span className="text-2xl animate-bounce-slow">🫁</span>}
-            {stats.daysSmokeFree >= 7 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.1s'}}>💓</span>}
-            {stats.daysSmokeFree >= 30 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.2s'}}>💪</span>}
-            {stats.daysSmokeFree >= 100 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.3s'}}>🛡️</span>}
+            {stats.daysSmokeFree >= 1 && <span className="animate-bounce-slow"><Sprite id="icon_lung" scale={2} label="Lungs recovering" /></span>}
+            {stats.daysSmokeFree >= 7 && <span className="animate-bounce-slow" style={{animationDelay: '0.1s'}}><Sprite id="icon_heartbeat" scale={2} label="Heart rate normal" /></span>}
+            {stats.daysSmokeFree >= 30 && <span className="animate-bounce-slow" style={{animationDelay: '0.2s'}}><Sprite id="icon_strength" scale={2} label="Lung function improving" /></span>}
+            {stats.daysSmokeFree >= 100 && <span className="animate-bounce-slow" style={{animationDelay: '0.3s'}}><Sprite id="icon_shield" scale={2} label="Heart disease risk dropping" /></span>}
           </div>
         </div>
       </div>
@@ -1805,7 +1842,7 @@ const QuitQuestRPG = () => {
           
           {/* Battle Status */}
           <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold-title text-yellow-500 text-center mb-4 pixelated">⚔️ BATTLE MODE ⚔️</h2>
+            <h2 className="text-2xl font-extrabold-title text-yellow-500 text-center mb-4 pixelated"><Icon id="icon_swords" scale={2} className="mr-2" />BATTLE MODE<Icon id="icon_swords" scale={2} className="ml-2" /></h2>
             
             {/* Enemy Section */}
             <div className="mb-6">
@@ -1822,15 +1859,17 @@ const QuitQuestRPG = () => {
               
               {/* Enemy Avatar */}
               <div className={`text-center mt-4 ${enemyAnimation}`}>
-                <span className="text-7xl inline-block">
-                  {battleState.currentEnemy.icon}
-                </span>
+                <Sprite
+                  id={enemySpriteId(battleState.currentEnemy)}
+                  scale={battleState.currentEnemy.boss ? 2 : 3}
+                  label={battleState.currentEnemy.name}
+                />
               </div>
             </div>
             
             {/* VS Divider */}
             <div className="text-center my-4">
-              <span className="text-yellow-400 text-2xl font-bold pixelated">⚡ VS ⚡</span>
+              <span className="text-yellow-400 text-2xl font-bold pixelated"><Icon id="icon_lightning" className="mr-2" />VS<Icon id="icon_lightning" className="ml-2" /></span>
             </div>
             
             {/* Player Section */}
@@ -1867,7 +1906,7 @@ const QuitQuestRPG = () => {
                     : 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <Sword className="w-5 h-5 mx-auto mb-1" />
+                <Sprite id="icon_sword" scale={1} className="mx-auto mb-1 block" />
                 <span className="text-sm">Attack</span>
               </button>
               
@@ -1880,7 +1919,7 @@ const QuitQuestRPG = () => {
                     : 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <Zap className="w-5 h-5 mx-auto mb-1" />
+                <Sprite id="icon_lightning" scale={1} className="mx-auto mb-1 block" />
                 <span className="text-sm">Special</span>
               </button>
             </div>
@@ -1924,21 +1963,16 @@ const QuitQuestRPG = () => {
     };
 
     const getRarityBadge = (rarity) => {
-      switch (rarity) {
-        case 'common': return '⚪ Common';
-        case 'uncommon': return '🟢 Uncommon';
-        case 'rare': return '🔵 Rare';
-        case 'epic': return '🟣 Epic';
-        case 'legendary': return '🟡 Legendary';
-        default: return '⚪ Common';
-      }
+      const names = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+      const key = names[rarity] ? rarity : 'common';
+      return <><Icon id={`icon_rarity_${key}`} className="mr-1" />{names[key]}</>;
     };
 
     return (
       <div className="space-y-4 max-w-4xl mx-auto pb-8">
         {/* Header Stats */}
         <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 sticky top-0 z-10">
-          <h2 className="text-2xl font-extrabold-title text-slate-900 text-center mb-4 pixelated">🏆 HALL OF GLORY</h2>
+          <h2 className="text-2xl font-extrabold-title text-slate-900 text-center mb-4 pixelated"><Icon id="icon_trophy" scale={2} className="mr-2" />HALL OF GLORY</h2>
           <div className="flex justify-around mb-4">
             <div className="text-center">
               <p className="text-3xl font-black-hero text-slate-900 pixelated">{unlockedCount}</p>
@@ -1973,8 +2007,8 @@ const QuitQuestRPG = () => {
               >
                 {/* Icon */}
                 <div className="text-center mb-3">
-                  <span className={`text-5xl ${unlocked ? 'animate-bounce-slow' : 'grayscale opacity-50'}`}>
-                    {unlocked ? achievement.icon : '🔒'}
+                  <span className={`inline-block ${unlocked ? 'animate-bounce-slow' : 'opacity-50'}`}>
+                    <Sprite id={unlocked ? achievement.icon : 'icon_lock'} scale={3} label={unlocked ? achievement.title : 'Locked'} />
                   </span>
                 </div>
 
@@ -2019,7 +2053,7 @@ const QuitQuestRPG = () => {
         {unlockedCount < totalCount && (
           <div className="bg-gradient-to-br from-purple-900 to-purple-800 border-4 border-purple-700 rounded-lg p-4 text-center mx-4">
             <p className="text-purple-200 pixelated font-light-body">
-              ⚔️ {totalCount - unlockedCount} achievements await you, brave hero! ⚔️
+              <Icon id="icon_swords" className="mr-2" />{totalCount - unlockedCount} achievements await you, brave hero!<Icon id="icon_swords" className="ml-2" />
             </p>
           </div>
         )}
@@ -2027,7 +2061,7 @@ const QuitQuestRPG = () => {
         {/* Completion Message */}
         {unlockedCount === totalCount && (
           <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 text-center mx-4 animate-pulse-slow">
-            <p className="text-3xl mb-2">🎉</p>
+            <Sprite id="icon_special" scale={2} className="mx-auto mb-2 block" />
             <h3 className="text-xl font-extrabold-title text-slate-900 pixelated mb-2">
               LEGENDARY HERO!
             </h3>
@@ -2068,7 +2102,7 @@ const QuitQuestRPG = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-transparent to-purple-900 opacity-30"></div>
         <div className="max-w-4xl mx-auto p-4 relative z-10">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-extrabold-title text-yellow-500 pixelated">🏰 QUIT QUEST</h1>
+            <h1 className="text-2xl font-extrabold-title text-yellow-500 pixelated"><Icon id="icon_castle" scale={2} className="mr-2" />QUIT QUEST</h1>
             <div className="flex items-center gap-3">
               <CharacterAvatar level={stats.knightLevel} size="small" />
               <div className="text-right">
@@ -2092,7 +2126,7 @@ const QuitQuestRPG = () => {
                   : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <Shield className="w-6 h-6 mx-auto mb-1" />
+              <Sprite id="icon_shield" scale={2} className="mx-auto mb-1 block" />
               <span className="text-xs font-bold">QUEST</span>
             </button>
             <button
@@ -2103,7 +2137,7 @@ const QuitQuestRPG = () => {
                   : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <BookOpen className="w-6 h-6 mx-auto mb-1" />
+              <Sprite id="icon_book" scale={2} className="mx-auto mb-1 block" />
               <span className="text-xs font-bold">STORY</span>
               {!todayStoryViewed && userData.storyProgress.includes(stats.daysSmokeFree) && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
@@ -2117,7 +2151,7 @@ const QuitQuestRPG = () => {
                   : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <Swords className="w-6 h-6 mx-auto mb-1" />
+              <Sprite id="icon_swords" scale={2} className="mx-auto mb-1 block" />
               <span className="text-xs font-bold">BATTLE</span>
               {battleState.inBattle && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -2131,7 +2165,7 @@ const QuitQuestRPG = () => {
                   : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <Trophy className="w-6 h-6 mx-auto mb-1" />
+              <Sprite id="icon_trophy" scale={2} className="mx-auto mb-1 block" />
               <span className="text-xs font-bold">GLORY</span>
             </button>
             <button
@@ -2142,7 +2176,7 @@ const QuitQuestRPG = () => {
                   : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <User className="w-6 h-6 mx-auto mb-1" />
+              <Sprite id="icon_helmet" scale={2} className="mx-auto mb-1 block" />
               <span className="text-xs font-bold">HERO</span>
             </button>
           </div>

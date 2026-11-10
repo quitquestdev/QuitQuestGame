@@ -100,7 +100,7 @@ export default function Sprite({
   if (sprite.missing) {
     return (
       <span
-        className={`sprite sprite-missing inline-block ${className}`}
+        className={`sprite sprite-missing ${className}`}
         style={{ width, height, ...style }}
         title={isDev ? `missing sprite: ${id}` : undefined}
         data-sprite-id={id}
@@ -119,7 +119,7 @@ export default function Sprite({
       height={height}
       alt={label || ''}
       draggable={false}
-      className={`sprite inline-block ${className}`}
+      className={`sprite ${className}`}
       style={{ width, height, ...style }}
       data-sprite-id={id}
       data-sprite-source={sprite.source}

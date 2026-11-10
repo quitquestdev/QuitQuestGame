@@ -25,6 +25,14 @@
   user-select: none;
 }
 
+/* Default display lives in the components layer so a utility such as
+   `block` on a particular sprite still wins. */
+@layer components {
+  .sprite {
+    display: inline-block;
+  }
+}
+
 .sprite-missing {
   background-color: var(--c-rust600);
   background-image:
