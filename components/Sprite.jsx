@@ -14,7 +14,7 @@
  * - Shows the first frame only when the user prefers reduced motion.
  * - Unknown IDs render a visible checkered placeholder instead of crashing.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSpriteRegistry } from '../lib/sprites/SpriteProvider';
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -78,17 +78,32 @@ export default function Sprite({
 
   const animate = playing && !reducedMotion && forcedFrame === undefined && sprite.frames.length > 1 && sprite.fps > 0;
 
+  // Latest callback, so the timer never calls a stale one.
+  const onEndRef = useRef(onAnimationEnd);
+  onEndRef.current = onAnimationEnd;
+
   useEffect(() => {
-    if (!animate) return undefined;
+    const oneShot = !sprite.loop && sprite.frames.length > 1 && sprite.fps > 0;
+    if (!animate) {
+      // Reduced motion: hold the first frame, but still report the end of a
+      // one-shot animation after its normal duration so callers can move on.
+      if (!oneShot || !onEndRef.current) return undefined;
+      const t = setTimeout(() => onEndRef.current?.(), (sprite.frames.length * 1000) / sprite.fps);
+      return () => clearTimeout(t);
+    }
+    let f = 0;
     const timer = setInterval(() => {
-      setFrame((f) => {
-        const next = f + 1;
-        if (next < sprite.frames.length) return next;
-        if (sprite.loop) return 0;
+      const next = f + 1;
+      if (next < sprite.frames.length) {
+        f = next;
+      } else if (sprite.loop) {
+        f = 0;
+      } else {
         clearInterval(timer);
-        onAnimationEnd?.();
-        return f;
-      });
+        onEndRef.current?.();
+        return;
+      }
+      setFrame(f);
     }, 1000 / sprite.fps);
     return () => clearInterval(timer);
   }, [animate, frameKey, sprite.fps, sprite.loop]); // eslint-disable-line react-hooks/exhaustive-deps

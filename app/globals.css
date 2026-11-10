@@ -247,3 +247,32 @@
     to { opacity: 1; transform: translateY(0); }
   }
 }
+
+/* Battle effects (components/battle). Stepped, whole-pixel, palette only. */
+@layer utilities {
+  .qq-damage {
+    font-family: "Jersey 10", ui-monospace, monospace;
+    font-size: 32px;
+    line-height: 1;
+    pointer-events: none;
+    text-shadow: 2px 2px 0 var(--c-indigo950), -2px 0 0 var(--c-indigo950), 0 -2px 0 var(--c-indigo950);
+    animation: qq-damage-rise 0.9s steps(6, end) forwards;
+  }
+  .qq-damage--hit { color: var(--c-bone); }
+  .qq-damage--hurt { color: var(--c-rust300); }
+  .qq-damage--heal { color: var(--c-moss300); }
+
+  @keyframes qq-damage-rise {
+    0% { transform: translateY(0); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translateY(-24px); opacity: 0; }
+  }
+
+  .qq-defeated {
+    animation: qq-defeated 0.8s steps(4, end) forwards;
+  }
+  @keyframes qq-defeated {
+    from { opacity: 1; }
+    to { opacity: 0; transform: translateY(8px); }
+  }
+}

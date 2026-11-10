@@ -5,6 +5,7 @@ import Panel from './ui/Panel';
 import Button from './ui/Button';
 import ProgressBar from './ui/ProgressBar';
 import { GreeningProvider, greeningStage } from './ui/Greening';
+import BattleField from './battle/BattleField';
 
 // Inline icon: a manifest sprite sitting on the text line.
 const Icon = ({ id, scale = 1, className = '' }) => (
@@ -1647,46 +1648,39 @@ const QuitQuestRPG = () => {
     return (
       <div className="space-y-4">
         {/* Battle Arena */}
-        <Panel tone="danger" className="relative overflow-hidden">
-          <PixelBackground environment="dungeon" />
+        <Panel tone="danger" className="space-y-3">
+          <Heading icon="icon_swords">Battle Mode</Heading>
 
-          <div className="relative z-10">
-            <Heading icon="icon_swords" className="mb-4">Battle Mode</Heading>
-
-            {/* Enemy Section: enemy health is danger, so rust */}
-            <div className="mb-4">
-              <div className="flex items-baseline justify-between gap-2 mb-1">
-                <span className="type-subheading text-rust-300">{battleState.currentEnemy.name}</span>
-                <span className="type-stat text-bone whitespace-nowrap">{battleState.enemyHP}/{battleState.enemyMaxHP} HP</span>
-              </div>
-              <ProgressBar value={battleState.enemyHP} max={battleState.enemyMaxHP} tone="rust" label="Enemy health" />
-
-              <div className={`text-center mt-4 ${enemyAnimation}`}>
-                <Sprite
-                  id={enemySpriteId(battleState.currentEnemy)}
-                  scale={battleState.currentEnemy.boss ? 2 : 3}
-                  label={battleState.currentEnemy.name}
-                />
-              </div>
+          {/* Enemy health is danger, so rust */}
+          <div>
+            <div className="flex items-baseline justify-between gap-2 mb-1">
+              <span className="type-subheading text-rust-300">{battleState.currentEnemy.name}</span>
+              <span className="type-stat text-bone whitespace-nowrap">{battleState.enemyHP}/{battleState.enemyMaxHP} HP</span>
             </div>
+            <ProgressBar value={battleState.enemyHP} max={battleState.enemyMaxHP} tone="rust" label="Enemy health" />
+          </div>
 
-            {/* VS Divider */}
-            <p className="text-center my-3 type-statL text-brass-300">
-              <Icon id="icon_lightning" className="mr-2" />VS<Icon id="icon_lightning" className="ml-2" />
-            </p>
+          <BattleField
+            enemySpriteId={enemySpriteId(battleState.currentEnemy)}
+            enemyName={battleState.currentEnemy.name}
+            isBoss={!!battleState.currentEnemy.boss || enemySpriteId(battleState.currentEnemy) === 'enemy_nicotine_lord'}
+            enemyHP={battleState.enemyHP}
+            playerHP={battleState.playerHP}
+            heroSpriteId={`hero_${['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}`}
+            heroName={userData.heroName}
+            battleAnimation={battleAnimation}
+            enemyAnimation={enemyAnimation}
+            inBattle={battleState.inBattle}
+            turn={battleState.battleLog.length}
+          />
 
-            {/* Player Section: your health is positive, so moss */}
-            <div className="mb-2">
-              <div className={`text-center mb-5 ${battleAnimation}`}>
-                <CharacterAvatar level={stats.knightLevel} size="medium" />
-              </div>
-
-              <div className="flex items-baseline justify-between gap-2 mb-1">
-                <span className="type-subheading text-bone">{userData.heroName}</span>
-                <span className="type-stat text-bone whitespace-nowrap">{battleState.playerHP}/{battleState.playerMaxHP} HP</span>
-              </div>
-              <ProgressBar value={battleState.playerHP} max={battleState.playerMaxHP} tone="moss" label="Your health" />
+          {/* Your health is positive, so moss */}
+          <div>
+            <div className="flex items-baseline justify-between gap-2 mb-1">
+              <span className="type-subheading text-bone">{userData.heroName}</span>
+              <span className="type-stat text-bone whitespace-nowrap">{battleState.playerHP}/{battleState.playerMaxHP} HP</span>
             </div>
+            <ProgressBar value={battleState.playerHP} max={battleState.playerMaxHP} tone="moss" label="Your health" />
           </div>
         </Panel>
 
@@ -1922,7 +1916,8 @@ const QuitQuestRPG = () => {
         <main className="max-w-4xl mx-auto p-4 relative">
           {currentScreen === 'dashboard' && <DashboardScreen />}
           {currentScreen === 'story' && <StoryScreen />}
-          {currentScreen === 'battle' && <BattleScreen />}
+          {/* Called as a function (no hooks) so the battle field stays mounted between turns */}
+          {currentScreen === 'battle' && BattleScreen()}
           {currentScreen === 'achievements' && <AchievementsScreen />}
           {currentScreen === 'profile' && <ProfileScreen />}
         </main>
@@ -1942,7 +1937,8 @@ const QuitQuestRPG = () => {
           setSetupStep={setSetupStep}
         />
       ) : (
-        <GameScreen />
+        // Called as a function (no hooks) so the game tree is not remounted on every state change
+        GameScreen()
       )}
     </>
   );

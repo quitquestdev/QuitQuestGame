@@ -54,7 +54,7 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - [ ] Attack: 10 + level × 5 + random 0 to 9 damage; builds combo and +20 special charge
 - [ ] Special at 100 charge: Warrior ×2.5 Mighty Strike, Mage ×2 Fireball, Rogue ×1.8 Shadow Strike
 - [ ] Enemy turn after 1.5 s: attack + random 0 to 7
-- [ ] Enemy and player HP bars, attack lunge animations, VS divider
+- [ ] Enemy and player HP bars; battle stage (Stage 5) with parallax scene per enemy, hero and enemy sprites with attack, hurt and victory frames, hit flash and floating damage/heal numbers (replaces the lunge animations and VS divider)
 - [ ] Victory: XP = enemy XP + combo × 10, battles won +1, cravings defeated +1, perfect victory if full HP
 - [ ] Defeat message; Continue Quest returns to dashboard
 - [ ] Battle log (only the last line is shown after the battle)
