@@ -8,11 +8,16 @@ export const metadata = {
 
 /**
  * Visual check of every palette colour, type role and sprite.
- * Available in `npm run dev`. Hidden in production builds unless
- * NEXT_PUBLIC_ENABLE_DEV_HARNESS=1 is set (e.g. on a Vercel preview).
+ *
+ * Available in `npm run dev` and on Vercel preview deployments (every pushed
+ * branch other than the production one). Returns 404 on the production site.
+ * NEXT_PUBLIC_ENABLE_DEV_HARNESS=1 forces it on for any other build.
  */
 export default function DevHarnessPage() {
-  const enabled = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_ENABLE_DEV_HARNESS === '1';
+  const enabled =
+    process.env.NODE_ENV !== 'production' ||
+    process.env.VERCEL_ENV === 'preview' ||
+    process.env.NEXT_PUBLIC_ENABLE_DEV_HARNESS === '1';
   if (!enabled) notFound();
   return <DevHarness />;
 }
