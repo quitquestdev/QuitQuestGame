@@ -4,13 +4,1024 @@
   "version": 1,
   "baseUrl": "/assets/sprites/",
   "sprites": {
+    "bg_forest_sky": {
+      "category": "backgrounds",
+      "frameWidth": 96,
+      "frameHeight": 256,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_forest_sky_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "forest",
+        "layer": 0,
+        "parallax": 0.1,
+        "tileX": true
+      }
+    },
+    "bg_forest_smog": {
+      "category": "backgrounds",
+      "frameWidth": 128,
+      "frameHeight": 256,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_forest_smog_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "forest",
+        "layer": 2,
+        "parallax": 1,
+        "tileX": true
+      }
+    },
+    "bg_forest_trees": {
+      "category": "backgrounds",
+      "frameWidth": 208,
+      "frameHeight": 256,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_forest_trees_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "forest",
+        "layer": 1,
+        "parallax": 0.5,
+        "tileX": true
+      }
+    },
+    "bg_lair_sky": {
+      "category": "backgrounds",
+      "frameWidth": 256,
+      "frameHeight": 176,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_lair_sky_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "lair",
+        "layer": 0,
+        "parallax": 0.1,
+        "tileX": true
+      }
+    },
+    "bg_lair_smog": {
+      "category": "backgrounds",
+      "frameWidth": 128,
+      "frameHeight": 176,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_lair_smog_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "lair",
+        "layer": 2,
+        "parallax": 1,
+        "tileX": true
+      }
+    },
+    "bg_lair_town": {
+      "category": "backgrounds",
+      "frameWidth": 256,
+      "frameHeight": 176,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_lair_town_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "lair",
+        "layer": 1,
+        "parallax": 0.45,
+        "tileX": true
+      }
+    },
+    "bg_village_clouds": {
+      "category": "backgrounds",
+      "frameWidth": 288,
+      "frameHeight": 224,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_village_clouds_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "village",
+        "layer": 1,
+        "parallax": 0.15,
+        "tileX": true
+      }
+    },
+    "bg_village_forest": {
+      "category": "backgrounds",
+      "frameWidth": 64,
+      "frameHeight": 224,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_village_forest_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "village",
+        "layer": 3,
+        "parallax": 0.55,
+        "tileX": true
+      }
+    },
+    "bg_village_mountains": {
+      "category": "backgrounds",
+      "frameWidth": 96,
+      "frameHeight": 224,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_village_mountains_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "village",
+        "layer": 2,
+        "parallax": 0.3,
+        "tileX": true
+      }
+    },
+    "bg_village_sky": {
+      "category": "backgrounds",
+      "frameWidth": 96,
+      "frameHeight": 224,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_village_sky_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "village",
+        "layer": 0,
+        "parallax": 0,
+        "tileX": true
+      }
+    },
+    "bg_village_town": {
+      "category": "backgrounds",
+      "frameWidth": 512,
+      "frameHeight": 224,
+      "placeholder": true,
+      "source": "gothicvania",
+      "animations": {
+        "idle": {
+          "path": "placeholder/backgrounds/bg_village_town_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "scene": "village",
+        "layer": 4,
+        "parallax": 0.8,
+        "tileX": true
+      }
+    },
     "dev_test_gem": {
       "category": "placeholder",
       "frameWidth": 16,
       "frameHeight": 16,
       "placeholder": true,
       "animations": {
-        "idle": { "path": "placeholder/dev_test_gem_idle_##.png", "frames": 4, "fps": 4 }
+        "idle": {
+          "path": "placeholder/dev_test_gem_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        }
+      }
+    },
+    "enemy_boredom_slime": {
+      "category": "enemies",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/enemies/boredom_slime_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/enemies/boredom_slime_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/enemies/boredom_slime_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        }
+      }
+    },
+    "enemy_cigarette_butt_goblin": {
+      "category": "enemies",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/enemies/cigarette_butt_goblin_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/enemies/cigarette_butt_goblin_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/enemies/cigarette_butt_goblin_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        }
+      }
+    },
+    "enemy_nicotine_lord": {
+      "category": "enemies",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/enemies/boss_nicotine_lord_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/enemies/boss_nicotine_lord_attack_##.png",
+          "frames": 5,
+          "fps": 10,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/enemies/boss_nicotine_lord_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        }
+      }
+    },
+    "enemy_smoke_wraith": {
+      "category": "enemies",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/enemies/smoke_wraith_idle_##.png",
+          "frames": 4,
+          "fps": 5
+        },
+        "attack": {
+          "path": "placeholder/enemies/smoke_wraith_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/enemies/smoke_wraith_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        }
+      }
+    },
+    "enemy_social_pressure_imp": {
+      "category": "enemies",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/enemies/social_pressure_imp_idle_##.png",
+          "frames": 4,
+          "fps": 5
+        },
+        "attack": {
+          "path": "placeholder/enemies/social_pressure_imp_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/enemies/social_pressure_imp_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        }
+      }
+    },
+    "enemy_stress_demon": {
+      "category": "enemies",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/enemies/stress_demon_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/enemies/stress_demon_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/enemies/stress_demon_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        }
+      }
+    },
+    "hero_mage": {
+      "category": "characters",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/characters/knight_mage_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/characters/knight_mage_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/characters/knight_mage_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        },
+        "victory": {
+          "path": "placeholder/characters/knight_mage_victory_##.png",
+          "frames": 4,
+          "fps": 6
+        }
+      }
+    },
+    "hero_rogue": {
+      "category": "characters",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/characters/knight_rogue_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/characters/knight_rogue_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/characters/knight_rogue_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        },
+        "victory": {
+          "path": "placeholder/characters/knight_rogue_victory_##.png",
+          "frames": 4,
+          "fps": 6
+        }
+      }
+    },
+    "hero_warrior": {
+      "category": "characters",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "dcss",
+      "animations": {
+        "idle": {
+          "path": "placeholder/characters/knight_warrior_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "placeholder/characters/knight_warrior_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "placeholder/characters/knight_warrior_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        },
+        "victory": {
+          "path": "placeholder/characters/knight_warrior_victory_##.png",
+          "frames": 4,
+          "fps": 6
+        }
+      }
+    },
+    "icon_book": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "shade",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_book_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_castle": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_castle_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_chest": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "shade",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_chest_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_coin": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_coin_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_coins": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_coins_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_crown": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_crown_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_flame": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "owlish",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_flame_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_heart": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_heart_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_hourglass": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_hourglass_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_lightning": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_lightning_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_lock": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_lock_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_lung": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_lung_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_medal_bronze": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_medal_bronze_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_medal_gold": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_medal_gold_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_medal_silver": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_medal_silver_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_no_smoking": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_no_smoking_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_potion": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "shade",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_potion_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_scroll": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_scroll_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_shield": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_shield_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_skull": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_skull_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_special": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "owlish",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_special_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_strength": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "owlish",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_strength_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_sword": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "shade",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_sword_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_trophy": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_trophy_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_water": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "shade",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_water_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "icon_xp": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_xp_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
+    "ui_bar_fill_brass": {
+      "category": "ui",
+      "frameWidth": 2,
+      "frameHeight": 4,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_bar_fill_brass_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "repeatX": true
+      }
+    },
+    "ui_bar_fill_moss": {
+      "category": "ui",
+      "frameWidth": 2,
+      "frameHeight": 4,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_bar_fill_moss_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "repeatX": true
+      }
+    },
+    "ui_bar_fill_rust": {
+      "category": "ui",
+      "frameWidth": 2,
+      "frameHeight": 4,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_bar_fill_rust_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "repeatX": true
+      }
+    },
+    "ui_bar_frame": {
+      "category": "ui",
+      "frameWidth": 12,
+      "frameHeight": 10,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_bar_frame_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "sliceX": 4,
+        "track": {
+          "x": 3,
+          "y": 3,
+          "height": 4
+        }
+      }
+    },
+    "ui_button_brass": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "normal": {
+          "path": "placeholder/ui/ui_button_brass_normal_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "pressed": {
+          "path": "placeholder/ui/ui_button_brass_pressed_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "disabled": {
+          "path": "placeholder/ui/ui_button_brass_disabled_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8
+      },
+      "defaultAnimation": "normal"
+    },
+    "ui_button_moss": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "normal": {
+          "path": "placeholder/ui/ui_button_moss_normal_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "pressed": {
+          "path": "placeholder/ui/ui_button_moss_pressed_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "disabled": {
+          "path": "placeholder/ui/ui_button_moss_disabled_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8
+      },
+      "defaultAnimation": "normal"
+    },
+    "ui_button_rust": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "normal": {
+          "path": "placeholder/ui/ui_button_rust_normal_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "pressed": {
+          "path": "placeholder/ui/ui_button_rust_pressed_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "disabled": {
+          "path": "placeholder/ui/ui_button_rust_disabled_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8
+      },
+      "defaultAnimation": "normal"
+    },
+    "ui_panel_frame": {
+      "category": "ui",
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/ui/ui_panel_frame_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      },
+      "meta": {
+        "slice": 8
       }
     }
   }
