@@ -19,6 +19,13 @@ import Button from '../ui/Button';
 import { useSpriteRegistry } from '../../lib/sprites/SpriteProvider';
 import J from '../../lib/journey/regions';
 import { landmarkKind, LANDMARK_NAMES, durationLabel, TIER_LABELS } from './places';
+import MapParticles, { timeOfDayFor } from './MapParticles';
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Living regions get swaying grass along the trail.
+const GRASS_REGIONS = new Set(['fields', 'woods', 'heights', 'epilogue']);
 
 const SCALE = 2;
 const LAYERS = ['sky', 'far', 'mid', 'ground', 'fore'];
@@ -37,9 +44,26 @@ export default function JourneyMap({
   onFight,
   journeyState = {},
   onJourneyStateChange,
-  reducedEffects = false,
+  reducedEffects: reducedSetting = false,
 }) {
   const registry = useSpriteRegistry();
+  // Reduced Effects: the player's setting, or the system's reduce-motion preference.
+  const [osReduced, setOsReduced] = useState(prefersReducedMotion);
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setOsReduced(mq.matches);
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+  const reducedEffects = reducedSetting || osReduced;
+
+  // Light follows the device clock; checked again every ten minutes.
+  const [timeOfDay, setTimeOfDay] = useState(() => timeOfDayFor());
+  useEffect(() => {
+    const t = setInterval(() => setTimeOfDay(timeOfDayFor()), 10 * 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
   const viewportRef = useRef(null);
   const layerRefs = useRef({});
   const camRef = useRef(journey.playerX);
@@ -316,6 +340,15 @@ export default function JourneyMap({
     return list.sort((a, b) => b.h - a.h || a.x - b.x);
   }, [journey]);
 
+  const grass = useMemo(() => {
+    const out = [];
+    for (const r of journey.regions) {
+      if (!GRASS_REGIONS.has(r.id)) continue;
+      for (let x = r.x0 + 10; x < r.x1 - 6; x += 26) out.push(x + ((x * 7) % 9));
+    }
+    return out;
+  }, [journey.regions]);
+
   // Only animate what is (nearly) on screen.
   const visibleLo = settledCam - viewW / 2 - 24;
   const visibleHi = settledCam + viewW / 2 + 24;
@@ -371,6 +404,11 @@ export default function JourneyMap({
             {/* The road: ground, props and the knight share the camera exactly. */}
             <div ref={(el) => (layerRefs.current.path = el)} className="absolute top-0 left-0 will-change-transform" style={{ width: journey.width * SCALE, height }}>
               <Sprite id="journey_ground" scale={SCALE} className="block absolute top-0 left-0" />
+              {grass.map((x) => (
+                <div key={`g${x}`} className="absolute pointer-events-none" style={{ left: (x - 4) * SCALE, top: (J.PROP_BASELINE + 1 - 8) * SCALE }} aria-hidden="true">
+                  <Sprite id="journey_grass" scale={SCALE} playing={!reducedEffects && onScreen(x)} className="block" />
+                </div>
+              ))}
               {places.map((p) => {
                 const sp = spriteFor(p);
                 const isSel = selectedPlace === p;
@@ -433,6 +471,9 @@ export default function JourneyMap({
                 />
               )}
             </div>
+
+            {timeOfDay !== 'day' && <div className={`qq-light qq-light--${timeOfDay}`} data-time={timeOfDay} aria-hidden="true" />}
+            {!reducedEffects && <MapParticles regionId={viewRegion.id} timeOfDay={timeOfDay} />}
 
             {/* The destination, always on the horizon until it comes into view */}
             <div ref={horizonRef} className="absolute pointer-events-none" style={{ left: (viewW - 40) * SCALE, top: 38 * SCALE }} aria-hidden="true">

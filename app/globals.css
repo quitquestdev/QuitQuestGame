@@ -286,3 +286,43 @@
     to { opacity: 0; transform: translateY(8px); }
   }
 }
+
+/* World map ambience (components/map). Palette pixels only, stepped motion. */
+@layer utilities {
+  .qq-pt { position: absolute; width: 2px; height: 2px; animation-timing-function: steps(15, end); animation-iteration-count: infinite; }
+  .qq-pt--ash { background: var(--c-stone400); animation-name: qq-pt-fall; }
+  .qq-pt--smoke { background: var(--c-stone500); width: 6px; height: 4px; animation-name: qq-pt-rise; }
+  .qq-pt--mote { background: var(--c-brass300); animation-name: qq-pt-rise; }
+  .qq-pt--pollen { background: var(--c-bone); animation-name: qq-pt-rise; }
+  .qq-pt--leaf { background: var(--c-moss400); width: 4px; height: 2px; animation-name: qq-pt-fall; }
+  .qq-pt--ember { background: var(--c-rust400); animation-name: qq-pt-rise; }
+  .qq-pt--firefly { background: var(--c-brass300); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-brass300) 35%, transparent); animation-name: qq-pt-firefly; animation-timing-function: steps(8, end); }
+
+  @keyframes qq-pt-fall {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(4px, 60px); }
+    50% { transform: translate(0, 120px); }
+    75% { transform: translate(4px, 180px); }
+    100% { transform: translate(0, 240px); }
+  }
+  @keyframes qq-pt-rise {
+    0% { transform: translate(0, 0); opacity: 1; }
+    50% { transform: translate(-4px, -60px); opacity: 1; }
+    85% { transform: translate(0, -100px); opacity: 1; }
+    100% { transform: translate(-4px, -120px); opacity: 0; }
+  }
+  @keyframes qq-pt-firefly {
+    0%, 100% { transform: translate(0, 0); opacity: 1; }
+    25% { transform: translate(8px, -6px); opacity: 1; }
+    40% { opacity: 0; }
+    55% { transform: translate(14px, 4px); opacity: 0; }
+    70% { transform: translate(6px, 10px); opacity: 1; }
+  }
+
+  /* Time-of-day light: an ordered dither of palette pixels over the scene,
+     the way 16-bit games darken a screen, instead of a translucent tint. */
+  .qq-light { position: absolute; inset: 0; pointer-events: none; background-size: 4px 4px; }
+  .qq-light--night { background-image: conic-gradient(var(--c-indigo950) 0 25%, transparent 0 50%, var(--c-indigo950) 0 75%, transparent 0); }
+  .qq-light--dusk { background-image: conic-gradient(var(--c-rust800) 0 25%, transparent 0); }
+  .qq-light--dawn { background-image: conic-gradient(var(--c-brass700) 0 25%, transparent 0); }
+}
