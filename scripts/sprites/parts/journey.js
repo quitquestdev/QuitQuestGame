@@ -15,8 +15,8 @@
  * fields on. Ashen Wastes and the fortress have no green at all.
  *
  * Props: five milestone landmarks (locked / lit), a story signpost, a battle
- * camp, the fortress, its distant silhouette, swaying grass, and the dither
- * masks used by the fog-lifting reveal.
+ * camp, the fortress, its distant silhouette and swaying grass. The fog has
+ * a four-frame `lift` animation for the one-time reveal of each region.
  */
 const { Img } = require('../lib/image');
 const { rgbOf } = require('../lib/color');
@@ -444,7 +444,12 @@ function paintLayer(name, speed, painter) {
   return { img, pad };
 }
 
-function paintFog() {
+/**
+ * Smog over unreached land. `keep` thins it for the reveal frames: 1 is the
+ * full fog, 0.5 drops half its pixels in an ordered-dither pattern, so the
+ * fog dissolves pixel by pixel instead of fading through off-palette blends.
+ */
+function paintFog(keep = 1) {
   const width = J.WORLD_WIDTH;
   const img = new Img(width, H);
   for (let x = 0; x < width; x++) {
@@ -452,17 +457,11 @@ function paintFog() {
       const n = noise2(x * 0.045, y * 0.09, 71);
       const density = 0.74 + 0.22 * n - (y < 20 ? 0.12 : 0);
       if (bayer(x, y) >= density) continue;
+      if (bayer(x + 2, y + 1) >= keep) continue;
       const w = noise2(x * 0.08 + 40, y * 0.14, 72);
       img.set(x, y, rgbOf(w > 0.64 ? 'stone500' : w < 0.3 ? 'indigo700' : 'stone600'));
     }
   }
-  return img;
-}
-
-/** 4x4 dither masks for the reveal: opaque where the pattern is "on". */
-function ditherMask(level) {
-  const img = new Img(4, 4);
-  for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if (bayer(x, y) < level) img.set(x, y, rgbOf('bone'));
   return img;
 }
 
@@ -623,7 +622,8 @@ module.exports = function buildJourney() {
     add(`journey_${name}`, 'idle', [img], { ...o, file: `journey_${name}_idle`, meta: { layer: i, speed, pad, worldWidth: J.WORLD_WIDTH } });
   });
   add('journey_fog', 'idle', [paintFog()], { ...o, file: 'journey_fog_idle', meta: { layer: 5, speed: 1, pad: 0 } });
-  for (const level of [25, 50, 75]) add(`fx_dither_${level}`, 'idle', [ditherMask(level / 100)], { ...o, file: `fx_dither_${level}_idle` });
+  // The reveal: the fog dissolves in ordered-dither steps (played once per region).
+  add('journey_fog', 'lift', [0.75, 0.5, 0.25, 0.06].map((k) => paintFog(k)), { ...o, file: 'journey_fog_lift', fps: 4, loop: false });
 
   for (const [kind, draw] of Object.entries(LANDMARKS)) {
     add(`journey_lm_${kind}`, 'lit', [0, 1, 2].map((f) => draw(true, f)), { ...o, file: `journey_lm_${kind}_lit`, fps: 4, defaultAnimation: 'lit' });

@@ -1390,6 +1390,9 @@ const QuitQuestRPG = () => {
             <JourneyMap
               journey={buildJourneyLayout(journeyData())}
               heroSpriteId={`hero_${['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}`}
+              journeyState={userData.journey || {}}
+              onJourneyStateChange={(patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } }))}
+              reducedEffects={userData.settings?.reducedEffects === true}
               onReadRegion={(region) => {
                 // Open the region's first story chapter you have reached.
                 const today = Math.max(1, stats.daysSmokeFree);

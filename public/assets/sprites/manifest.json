@@ -396,48 +396,6 @@
         }
       }
     },
-    "fx_dither_25": {
-      "category": "map",
-      "frameWidth": 4,
-      "frameHeight": 4,
-      "placeholder": true,
-      "source": "code",
-      "animations": {
-        "idle": {
-          "path": "placeholder/map/fx_dither_25_idle_##.png",
-          "frames": 1,
-          "fps": 0
-        }
-      }
-    },
-    "fx_dither_50": {
-      "category": "map",
-      "frameWidth": 4,
-      "frameHeight": 4,
-      "placeholder": true,
-      "source": "code",
-      "animations": {
-        "idle": {
-          "path": "placeholder/map/fx_dither_50_idle_##.png",
-          "frames": 1,
-          "fps": 0
-        }
-      }
-    },
-    "fx_dither_75": {
-      "category": "map",
-      "frameWidth": 4,
-      "frameHeight": 4,
-      "placeholder": true,
-      "source": "code",
-      "animations": {
-        "idle": {
-          "path": "placeholder/map/fx_dither_75_idle_##.png",
-          "frames": 1,
-          "fps": 0
-        }
-      }
-    },
     "hero_mage": {
       "category": "characters",
       "frameWidth": 32,
@@ -1520,6 +1478,12 @@
           "path": "placeholder/map/journey_fog_idle_##.png",
           "frames": 1,
           "fps": 0
+        },
+        "lift": {
+          "path": "placeholder/map/journey_fog_lift_##.png",
+          "frames": 4,
+          "fps": 4,
+          "loop": false
         }
       },
       "meta": {
