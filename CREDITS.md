@@ -66,7 +66,7 @@ summarised below.
 
 ### Code-drawn (Quit Quest, no third-party source)
 - `enemy_nicotine_lord` (64x64 boss), all `ui_*` pieces, `bg_forest_smog`, `bg_lair_smog`
-- Icons: `icon_heart`, `icon_coin`, `icon_coins`, `icon_xp`, `icon_shield`, `icon_lung`, `icon_trophy`, `icon_lock`, `icon_scroll`, `icon_skull`, `icon_crown`, `icon_castle`, `icon_lightning`, `icon_hourglass`, `icon_no_smoking`, `icon_medal_bronze`, `icon_medal_silver`, `icon_medal_gold`
+- Icons: every `icon_*` sprite except the eight listed under the CC0 packs above (sword, chest, book, potion, water, strength, flame, special). That includes the hearts, coins, XP, shield, lung, trophies and medals, rarity gems, activity, health-milestone and location icons, arrows, check and lock.
 - `dev_test_gem` (dev harness only)
 
 ## Fonts

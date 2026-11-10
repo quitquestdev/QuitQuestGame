@@ -11,7 +11,7 @@
 const { write } = require('./lib/manifest');
 
 const only = process.argv.slice(2);
-const parts = ['characters', 'boss', 'icons', 'backgrounds', 'ui'];
+const parts = ['characters', 'boss', 'icons', 'icons-more', 'backgrounds', 'ui'];
 for (const part of parts) {
   if (only.length && !only.includes(part)) continue;
   try {

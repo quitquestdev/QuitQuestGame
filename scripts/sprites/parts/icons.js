@@ -5,28 +5,14 @@
  */
 const path = require('path');
 const { Img } = require('../lib/image');
-const { quantize, rgbOf } = require('../lib/color');
+const { grid } = require('../lib/grid');
+const { quantize } = require('../lib/color');
 const { outline } = require('../lib/anim');
 const { polygon, ellipse, stroke, render } = require('../lib/raster');
 const { add, ROOT } = require('../lib/manifest');
 
 const SRC = path.join(ROOT, 'art-sources/placeholder');
 const NO_GREEN = ['indigo', 'brass', 'rust', 'stone', 'bone'];
-
-function grid(rows, legend) {
-  if (rows.length !== 16) throw new Error(`icon grid has ${rows.length} rows, expected 16`);
-  const img = new Img(16, 16);
-  rows.forEach((row, y) => {
-    if (row.length !== 16) throw new Error(`icon row ${y} "${row}" is ${row.length} wide, expected 16`);
-    [...row].forEach((ch, x) => {
-      if (ch === '.') return;
-      const token = ch === 'X' ? 'indigo950' : legend[ch];
-      if (!token) throw new Error(`no legend entry for "${ch}"`);
-      img.set(x, y, rgbOf(token));
-    });
-  });
-  return img;
-}
 
 const BRASS = { h: 'brass300', m: 'brass500', d: 'brass700' };
 
@@ -242,19 +228,19 @@ const DRAWN = {
   ], { ...BRASS, r: 'rust400', g: 'indigo400' }],
 
   castle: [[
-    '................',
-    '................',
-    '.XX.XX....XX.XX.',
-    '.XhhhX....XhhsX.',
-    '.XhssX.XX.XhssX.',
-    '.XhssXXhhXXhssX.',
-    '.XhsssssssssssX.',
-    '.XhsXsssssXssdX.',
+    '......X..X......',
+    '......XXXX......',
+    '......XhsX......',
+    '.X.X..XhsX..X.X.',
+    '.XXXX.XhsX.XXXX.',
+    '.XhsX.XhsX.XhsX.',
+    '.XhsXXXhsXXXhsX.',
     '.XhssssssssssdX.',
-    '.XhsssXXXXsssdX.',
-    '.XhssXggggXssdX.',
-    '.XhssXggggXssdX.',
-    '.XXXXXggggXXXXX.',
+    '.XhsXssssssXsdX.',
+    '.XhssssXXssssdX.',
+    '.XhsssXggXsssdX.',
+    '.XhsssXggXsssdX.',
+    '.XXXXXXggXXXXXX.',
     '................',
     '................',
     '................',
