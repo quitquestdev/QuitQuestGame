@@ -19,7 +19,6 @@ import { premiumChaptersFor } from '../lib/premium/story';
 import { skinManifestUrl } from '../lib/premium/skins';
 import { loadSkinManifest } from '../lib/sprites/SpriteProvider';
 import BattleView from './battle/BattleView';
-import BattleResults from './battle/BattleResults';
 import BattleCamp from './battle/BattleCamp';
 import SupportPanel from './battle/SupportPanel';
 import useBattleFx from './battle/useBattleFx';
@@ -374,6 +373,9 @@ const QuitQuestRPG = () => {
   });
 
   // Calculated Stats
+  // True once stats (days smoke-free and so on) have been worked out from the
+  // saved quit date. The world map waits for it, so it never sees a stale day.
+  const [statsReady, setStatsReady] = useState(false);
   const [stats, setStats] = useState({
     daysSmokeFree: 0,
     moneySaved: 0,
@@ -622,6 +624,7 @@ const QuitQuestRPG = () => {
       setTimeout(() => setIsLevelingUp(false), 2000);
     }
     
+    setStatsReady(true);
     setStats({
       daysSmokeFree,
       moneySaved,
@@ -1165,6 +1168,69 @@ const QuitQuestRPG = () => {
     ]
   });
 
+  // A short celebration on the map after a battle is won (set on Continue).
+  const [mapCheer, setMapCheer] = useState(null); // { id, xp }
+  // It plays once: cleared after it has shown, so revisiting the tab does not replay it.
+  useEffect(() => {
+    if (!mapCheer) return undefined;
+    const t = setTimeout(() => setMapCheer(null), 3000);
+    return () => clearTimeout(t);
+  }, [mapCheer]);
+
+  /**
+   * The world map (from above or on the road; the choice is remembered).
+   * Shown at the top of the Quest tab (compact: no region list) and in full
+   * under Story > World Map. Called as a function so the map stays mounted.
+   */
+  const renderWorldMap = ({ compact = false, celebrate = null }) => {
+    if (!statsReady) return <div className="qq-inset" style={{ height: 240 }} aria-hidden="true" />;
+    const mapView = userData.journey?.view === 'road' ? 'road' : 'overhead';
+    const openStoryDay = (day) => {
+      setStoryDay(day);
+      setStoryView('archive');
+      setCurrentScreen('story');
+    };
+    const shared = {
+      journey: buildJourneyLayout(journeyData()),
+      journeyState: userData.journey || {},
+      onJourneyStateChange: (patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } })),
+      reducedEffects: userData.settings?.reducedEffects === true,
+      onOpenStory: openStoryDay,
+      onFight: (encounter) => (encounter.boss ? startBattleAgainst(encounter.enemyId) : startBattle(encounter.tier)),
+      onReadRegion: (region) => {
+        // Open the region's first story chapter you have reached.
+        const today = Math.max(1, stats.daysSmokeFree);
+        const first = storyContent.chapters.find(ch => ch.day >= Math.max(1, region.from) && ch.day <= Math.min(region.to, today));
+        openStoryDay(first ? first.day : Math.min(region.from, today));
+      },
+      compact,
+      celebrate,
+      onOpenFull: compact ? () => { setStoryView('world'); setCurrentScreen('story'); } : undefined,
+    };
+    return (
+      <>
+        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Map view">
+          {[['overhead', 'From above'], ['road', 'On the road']].map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={mapView === v}
+              onClick={() => shared.onJourneyStateChange({ view: v })}
+              className={`qq-chip px-3 py-1 text-base ${mapView === v ? 'qq-chip--brass' : 'qq-chip--locked'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {mapView === 'overhead' ? (
+          <OverworldMap {...shared} heroClass={heroClass} />
+        ) : (
+          <JourneyMap {...shared} heroSpriteId={`hero_${heroClass}`} />
+        )}
+      </>
+    );
+  };
+
   // Story Screen Component
   const StoryScreen = () => {
     // A remembered day never runs past today (e.g. after a progress reset).
@@ -1376,51 +1442,7 @@ const QuitQuestRPG = () => {
         {viewMode === 'world' && (
           <Panel className="space-y-2">
             <Heading icon="icon_map">The World</Heading>
-            {(() => {
-              // Both views draw the same journey; the choice is remembered with progress.
-              const mapView = userData.journey?.view === 'road' ? 'road' : 'overhead';
-              const heroClass = ['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior';
-              const shared = {
-                journey: buildJourneyLayout(journeyData()),
-                journeyState: userData.journey || {},
-                onJourneyStateChange: (patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } })),
-                reducedEffects: userData.settings?.reducedEffects === true,
-                onOpenStory: (day) => {
-                  setSelectedDay(day);
-                  setViewMode('archive');
-                },
-                onFight: (encounter) => (encounter.boss ? startBattleAgainst(encounter.enemyId) : startBattle(encounter.tier)),
-                onReadRegion: (region) => {
-                  // Open the region's first story chapter you have reached.
-                  const today = Math.max(1, stats.daysSmokeFree);
-                  const first = storyContent.chapters.find(ch => ch.day >= Math.max(1, region.from) && ch.day <= Math.min(region.to, today));
-                  setSelectedDay(first ? first.day : Math.min(region.from, today));
-                  setViewMode('archive');
-                },
-              };
-              return (
-                <>
-                  <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Map view">
-                    {[['overhead', 'From above'], ['road', 'On the road']].map(([v, label]) => (
-                      <button
-                        key={v}
-                        type="button"
-                        aria-pressed={mapView === v}
-                        onClick={() => shared.onJourneyStateChange({ view: v })}
-                        className={`qq-chip px-3 py-1 text-base ${mapView === v ? 'qq-chip--brass' : 'qq-chip--locked'}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  {mapView === 'overhead' ? (
-                    <OverworldMap {...shared} heroClass={heroClass} />
-                  ) : (
-                    <JourneyMap {...shared} heroSpriteId={`hero_${heroClass}`} />
-                  )}
-                </>
-              );
-            })()}
+            {renderWorldMap({})}
             <AdSlot screen="worldMap" inCravingFlow={battleState.inBattle} />
           </Panel>
         )}
@@ -1594,6 +1616,12 @@ const QuitQuestRPG = () => {
           </Panel>
         )}
 
+        {/* The world map leads the Quest tab: where the knight is on the journey */}
+        <Panel className="relative z-10 space-y-2 qq-home-map">
+          <Heading icon="icon_map">Your Journey</Heading>
+          {renderWorldMap({ compact: true, celebrate: mapCheer })}
+        </Panel>
+
         {/* Craving Emergency: fighting a craving is a positive action, so moss */}
         <Panel tone="danger" className="text-center relative z-10 space-y-3">
           <h3 className="type-heading text-rust-300">
@@ -1661,7 +1689,7 @@ const QuitQuestRPG = () => {
               setCurrentScreen('story');
             }}
           >
-            <Icon id="icon_map" />World Map
+            <Icon id="icon_map" />Full map &amp; regions
           </Button>
         </Panel>
 
@@ -1823,9 +1851,21 @@ const QuitQuestRPG = () => {
   };
 
   // Battle Screen Component
+  /** After a battle: back to the Quest tab and its map; a win gets a cheer there. */
+  const continueAfterBattle = () => {
+    const r = battleState.result;
+    setBattleState(prev => ({ ...prev, result: null, engine: null, inBattle: false }));
+    setMapCheer(r && r.outcome === 'victory' ? { id: Date.now(), xp: r.rewards.xp } : null);
+    setCurrentScreen('dashboard');
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   const BattleScreen = () => {
     const engine = battleState.engine;
-    if (engine && !isOver(engine)) {
+    const r = battleState.result;
+    // The battle stays on screen when it ends: the outcome plays on the field
+    // and the results appear beneath it.
+    if (engine && (!isOver(engine) || r)) {
       return (
         <BattleView
           battle={engine}
@@ -1834,21 +1874,10 @@ const QuitQuestRPG = () => {
           heroSpriteId={`hero_${heroClass}`}
           reducedEffects={reducedEffectsOn}
           fx={battleFx}
-        />
-      );
-    }
-    if (battleState.result) {
-      const r = battleState.result;
-      return (
-        <BattleResults
           result={r}
-          onContinue={() => {
-            setBattleState(prev => ({ ...prev, result: null }));
-            setCurrentScreen('dashboard');
-          }}
-          onRetry={() => beginBattle(r.enemyId, r.tier, r.mode)}
+          onContinue={continueAfterBattle}
+          onRetry={r ? () => beginBattle(r.enemyId, r.tier, r.mode) : undefined}
           onUrgeAgain={startUrge}
-          reducedEffects={reducedEffectsOn}
         />
       );
     }
@@ -2223,7 +2252,8 @@ const QuitQuestRPG = () => {
 
         {/* Content */}
         <main className="max-w-4xl mx-auto p-4 relative">
-          {currentScreen === 'dashboard' && <DashboardScreen />}
+          {/* Called as a function (no hooks) so the map on it stays mounted */}
+          {currentScreen === 'dashboard' && DashboardScreen()}
           {/* Called as a function (no hooks) so the world map stays mounted between state changes */}
           {currentScreen === 'story' && StoryScreen()}
           {/* Called as a function (no hooks) so the battle field stays mounted between turns */}

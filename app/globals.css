@@ -170,6 +170,31 @@
   .qq-result--win { animation: qq-bubble-in 0.3s steps(3, end); }
   .qq-confetti { position: absolute; top: -6px; width: 6px; height: 6px; animation: qq-confetti 1.4s steps(10, end) forwards; pointer-events: none; }
 
+  /* End of battle: a banner over the field */
+  .qq-outcome { position: absolute; inset: 18% 0 auto; text-align: center; pointer-events: none; animation: qq-outcome-in 0.45s steps(5, end) both; }
+  .qq-outcome.is-still { animation: none; }
+  .qq-outcome__title {
+    font-family: "Cinzel", serif; font-weight: 700; font-size: 34px; line-height: 1.1; letter-spacing: 0.04em; color: var(--c-brass300);
+    text-shadow: 2px 2px 0 var(--c-indigo950), -2px 0 0 var(--c-indigo950), 0 -2px 0 var(--c-indigo950), 2px 0 0 var(--c-indigo950), 0 4px 0 var(--c-brass700);
+  }
+  .qq-outcome__xp {
+    font-family: "Jersey 10", ui-monospace, monospace; font-size: 28px; line-height: 1.1; color: var(--c-moss300);
+    text-shadow: 2px 2px 0 var(--c-indigo950), -2px 0 0 var(--c-indigo950), 0 -2px 0 var(--c-indigo950), 2px 0 0 var(--c-indigo950);
+  }
+  .qq-outcome__note { font-family: "Jersey 10", ui-monospace, monospace; font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-bone); text-shadow: 2px 2px 0 var(--c-indigo950); }
+  .qq-outcome--rest .qq-outcome__title { font-size: 26px; color: var(--c-indigo300); text-shadow: 2px 2px 0 var(--c-indigo950), -2px 0 0 var(--c-indigo950), 0 -2px 0 var(--c-indigo950), 2px 0 0 var(--c-indigo950); }
+
+  /* After a won battle, on the map: the knight hops and the XP floats up */
+  .qq-hop { animation: qq-hop 0.9s steps(6, end) 3; }
+  .qq-mapcheer {
+    position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    font-family: "Jersey 10", ui-monospace, monospace; font-size: 20px; color: var(--c-moss300);
+    text-shadow: 2px 2px 0 var(--c-indigo950), -2px 0 0 var(--c-indigo950), 0 -2px 0 var(--c-indigo950), 2px 0 0 var(--c-indigo950);
+    animation: qq-cheer-rise 2.8s steps(14, end) forwards;
+  }
+  .qq-mapcheer.is-still { animation: qq-fade 2.8s steps(4, end) forwards; }
+
   /* Urge Mode button in the header */
   .qq-urge-btn { flex: 0 0 auto; }
 
@@ -529,3 +554,7 @@
 @keyframes qq-bubble-in { from { transform: translateY(4px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes qq-fade { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes qq-confetti { 0% { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
+@keyframes qq-outcome-in { from { transform: translateY(-14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes qq-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } 70% { transform: translateY(-2px); } }
+@keyframes qq-cheer-rise { 0% { transform: translate(-50%, 6px); opacity: 0; } 15% { transform: translate(-50%, 0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(-50%, -18px); opacity: 0; } }
+

@@ -46,10 +46,22 @@ export default function JourneyMap({
   journeyState = {},
   onJourneyStateChange,
   reducedEffects: reducedSetting = false,
+  compact = false, // Quest tab: no region list; a link to the full map instead
+  celebrate = null, // { id, xp }: a short cheer over the knight after a won battle
+  onOpenFull,
 }) {
   const registry = useSpriteRegistry();
   const reducedEffects = useReducedEffects(reducedSetting);
   const timeOfDay = useTimeOfDay();
+
+  // After a won battle: the knight cheers on the map and the XP floats up.
+  const [cheer, setCheer] = useState(null);
+  useEffect(() => {
+    if (!celebrate) return undefined;
+    setCheer(celebrate);
+    const t = setTimeout(() => setCheer(null), 2800);
+    return () => clearTimeout(t);
+  }, [celebrate && celebrate.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const viewportRef = useRef(null);
   const layerRefs = useRef({});
   const camRef = useRef(journey.playerX);
@@ -392,7 +404,12 @@ export default function JourneyMap({
                 style={{ left: (Math.round(knightXRef.current) - 16) * S, top: (J.KNIGHT_BASELINE + 1 - 32) * S }}
                 aria-hidden="true"
               >
-                <Sprite id={heroSpriteId} animation={heroAnim} scale={S} />
+                <Sprite id={heroSpriteId} animation={cheer && heroAnim === 'idle' ? 'victory' : heroAnim} scale={S} />
+                {cheer && (
+                  <span key={cheer.id} className={`qq-mapcheer ${reducedEffects ? 'is-still' : ''}`}>
+                    {!reducedEffects && <Sprite id="icon_sparkle" scale={1} />}+{cheer.xp} XP
+                  </span>
+                )}
               </div>
             </div>
 
@@ -476,6 +493,15 @@ export default function JourneyMap({
         />
       )}
 
+      {compact && onOpenFull && (
+        <div className="text-center">
+          <Button size="sm" onClick={onOpenFull}>
+            <Sprite id="icon_map" scale={1} />Regions &amp; full map
+          </Button>
+        </div>
+      )}
+
+      {!compact && (
       <ul className="space-y-2">
         {journey.regions.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -494,6 +520,7 @@ export default function JourneyMap({
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }

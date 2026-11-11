@@ -15,6 +15,9 @@
  *   onFinish(state)          the battle ended (victory, defeat or retreat)
  *   heroSpriteId, reducedEffects (setting; the system reduce-motion
  *   preference is added automatically), fx (sound + haptics)
+ *   result, onContinue, onRetry, onUrgeAgain   after the battle: the outcome
+ *     plays on the field (victory banner and XP count, or a resting knight)
+ *     and the results panel appears beneath it, so nothing jumps away.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Panel from '../ui/Panel';
@@ -26,6 +29,7 @@ import AbilityBar from './AbilityBar';
 import DistractPanel from './DistractPanel';
 import BreathingPanel from './BreathingPanel';
 import SupportPanel from './SupportPanel';
+import BattleResults from './BattleResults';
 import { useReducedEffects } from '../map/useJourneyMap';
 import { playerAct, enemyAct, available, isOver } from '../../lib/battle/engine';
 import { ABILITIES } from '../../lib/battle/data/abilities';
@@ -45,7 +49,7 @@ const INTENT_HINTS = {
 const ENEMY_BEAT_MS = 950; // pause before the enemy acts, so the player's move reads
 const RETURN_BEAT_MS = 650; // pause before the player's turn returns
 
-export default function BattleView({ battle, onChange, onFinish, heroSpriteId, reducedEffects: reducedSetting = false, fx = null }) {
+export default function BattleView({ battle, onChange, onFinish, heroSpriteId, reducedEffects: reducedSetting = false, fx = null, result = null, onContinue, onRetry, onUrgeAgain }) {
   const reducedEffects = useReducedEffects(reducedSetting);
   const [mode, setMode] = useState(null); // null | 'delay' | 'breathe' | 'distract'
   const [help, setHelp] = useState(false);
@@ -151,7 +155,7 @@ export default function BattleView({ battle, onChange, onFinish, heroSpriteId, r
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => setHelp((h) => !h)} aria-expanded={help}>Need more help</Button>
           {/* Leaving is always possible, even mid-turn or mid-breath. */}
-          <Button size="sm" onClick={leave}>Leave</Button>
+          {!isOver(battle) && <Button size="sm" onClick={leave}>Leave</Button>}
         </div>
       </div>
 
@@ -165,6 +169,7 @@ export default function BattleView({ battle, onChange, onFinish, heroSpriteId, r
             <span className="type-stat text-bone">{enemy.hp}/{enemy.maxHp}</span>
           </div>
           <ProgressBar value={enemy.hp} max={enemy.maxHp} tone="rust" label={`${enemy.name} health`} className="qq-bar--lg" />
+          {!isOver(battle) && (
           <div className={`qq-intent qq-intent--${intent.type}`} role="status" aria-live="polite">
             <Sprite id={INTENT_ICONS[intent.type] || 'icon_sword'} scale={2} label="" />
             <div className="min-w-0">
@@ -175,8 +180,10 @@ export default function BattleView({ battle, onChange, onFinish, heroSpriteId, r
               <p className="qq-intent__hint">{INTENT_HINTS[intent.type]}</p>
             </div>
           </div>
+          )}
         </div>
 
+        <div className="relative">
         <BattleField
           enemySpriteId={enemy.sprite}
           enemyName={enemy.name}
@@ -191,6 +198,8 @@ export default function BattleView({ battle, onChange, onFinish, heroSpriteId, r
           stunned={enemy.stunned}
           reducedEffects={reducedEffects}
         />
+        {result && <OutcomeOverlay result={result} reducedEffects={reducedEffects} />}
+        </div>
 
         {/* Hero: name and health */}
         <div className="space-y-1">
@@ -202,8 +211,11 @@ export default function BattleView({ battle, onChange, onFinish, heroSpriteId, r
         </div>
       </Panel>
 
+      {/* After the battle: results beneath the stage, after a short beat */}
+      {result && <DelayedResults result={result} reducedEffects={reducedEffects} onContinue={onContinue} onRetry={onRetry} onUrgeAgain={onUrgeAgain} />}
+
       {/* Tip from the last ability: supportive, never medical */}
-      {tip && (
+      {tip && !isOver(battle) && (
         <p className="qq-tip" role="status">
           <Sprite id={ABILITIES[tip.ability].icon} scale={1} /> {tip.text}
         </p>
@@ -254,3 +266,60 @@ function DelayHold({ seconds, onDone }) {
     </Panel>
   );
 }
+
+/**
+ * Over the field when a battle ends. Victory: a banner drops in and the XP
+ * counts up. Defeat: a soft "resting" note. Leaving: nothing.
+ * With Reduced Effects the numbers appear at once and nothing moves.
+ */
+function OutcomeOverlay({ result, reducedEffects }) {
+  const target = (result.rewards && result.rewards.xp) || 0;
+  const [xp, setXp] = useState(reducedEffects ? target : 0);
+  useEffect(() => {
+    if (reducedEffects || result.outcome !== 'victory') return undefined;
+    const start = Date.now() + 500;
+    const t = setInterval(() => {
+      const p = Math.min(1, Math.max(0, (Date.now() - start) / 800));
+      setXp(Math.round(target * p));
+      if (p >= 1) clearInterval(t);
+    }, 66);
+    return () => clearInterval(t);
+  }, [target, reducedEffects, result.outcome]);
+
+  if (result.outcome === 'victory') {
+    return (
+      <div className={`qq-outcome qq-outcome--win ${reducedEffects ? 'is-still' : ''}`} role="status">
+        <p className="qq-outcome__title">Victory!</p>
+        <p className="qq-outcome__xp">+{xp} XP</p>
+        {result.rewards.perfect && <p className="qq-outcome__note">Flawless</p>}
+      </div>
+    );
+  }
+  if (result.outcome === 'defeat') {
+    return (
+      <div className={`qq-outcome qq-outcome--rest ${reducedEffects ? 'is-still' : ''}`} role="status">
+        <p className="qq-outcome__title">Resting...</p>
+      </div>
+    );
+  }
+  return null;
+}
+
+/** The results panel, shown once the outcome has had a moment on the field. */
+function DelayedResults({ result, reducedEffects, onContinue, onRetry, onUrgeAgain }) {
+  const [show, setShow] = useState(reducedEffects || result.outcome === 'retreat');
+  useEffect(() => {
+    if (show) return undefined;
+    const t = setTimeout(() => setShow(true), 1500);
+    return () => clearTimeout(t);
+  }, [show]);
+  if (!show) {
+    return (
+      <div className="text-center">
+        <Button size="sm" onClick={() => setShow(true)}>Skip</Button>
+      </div>
+    );
+  }
+  return <BattleResults result={result} compact onContinue={onContinue} onRetry={onRetry} onUrgeAgain={onUrgeAgain} reducedEffects={reducedEffects} />;
+}
+

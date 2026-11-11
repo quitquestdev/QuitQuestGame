@@ -39,6 +39,7 @@ const PARTICLE_COLORS = {
   hurt: ['rust300', 'rust400', 'bone'],
   heal: ['moss300', 'moss400', 'bone'],
   stun: ['brass300', 'bone'],
+  puff: ['stone400', 'stone500', 'indigo300', 'bone'],
 };
 
 function useWide() {
@@ -160,8 +161,28 @@ export default function BattleField({
     }
   }, [events.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const won = phase === 'victory';
-  const lost = phase === 'defeat';
+  // The ending plays after the final hit has landed: the enemy breaks into a
+  // puff and fades, the knight poses and sparkles (or rests, after a loss).
+  const [ended, setEnded] = useState(null);
+  useEffect(() => {
+    if (phase !== 'victory' && phase !== 'defeat') {
+      setEnded(null);
+      return undefined;
+    }
+    setBubble(null); // a last taunt never talks over the ending
+    const t = setTimeout(() => {
+      setEnded(phase);
+      if (phase === 'victory') {
+        burst('enemy', 'puff', 10);
+        later(() => burst('hero', 'big', 10), 450);
+        later(() => burst('hero', 'heal', 8), 1100);
+      }
+    }, 750);
+    return () => clearTimeout(t);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const won = ended === 'victory';
+  const lost = ended === 'defeat';
   const heroAnim = won && hero.anim === 'idle' ? 'victory' : hero.anim;
   // With Reduced Effects the hurt flash frame is skipped: hold the tinted frame instead.
   const noFlash = reducedEffects;

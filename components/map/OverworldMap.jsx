@@ -44,10 +44,22 @@ export default function OverworldMap({
   journeyState = {},
   onJourneyStateChange,
   reducedEffects: reducedSetting = false,
+  compact = false, // Quest tab: no region list; a link to the full map instead
+  celebrate = null, // { id, xp }: a short cheer over the knight after a won battle
+  onOpenFull,
 }) {
   const registry = useSpriteRegistry();
   const reducedEffects = useReducedEffects(reducedSetting);
   const timeOfDay = useTimeOfDay();
+
+  // After a won battle: the knight cheers on the map and the XP floats up.
+  const [cheer, setCheer] = useState(null);
+  useEffect(() => {
+    if (!celebrate) return undefined;
+    setCheer(celebrate);
+    const t = setTimeout(() => setCheer(null), 2800);
+    return () => clearTimeout(t);
+  }, [celebrate && celebrate.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const viewportRef = useRef(null);
   const worldRef = useRef(null);
@@ -477,11 +489,16 @@ export default function OverworldMap({
 
               <div
                 ref={knightRef}
-                className="absolute pointer-events-none"
+                className={`absolute pointer-events-none ${cheer && !reducedEffects ? 'qq-hop' : ''}`}
                 style={{ left: (knightPt.x - 4) * S, top: (knightPt.y - 12) * S }}
                 aria-hidden="true"
               >
                 <Sprite id={`overworld_knight_${heroClass}`} animation={walking ? 'walk' : 'idle'} scale={S} className="block" />
+                {cheer && (
+                  <span key={cheer.id} className={`qq-mapcheer ${reducedEffects ? 'is-still' : ''}`}>
+                    {!reducedEffects && <Sprite id="icon_sparkle" scale={1} />}+{cheer.xp} XP
+                  </span>
+                )}
               </div>
 
               {!reducedEffects && (
@@ -531,6 +548,15 @@ export default function OverworldMap({
         <PlaceDetail place={selectedPlace} day={journey.day} onClose={() => setSelected(null)} onOpenStory={onOpenStory} onFight={onFight} />
       )}
 
+      {compact && onOpenFull && (
+        <div className="text-center">
+          <Button size="sm" onClick={onOpenFull}>
+            <Sprite id="icon_map" scale={1} />Regions &amp; full map
+          </Button>
+        </div>
+      )}
+
+      {!compact && (
       <ul className="space-y-2">
         {journey.regions.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -549,6 +575,7 @@ export default function OverworldMap({
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }

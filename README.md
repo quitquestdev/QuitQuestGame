@@ -145,7 +145,7 @@ Every `Sprite`, panel, button and battle scene updates without code changes. A p
 
 ## World map
 
-The world map (Story tab > World Map, or the World Map button on the Quest tab's location card) has two views of the same journey, chosen with the toggle above the map and remembered with progress:
+The world map leads the **Quest tab** (compact: no region list), so the home screen is the journey itself, with the dashboard panels below it. The full map with the region list is under Story > World Map (also reached from "Regions & full map" on the Quest tab). Both use one shared renderer (`renderWorldMap` in `components/QuitQuestRPG.jsx`), which waits until the day count is known so reveals and the knight's walk always start from the right place. It has two views of the same journey, chosen with the toggle above the map and remembered with progress:
 
 - **From above** (the default): the whole land seen from above. You can drag, zoom and walk the knight along the road, and land you haven't reached yet is in shadow.
 - **On the road**: a side-scrolling road with parallax layers.
@@ -331,6 +331,18 @@ prop. Every round offers Shorter, Skip and Stop.
    manifest, tagged placeholder until final, and credit it in CREDITS.
 4. Run `npm test`: the fight-length test checks every enemy is winnable in a
    sensible number of turns at levels 1, 3 and 5.
+
+### The end of a battle
+
+The battle stays on screen when it ends: after the final hit the enemy breaks
+into a puff and fades, the knight takes a victory pose with a burst of
+sparkles, and a **Victory!** banner drops over the field while the XP counts
+up. The results panel (supportive line, loot, buttons) appears beneath after
+a moment, or at once with **Skip**. After a loss, the knight rests on the
+field under a soft "Resting..." note. **Continue the journey** (or **Back to
+the map**) returns to the Quest tab, where after a win the knight hops on the
+map and the XP floats up once. With Reduced Effects the numbers appear
+at once and nothing moves.
 
 ### Urge Mode
 
