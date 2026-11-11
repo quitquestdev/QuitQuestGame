@@ -10,6 +10,17 @@ import JourneyMap from './map/JourneyMap';
 import OverworldMap from './map/OverworldMap';
 import { buildJourneyLayout } from '../lib/journey/layout';
 import { REGIONS } from '../lib/journey/regions';
+import { useEntitlements } from './premium/EntitlementProvider';
+import { PremiumGate, AdvancedStats, SavingsProjections, SkinPicker, SAMPLE_STATS, SAMPLE_SAVINGS } from './premium/PremiumFeatures';
+import PremiumScreen from './premium/PremiumScreen';
+import { AdSlot, useAds } from './ads/AdsProvider';
+import { advancedStats, savingsProjection, logBattle } from '../lib/premium/insights';
+import { premiumChaptersFor } from '../lib/premium/story';
+import { skinManifestUrl } from '../lib/premium/skins';
+import { loadSkinManifest } from '../lib/sprites/SpriteProvider';
+import { devMockControls } from './premium/EntitlementProvider';
+import { env as qqEnv } from '../lib/monetization/env';
+import { deleteLocalData } from '../lib/account/deleteAccount';
 import { defaultRegistry } from '../lib/sprites/SpriteProvider';
 import { preloadSprites } from '../lib/sprites/preload';
 
@@ -259,7 +270,21 @@ SetupScreen.displayName = 'SetupScreen';
 const QuitQuestRPG = () => {
   // Game States
   const [gameState, setGameState] = useState('setup'); // 'setup', 'playing'
-  const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'achievements', 'profile', 'battle', 'story'
+  const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'achievements', 'profile', 'battle', 'story', 'stats', 'premium'
+  // Screens opened from elsewhere (Records, Premium) return to where they came from.
+  const [returnScreen, setReturnScreen] = useState('dashboard');
+  const openScreen = (screen) => {
+    setReturnScreen(currentScreen === 'premium' || currentScreen === 'stats' ? returnScreen : currentScreen);
+    setCurrentScreen(screen);
+  };
+  const openPremium = () => openScreen('premium');
+  const [deleteStep, setDeleteStep] = useState(0); // 0 closed, 1 explain, 2 type to confirm
+  const [deleteText, setDeleteText] = useState('');
+
+  // Premium is read from the entitlement layer only; ads follow their own rules.
+  const entitlements = useEntitlements();
+  const isPremium = entitlements.isPremium;
+  const ads = useAds();
   
   // Story System
   const [storyChapter, setStoryChapter] = useState(0);
@@ -395,7 +420,7 @@ const QuitQuestRPG = () => {
       
       // Chapter 5: Days 121-150 (The Mastery)
       { day: 130, title: "The Teacher", text: "Young squires seek your guidance. You've become a beacon of hope for those still fighting the Shadow." },
-      { day: 140, title: "Deep Healing", text: "Your cells regenerate with newfound vigor. The damage of years past continues to reverse itself." },
+      { day: 140, title: "Deep Healing", text: "Your body keeps repairing itself with newfound vigor, day after day." },
       { day: 150, title: "The Milestone", text: "150 days! The royal court honors you with a feast. Your transformation inspires an entire movement against the Shadow." },
       
       // Chapter 6: Days 151-180 (The Legend)
@@ -457,6 +482,24 @@ const QuitQuestRPG = () => {
     if (gameState !== 'playing') return;
     preloadSprites(defaultRegistry, ['overworld_terrain', 'overworld_sea', ...REGION_IDS.map(id => `overworld_shadow_${id}`), 'journey_sky', 'journey_far', 'journey_mid', 'journey_ground', 'journey_fore', 'journey_fog']);
   }, [gameState]);
+
+  // Knight skins (Premium): layered over the default art through the sprite
+  // registry's skin packs. Without Premium the classic armour is always used.
+  const heroSkin = userData.settings?.heroSkin || null;
+  useEffect(() => {
+    let live = true;
+    if (!isPremium || !heroSkin) {
+      defaultRegistry.setSkins([]);
+      return undefined;
+    }
+    loadSkinManifest(skinManifestUrl(heroSkin)).then((m) => {
+      if (live) defaultRegistry.setSkins(m ? [m] : []);
+    });
+    return () => {
+      live = false;
+    };
+  }, [isPremium, heroSkin]);
+  const chooseSkin = (id) => setUserData(prev => ({ ...prev, settings: { ...(prev.settings || {}), heroSkin: id } }));
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -594,9 +637,9 @@ const QuitQuestRPG = () => {
   const getHealthMessage = (days) => {
     if (days === 0) return "Your quest begins now! Every moment counts.";
     if (days === 1) return "Your oxygen levels are improving!";
-    if (days < 7) return "Your heart rate is normalizing!";
+    if (days < 7) return "Your heart rate is settling down!";
     if (days < 30) return "Your energy levels are increasing!";
-    if (days < 90) return "Your lung function is improving significantly!";
+    if (days < 90) return "Your lung function is improving!";
     if (days < 365) return "Your risk of heart disease is dropping!";
     return "You're a legendary smoke-free hero!";
   };
@@ -623,20 +666,20 @@ const QuitQuestRPG = () => {
 
   const achievementsList = [
     // Health-Based Achievements (Real Medical Milestones)
-    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate & blood pressure normalizing!', icon: 'icon_heartbeat', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide levels dropping!', icon: 'icon_blood_drop', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'CO levels normal, oxygen levels rising!', icon: 'icon_breath', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Heart attack risk begins to drop!', icon: 'icon_heart', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings regrowing! Taste & smell improving!', icon: 'icon_nose', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Bronchial tubes relaxing! Breathing easier!', icon: 'icon_lung', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Blood circulation improving dramatically!', icon: 'icon_circulation', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function increasing significantly!', icon: 'icon_breath', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia regrowing! Coughing decreasing!', icon: 'icon_sprout', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Major lung healing! Shortness of breath gone!', icon: 'icon_strength', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
-    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Heart disease risk cut by 50%!', icon: 'icon_heart_healed', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
-    { id: 'HEALTH_5YEAR', title: 'Stroke Survivor', description: 'Stroke risk reduced to non-smoker level!', icon: 'icon_brain', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
-    { id: 'HEALTH_10YEAR', title: 'Cancer Conqueror', description: 'Lung cancer risk cut by 50%!', icon: 'icon_shield', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
-    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk equals non-smoker!', icon: 'icon_flame', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate and blood pressure start to come down.', icon: 'icon_heartbeat', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide in your blood is dropping.', icon: 'icon_blood_drop', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'Carbon monoxide usually returns to normal, and oxygen levels rise.', icon: 'icon_breath', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Your risk of heart attack begins to drop.', icon: 'icon_heart', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings begin to recover; taste and smell often improve.', icon: 'icon_nose', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Airways begin to relax, and breathing often gets easier.', icon: 'icon_lung', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Circulation usually starts to improve.', icon: 'icon_circulation', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function often improves over the coming months.', icon: 'icon_breath', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia begin to recover, and coughing often eases.', icon: 'icon_sprout', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Coughing and shortness of breath usually keep easing.', icon: 'icon_strength', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Your added risk of heart disease is about half that of a smoker.', icon: 'icon_heart_healed', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_5YEAR', title: 'Steady Mind', description: 'Stroke risk can fall to about that of a non-smoker.', icon: 'icon_brain', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_10YEAR', title: 'Ten-Year Sentinel', description: 'Lung cancer risk drops to about half that of a smoker.', icon: 'icon_shield', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk is close to that of a non-smoker.', icon: 'icon_flame', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
 
     // Time-Based Achievements
     { id: 'HOUR_1', title: 'The First Hour', description: 'One hour smoke-free!', icon: 'icon_hourglass', hoursRequired: 1, experience: 10, rarity: 'common', category: 'time' },
@@ -796,17 +839,27 @@ const QuitQuestRPG = () => {
   const startBattle = (intensity = 'medium') => {
     const pool = enemyTiers[intensity] || enemyTiers.medium;
     const pickId = pool[Math.floor(Math.random() * pool.length)];
-    beginBattle(enemyTypes.find(e => e.id === pickId));
+    beginBattle(enemyTypes.find(e => e.id === pickId), intensity);
+  };
+
+  // Each battle's result goes in a small log (for Advanced Stats). Recording
+  // is the same for every player; only viewing the breakdown is Premium.
+  const recordBattle = (result) => {
+    const enemy = battleState.currentEnemy;
+    setUserData(prev => ({
+      ...prev,
+      history: logBattle(prev.history, { at: new Date().toISOString(), tier: battleState.tier || (enemy && enemy.id === 'nicotine_lord' ? 'boss' : 'other'), result, enemyId: enemy ? enemy.id : null })
+    }));
   };
 
   // A battle against one specific enemy (the world map's fortress uses this
   // for the Nicotine Lord). Same setup as any other battle.
   const startBattleAgainst = (enemyId) => {
     const enemy = enemyTypes.find(e => e.id === enemyId);
-    if (enemy) beginBattle(enemy);
+    if (enemy) beginBattle(enemy, enemyId === 'nicotine_lord' ? 'boss' : 'other');
   };
 
-  const beginBattle = (enemy) => {
+  const beginBattle = (enemy, tier = 'other') => {
     const playerMaxHP = 100 + (stats.knightLevel * 20);
     
     setBattleState({
@@ -822,7 +875,8 @@ const QuitQuestRPG = () => {
       comboCount: 0,
       specialCharge: 0,
       battlesWon: battleState.battlesWon,
-      perfectVictories: battleState.perfectVictories
+      perfectVictories: battleState.perfectVictories,
+      tier
     });
     
     setCurrentScreen('battle');
@@ -939,6 +993,7 @@ const QuitQuestRPG = () => {
       cravingsDefeated: prev.cravingsDefeated + 1
     }));
     
+    recordBattle('win');
     setShowParticles(true);
     setTimeout(() => setShowParticles(false), 3000);
   };
@@ -949,6 +1004,7 @@ const QuitQuestRPG = () => {
       inBattle: false,
       battleLog: [...prev.battleLog, `Defeated... But don't give up! Every battle makes you stronger!`]
     }));
+    recordBattle('loss');
   };
 
   const fleeBattle = () => {
@@ -957,6 +1013,7 @@ const QuitQuestRPG = () => {
       inBattle: false,
       battleLog: [...prev.battleLog, `You fled from battle. Sometimes retreat is wisdom!`]
     }));
+    if (battleState.inBattle) recordBattle('fled');
     setCurrentScreen('dashboard');
   };
 
@@ -1393,6 +1450,18 @@ const QuitQuestRPG = () => {
               )}
             </div>
 
+            {/* Premium side tales for this day (none written yet; see lib/premium/story.js) */}
+            {premiumChaptersFor(selectedDay, isPremium).map((tale) => (
+              <Panel key={tale.title} tone={tale.locked ? 'sunken' : 'parchment'} className="space-y-2">
+                <p className="type-subheading text-brass-300">{tale.locked && <Icon id="icon_lock" className="mr-2" />}{tale.title}</p>
+                {tale.locked ? (
+                  <Button size="sm" onClick={openPremium}>A Premium side tale. See Premium</Button>
+                ) : (
+                  <p className="story-text">{tale.text}</p>
+                )}
+              </Panel>
+            ))}
+
             {/* Quick Jump to Milestone Days */}
             <div>
               <p className="qq-label mb-2">Quick Jump to Milestones</p>
@@ -1461,6 +1530,7 @@ const QuitQuestRPG = () => {
                 </>
               );
             })()}
+            <AdSlot screen="worldMap" inCravingFlow={battleState.inBattle} />
           </Panel>
         )}
 
@@ -1725,6 +1795,18 @@ const QuitQuestRPG = () => {
           </Panel>
         </div>
 
+        {/* Records & Treasury: Premium stats and savings (free players see previews) */}
+        <Panel tone="sunken" className="relative z-10 text-center space-y-2">
+          <p className="type-subheading text-indigo-300"><Icon id="icon_scroll" className="mr-2" />Records &amp; Treasury</p>
+          <p className="type-caption text-bone">Your streak, battles and savings in depth.</p>
+          <Button size="sm" onClick={() => openScreen('stats')}>
+            <Icon id="icon_target" />Open Records
+          </Button>
+        </Panel>
+
+        {/* A gentle, one-time mention of Premium after a real milestone */}
+        <PremiumNote />
+
         {/* Real-World Activities Section: logging one is a positive action */}
         <Panel className="relative z-10 space-y-3">
           <h3 className="type-heading text-brass-300 flex items-center gap-2">
@@ -1756,6 +1838,91 @@ const QuitQuestRPG = () => {
             {stats.daysSmokeFree >= 100 && <span className="animate-bounce-slow" style={{animationDelay: '0.3s'}}><Sprite id="icon_shield" scale={2} label="Heart disease risk dropping" /></span>}
           </div>
         </Panel>
+
+        <div className="relative z-10">
+          <AdSlot screen="dashboard" inCravingFlow={battleState.inBattle} />
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * Premium note: shown at most twice ever (after day 7 and after day 30),
+   * never in the first session, never while a battle is on, gone for good
+   * once dismissed. No pressure: two buttons, "See Premium" and "Not now".
+   */
+  const PREMIUM_NOTE_DAYS = [7, 30];
+  const premiumNoteDay = [...PREMIUM_NOTE_DAYS].reverse().find(d => stats.daysSmokeFree >= d);
+  const premiumNotesSeen = userData.premiumNote?.seen || [];
+  const showPremiumNote =
+    !isPremium &&
+    !battleState.inBattle &&
+    !(ads && ads.firstSession) &&
+    premiumNoteDay !== undefined &&
+    !premiumNotesSeen.includes(premiumNoteDay) &&
+    premiumNotesSeen.length < PREMIUM_NOTE_DAYS.length;
+  const dismissPremiumNote = () => setUserData(prev => ({
+    ...prev,
+    premiumNote: { seen: [...new Set([...(prev.premiumNote?.seen || []), ...PREMIUM_NOTE_DAYS.filter(d => d <= stats.daysSmokeFree)])] }
+  }));
+  const PremiumNote = () => (showPremiumNote ? (
+    <Panel tone="raised" className="relative z-10 space-y-2 text-center" role="note" aria-label="About Premium">
+      <p className="type-subheading text-brass-300">
+        {premiumNoteDay === 7 ? 'A whole week smoke-free.' : 'A month smoke-free.'}
+      </p>
+      <p className="type-body text-bone">
+        If you would like deeper stats, savings projections and new armour for your knight, Premium has them. Everything you use now stays free.
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button size="sm" onClick={() => { dismissPremiumNote(); openPremium(); }}>See Premium</Button>
+        <Button size="sm" onClick={dismissPremiumNote}>Not now</Button>
+      </div>
+    </Panel>
+  ) : null);
+
+  // Records & Treasury: advanced stats and savings projections (Premium),
+  // with locked previews for everyone else.
+  const RecordsScreen = () => {
+    const statsData = advancedStats(userData, { perfectVictories: battleState.perfectVictories || 0 });
+    const savings = savingsProjection(userData);
+    return (
+      <div className="space-y-4">
+        <Panel tone="raised" className="text-center space-y-1">
+          <Heading icon="icon_scroll">Records &amp; Treasury</Heading>
+          <p className="type-caption text-bone">Day {stats.daysSmokeFree} of your quest</p>
+        </Panel>
+
+        <section className="space-y-3" aria-labelledby="records-stats">
+          <h3 id="records-stats" className="type-heading text-brass-300 text-center">Advanced Stats</h3>
+          <PremiumGate
+            title="Advanced Stats"
+            summary="Your streak, cravings resisted week by week, and battle results by craving strength. Shown here with sample numbers."
+            onOpenPremium={openPremium}
+            preview={<AdvancedStats data={SAMPLE_STATS} />}
+          >
+            <AdvancedStats data={statsData} />
+          </PremiumGate>
+        </section>
+
+        <section className="space-y-3" aria-labelledby="records-savings">
+          <h3 id="records-savings" className="type-heading text-brass-300 text-center">Savings Projections</h3>
+          <PremiumGate
+            title="Savings Projections"
+            summary="What you will have saved at each milestone and over the next year, from the costs you entered. Shown here with sample numbers."
+            onOpenPremium={openPremium}
+            preview={<SavingsProjections data={SAMPLE_SAVINGS} />}
+          >
+            <SavingsProjections data={savings} />
+          </PremiumGate>
+        </section>
+
+        <AdSlot screen="stats" inCravingFlow={battleState.inBattle} />
+
+        <div className="text-center">
+          <Button size="sm" onClick={() => setCurrentScreen(returnScreen)}>
+            <Icon id="icon_arrow_left" />Back
+          </Button>
+        </div>
       </div>
     );
   };
@@ -1950,6 +2117,93 @@ const QuitQuestRPG = () => {
     }));
   };
 
+  /** Delete my data: two steps, then everything this app saved is removed. */
+  const deleteMyData = () => {
+    deleteLocalData(window.localStorage);
+    defaultRegistry.setSkins([]);
+    window.location.reload();
+  };
+
+  // Settings on the Hero tab: help, legal, data, and (dev builds only) tools.
+  const SettingsPanels = () => (
+    <>
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_heart" scale={2} />Help &amp; Resources</h3>
+        <p className="type-body text-bone">
+          Free, confidential help from a quit coach, in the US: call <a className="qq-link" href="tel:+18007848669">1-800-QUIT-NOW</a> (1-800-784-8669).
+        </p>
+        <p className="type-caption text-stone-400">
+          Quit Quest helps you track your quit and stay motivated. It is not a substitute for medical advice. Talk to a doctor or pharmacist about quit medicines and any health concerns.
+        </p>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_scroll" scale={2} />Privacy &amp; Terms</h3>
+        <ul className="space-y-1 type-body">
+          <li>{qqEnv.legal.privacyPolicyUrl ? <a className="qq-link" href={qqEnv.legal.privacyPolicyUrl} target="_blank" rel="noopener noreferrer">Privacy Policy</a> : <span className="text-stone-400">Privacy Policy (coming soon)</span>}</li>
+          <li>{qqEnv.legal.termsUrl ? <a className="qq-link" href={qqEnv.legal.termsUrl} target="_blank" rel="noopener noreferrer">Terms of Use</a> : <span className="text-stone-400">Terms of Use (coming soon)</span>}</li>
+        </ul>
+        <p className="type-caption text-stone-400">
+          Manage or cancel: Premium is a one-time purchase with nothing to cancel. Purchases are managed in your App Store or Google Play account settings.
+        </p>
+      </Panel>
+
+      <Panel tone="danger" className="space-y-3">
+        <h3 className="type-subheading text-rust-300">Delete My Data</h3>
+        {deleteStep === 0 && (
+          <>
+            <p className="type-body text-bone">Remove your hero, progress and settings from this device. This cannot be undone.</p>
+            <Button tone="rust" size="sm" onClick={() => setDeleteStep(1)}>Delete my data</Button>
+          </>
+        )}
+        {deleteStep === 1 && (
+          <>
+            <p className="type-body text-bone">
+              This deletes your quit date, story progress, achievements, battle records and settings. Purchases are not affected: they belong to your App Store or Google Play account and can be restored.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button tone="rust" size="sm" onClick={() => { setDeleteText(''); setDeleteStep(2); }}>Continue</Button>
+              <Button size="sm" onClick={() => setDeleteStep(0)}>Keep my data</Button>
+            </div>
+          </>
+        )}
+        {deleteStep === 2 && (
+          <>
+            <label htmlFor="qq-delete-confirm" className="type-body text-bone block">Type DELETE to confirm.</label>
+            <input id="qq-delete-confirm" className="qq-input w-full" value={deleteText} onChange={(e) => setDeleteText(e.target.value)} autoComplete="off" />
+            <div className="flex flex-wrap gap-2">
+              <Button tone="rust" size="sm" disabled={deleteText.trim().toUpperCase() !== 'DELETE'} onClick={deleteMyData}>Delete everything</Button>
+              <Button size="sm" onClick={() => setDeleteStep(0)}>Cancel</Button>
+            </div>
+          </>
+        )}
+      </Panel>
+
+      {devMockControls.enabled && DevToolsPanel()}
+    </>
+  );
+
+  // DEVELOPER TOOLS: present only in development and preview builds.
+  const DevToolsPanel = () => {
+    const current = devMockControls.scenario || 'off';
+    const choose = (sc) => {
+      devMockControls.set(sc === 'off' ? null : sc);
+      window.location.reload();
+    };
+    return (
+      <Panel tone="sunken" className="space-y-3 qq-dev-panel">
+        <h3 className="type-subheading text-stone-400">Developer tools (not in production builds)</h3>
+        <p className="type-caption text-stone-400">Purchase mock: pretend store for testing Premium. Current: {current}.</p>
+        <div className="flex flex-wrap gap-2">
+          {['off', 'locked', 'unlocked', 'pending', 'failing', 'offline', 'store_unavailable'].map((sc) => (
+            <Button key={sc} size="sm" selected={current === sc} onClick={() => choose(sc)}>{sc.replace('_', ' ')}</Button>
+          ))}
+        </div>
+        <Button size="sm" onClick={() => { devMockControls.resetPurchase(); window.location.reload(); }}>Reset mock purchase</Button>
+      </Panel>
+    );
+  };
+
   // Profile Screen Component
   const ProfileScreen = () => (
     <div className="space-y-4">
@@ -1981,6 +2235,37 @@ const QuitQuestRPG = () => {
           {reducedEffectsOn ? 'Reduced Effects on' : 'Reduced Effects off'}
         </Button>
       </Panel>
+
+      {/* Premium */}
+      <Panel tone={isPremium ? 'raised' : 'default'} className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_crown" scale={2} />Premium</h3>
+        <p className="type-body text-bone">
+          {isPremium
+            ? 'Premium is unlocked: advanced stats, savings projections, knight skins and no ads. Thank you!'
+            : 'A one-time purchase for advanced stats, savings projections, knight skins and no ads. Everything else stays free.'}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={openPremium}>{isPremium ? 'About Premium' : 'See Premium'}</Button>
+          {entitlements.purchasesAvailable && (
+            <Button size="sm" onClick={() => entitlements.restore()} disabled={entitlements.restoring}>
+              {entitlements.restoring ? 'Restoring...' : 'Restore Purchases'}
+            </Button>
+          )}
+        </div>
+      </Panel>
+
+      {/* Knight skins (Premium) */}
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_helmet" scale={2} />Knight Armour</h3>
+        <SkinPicker
+          heroClass={['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}
+          selected={heroSkin}
+          onSelect={chooseSkin}
+          onOpenPremium={openPremium}
+        />
+      </Panel>
+
+      {SettingsPanels()}
     </div>
   );
 
@@ -2035,7 +2320,13 @@ const QuitQuestRPG = () => {
               return (
                 <button
                   key={tab.screen}
-                  onClick={() => setCurrentScreen(tab.screen)}
+                  onClick={() => {
+                    if (currentScreen === 'story' && tab.screen !== 'story' && tab.screen !== 'battle' && ads) {
+                      const last = (userData.history?.battles || []).slice(-1)[0];
+                      ads.maybeInterstitial('story_closed', { inCravingFlow: battleState.inBattle, lastBattleResult: last ? last.result : null });
+                    }
+                    setCurrentScreen(tab.screen);
+                  }}
                   aria-label={tab.label}
                   aria-current={active ? 'page' : undefined}
                   className={`relative py-2 text-center ${active ? 'qq-chip qq-chip--brass' : 'text-stone-400'}`}
@@ -2059,7 +2350,10 @@ const QuitQuestRPG = () => {
           {/* Called as a function (no hooks) so the battle field stays mounted between turns */}
           {currentScreen === 'battle' && BattleScreen()}
           {currentScreen === 'achievements' && <AchievementsScreen />}
-          {currentScreen === 'profile' && <ProfileScreen />}
+          {/* Called as a function (no hooks) so inputs keep focus between state changes */}
+          {currentScreen === 'profile' && ProfileScreen()}
+          {currentScreen === 'stats' && RecordsScreen()}
+          {currentScreen === 'premium' && <PremiumScreen onClose={() => setCurrentScreen(returnScreen)} />}
         </main>
       </div>
     </GreeningProvider>

@@ -1,0 +1,173 @@
+{
+  "id": "premium-midnight",
+  "name": "Midnight Warden (Premium knight skin, placeholder art)",
+  "version": 1,
+  "baseUrl": "/assets/skins/premium-midnight/",
+  "sprites": {
+    "hero_warrior": {
+      "category": "characters",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "knight_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "knight_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "knight_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        },
+        "victory": {
+          "path": "knight_victory_##.png",
+          "frames": 4,
+          "fps": 6
+        },
+        "walk": {
+          "path": "knight_walk_##.png",
+          "frames": 4,
+          "fps": 8
+        }
+      }
+    },
+    "hero_mage": {
+      "category": "characters",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "knight_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "knight_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "knight_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        },
+        "victory": {
+          "path": "knight_victory_##.png",
+          "frames": 4,
+          "fps": 6
+        },
+        "walk": {
+          "path": "knight_walk_##.png",
+          "frames": 4,
+          "fps": 8
+        }
+      }
+    },
+    "hero_rogue": {
+      "category": "characters",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "knight_idle_##.png",
+          "frames": 4,
+          "fps": 4
+        },
+        "attack": {
+          "path": "knight_attack_##.png",
+          "frames": 4,
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "path": "knight_hurt_##.png",
+          "frames": 3,
+          "fps": 10,
+          "loop": false
+        },
+        "victory": {
+          "path": "knight_victory_##.png",
+          "frames": 4,
+          "fps": 6
+        },
+        "walk": {
+          "path": "knight_walk_##.png",
+          "frames": 4,
+          "fps": 8
+        }
+      }
+    },
+    "overworld_knight_warrior": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 13,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "map_knight_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "walk": {
+          "path": "map_knight_walk_##.png",
+          "frames": 2,
+          "fps": 6
+        }
+      }
+    },
+    "overworld_knight_mage": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 13,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "map_knight_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "walk": {
+          "path": "map_knight_walk_##.png",
+          "frames": 2,
+          "fps": 6
+        }
+      }
+    },
+    "overworld_knight_rogue": {
+      "category": "map",
+      "frameWidth": 9,
+      "frameHeight": 13,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "map_knight_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        },
+        "walk": {
+          "path": "map_knight_walk_##.png",
+          "frames": 2,
+          "fps": 6
+        }
+      }
+    }
+  }
+}

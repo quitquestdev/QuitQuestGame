@@ -4,7 +4,8 @@
  *   npm run release:check          report only (exit 1 only on broken art)
  *   npm run release:check:strict   also fail while any placeholder art remains
  *
- * Checks every entry in the default manifest:
+ * Checks every entry in the default manifest and in every skin pack
+ * (public/assets/skins/<pack>/manifest.json, including the Premium knight skins):
  *   - lists entries still tagged "placeholder": true, grouped by category
  *   - every frame file exists
  *   - every frame is exactly frameWidth x frameHeight (art is never pre-scaled)
@@ -27,6 +28,7 @@ const errors = [];
 const warnings = [];
 const placeholders = {};
 const devOnly = [];
+const sources = {};
 let frameCount = 0;
 
 function framePaths(anim) {
@@ -35,48 +37,67 @@ function framePaths(anim) {
   return Array.from({ length: n }, (_, i) => anim.path.replace('##', String(i + 1).padStart(2, '0')));
 }
 
-for (const [id, entry] of Object.entries(manifest.sprites)) {
-  if (entry.meta && entry.meta.devOnly) devOnly.push(id);
-  else if (entry.placeholder) (placeholders[entry.category || 'other'] = placeholders[entry.category || 'other'] || []).push(id);
+/** Check one manifest. Skin packs are labelled; dev-only packs never block a release. */
+function checkManifest(m, { packLabel = '', group = '', packDevOnly = false } = {}) {
+  for (const [id, entry] of Object.entries(m.sprites)) {
+    const key = packLabel ? `${packLabel}: ${id}` : id;
+    if (packDevOnly || (entry.meta && entry.meta.devOnly)) devOnly.push(key);
+    else if (entry.placeholder) (placeholders[group || entry.category || 'other'] = placeholders[group || entry.category || 'other'] || []).push(key);
+    sources[key] = entry.source;
 
-  for (const [animName, anim] of Object.entries(entry.animations || {})) {
-    for (const rel of framePaths(anim)) {
-      frameCount++;
-      const file = path.join(ROOT, 'public', manifest.baseUrl, rel);
-      const where = `${id}.${animName} (${rel})`;
-      if (!fs.existsSync(file)) {
-        errors.push(`missing file: ${where}`);
-        continue;
+    for (const [animName, anim] of Object.entries(entry.animations || {})) {
+      for (const rel of framePaths(anim)) {
+        frameCount++;
+        const file = path.join(ROOT, 'public', m.baseUrl, rel);
+        const where = `${packLabel ? packLabel + ': ' : ''}${id}.${animName} (${rel})`;
+        if (!fs.existsSync(file)) {
+          errors.push(`missing file: ${where}`);
+          continue;
+        }
+        let png;
+        try {
+          png = PNG.sync.read(fs.readFileSync(file));
+        } catch (e) {
+          errors.push(`unreadable PNG: ${where}: ${e.message}`);
+          continue;
+        }
+        if (png.width !== entry.frameWidth || png.height !== entry.frameHeight) {
+          errors.push(`wrong size: ${where} is ${png.width}x${png.height}, manifest says ${entry.frameWidth}x${entry.frameHeight}`);
+        }
+        let off = 0;
+        for (let i = 0; i < png.data.length; i += 4) {
+          if (png.data[i + 3] === 0) continue;
+          if (!paletteRgb.has(`${png.data[i]},${png.data[i + 1]},${png.data[i + 2]}`)) off++;
+        }
+        if (off) warnings.push(`off-palette colours: ${where} has ${off} pixel(s) outside the master palette`);
       }
-      let png;
-      try {
-        png = PNG.sync.read(fs.readFileSync(file));
-      } catch (e) {
-        errors.push(`unreadable PNG: ${where}: ${e.message}`);
-        continue;
-      }
-      if (png.width !== entry.frameWidth || png.height !== entry.frameHeight) {
-        errors.push(`wrong size: ${where} is ${png.width}x${png.height}, manifest says ${entry.frameWidth}x${entry.frameHeight}`);
-      }
-      let off = 0;
-      for (let i = 0; i < png.data.length; i += 4) {
-        if (png.data[i + 3] === 0) continue;
-        if (!paletteRgb.has(`${png.data[i]},${png.data[i + 1]},${png.data[i + 2]}`)) off++;
-      }
-      if (off) warnings.push(`off-palette colours: ${where} has ${off} pixel(s) outside the master palette`);
     }
   }
 }
 
-const total = Object.keys(manifest.sprites).length;
+checkManifest(manifest);
+
+// Skin packs (public/assets/skins/*/manifest.json): the Premium knight skins
+// and the dev demo pack. Their placeholder art is listed like the default art.
+const skinsDir = path.join(ROOT, 'public/assets/skins');
+const skinPacks = [];
+for (const dir of fs.existsSync(skinsDir) ? fs.readdirSync(skinsDir).sort() : []) {
+  const file = path.join(skinsDir, dir, 'manifest.json');
+  if (!fs.existsSync(file)) continue;
+  const pack = JSON.parse(fs.readFileSync(file, 'utf8'));
+  skinPacks.push(pack.id);
+  checkManifest(pack, { packLabel: `skin ${pack.id}`, group: 'skin packs', packDevOnly: dir.startsWith('dev-') });
+}
+
+const total = Object.keys(sources).length;
 const phCount = Object.values(placeholders).reduce((n, l) => n + l.length, 0);
 
-console.log(`Sprite manifest: ${total} entries, ${frameCount} frames\n`);
+console.log(`Sprite manifest and ${skinPacks.length} skin pack(s) (${skinPacks.join(', ')}): ${total} entries, ${frameCount} frames\n`);
 if (phCount) {
   console.log(`Placeholder art still in use: ${phCount} of ${total - devOnly.length} release entries`);
   for (const [cat, ids] of Object.entries(placeholders).sort()) {
     console.log(`  ${cat} (${ids.length})`);
-    for (const id of ids.sort()) console.log(`    - ${id}${manifest.sprites[id].source ? `  [${manifest.sprites[id].source}]` : ''}`);
+    for (const id of ids.sort()) console.log(`    - ${id}${sources[id] ? `  [${sources[id]}]` : ''}`);
   }
 } else {
   console.log('No placeholder art in release entries.');

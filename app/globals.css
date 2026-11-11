@@ -61,6 +61,53 @@
   .qq-panel--sunken { --qq-body: color-mix(in srgb, var(--c-indigo950) 75%, transparent); }
 
   /* Inset: a sunken well inside a panel (stat tiles, story text). */
+  /* ---- Premium: locked previews ------------------------------------- */
+  .qq-locked { position: relative; min-height: 15rem; }
+  .qq-locked__content { pointer-events: none; user-select: none; }
+  /* A 50% ordered-dither veil in indigo950: dims the sample content in palette pixels. */
+  .qq-locked__veil {
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(var(--c-indigo950) 25%, transparent 0 50%, var(--c-indigo950) 0 75%, transparent 0) 0 0 / 4px 4px;
+  }
+  .qq-locked__card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.5rem 0.75rem 0.75rem;
+  }
+  .qq-locked__card > * { max-width: 20rem; width: 100%; }
+
+  /* ---- Premium: charts (one colour per chart; text stays in text colours) */
+  .qq-bars { display: flex; align-items: flex-end; gap: 4px; height: 7rem; padding-top: 1.25rem; border-bottom: 2px solid var(--c-indigo700); }
+  .qq-bars__col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .qq-bars__value { font-family: "Jersey 10", ui-monospace, monospace; font-size: 16px; line-height: 1; color: var(--c-bone); margin-bottom: 2px; }
+  .qq-bars__bar { display: block; width: 100%; min-height: 0; background: var(--c-moss500); box-shadow: inset 2px 2px 0 var(--c-moss400); }
+  .qq-hbar { height: 8px; background: var(--c-indigo900); box-shadow: inset 1px 1px 0 var(--c-indigo950); }
+  .qq-hbar__fill { display: block; height: 100%; background: var(--c-moss500); }
+
+  .qq-table { width: 100%; border-collapse: collapse; font-size: 16px; color: var(--c-bone); }
+  .qq-table th { text-align: left; font-weight: 600; color: var(--c-brass300); border-bottom: 2px solid var(--c-indigo700); padding: 4px 6px 4px 0; }
+  .qq-table td { border-bottom: 1px solid var(--c-indigo800); padding: 4px 6px 4px 0; overflow-wrap: anywhere; }
+  .qq-table tr.is-reached td { color: var(--c-moss300); }
+  .qq-details summary { cursor: pointer; }
+  .qq-details[open] summary { margin-bottom: 0.5rem; }
+
+  /* ---- Dev tools only: where a banner would go on mobile ---------------- */
+  .qq-ad-outline {
+    border: 2px dashed var(--c-stone500);
+    color: var(--c-stone400);
+    font-size: 14px;
+    padding: 10px;
+    text-align: center;
+  }
+  .qq-ad-outline[data-would-show='yes'] { border-color: var(--c-brass500); color: var(--c-brass300); }
+
+  .qq-link { color: var(--c-brass300); text-decoration: underline; text-underline-offset: 3px; }
+  .qq-link:hover, .qq-link:focus-visible { color: var(--c-bone); }
+
   .qq-inset {
     background: color-mix(in srgb, var(--c-indigo950) 70%, transparent);
     box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo700);
