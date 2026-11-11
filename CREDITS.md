@@ -70,6 +70,8 @@ summarised below.
 - World map on the road: the parallax layers `journey_sky`, `journey_far`, `journey_mid`, `journey_ground`, `journey_fore`, the smog `journey_fog`, the landmarks `journey_lm_*`, `journey_story`, `journey_camp`, `journey_fortress`, `journey_fortress_far`, `journey_grass`, and the knight's `walk` frames (built from the CC0 knight tile above)
 - Icons: every `icon_*` sprite except the eight listed under the CC0 packs above (sword, chest, book, potion, water, strength, flame, special). That includes the hearts, coins, XP, shield, lung, trophies and medals, rarity gems, activity, health-milestone and location icons, arrows, check and lock.
 - Premium knight skins (skin packs `premium-gilded`, `premium-midnight`, `premium-silver` in `public/assets/skins/`): palette recolours of the CC0 knight above, built by `npm run sprites:skins`. Placeholder art.
+- Battle telegraph icon `icon_taunt` (speech bubble). Placeholder art.
+- Sound effects (`public/assets/sounds/placeholder/*.wav`: hit, heal, charge, victory, tap, rest): synthesized in code by `npm run sounds:placeholders`, no third-party audio. Placeholder sounds.
 - `dev_test_gem` (dev harness only)
 
 ## Fonts

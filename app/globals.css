@@ -62,6 +62,117 @@
   .qq-panel--sunken { --qq-body: color-mix(in srgb, var(--c-indigo950) 75%, transparent); }
 
   /* Inset: a sunken well inside a panel (stat tiles, story text). */
+
+  /* ================================================================
+     Battle (components/battle). Palette colours only. Shakes and flashes
+     play once per hit (never faster than three a second); Reduced Effects
+     removes shake, lunges, flashes and particles in the components.
+     ================================================================ */
+  .qq-bar--lg { height: 30px; border-width: 9px 12px; }
+  .qq-bar--lg .qq-bar__fill { height: 12px; background-size: 6px 12px; }
+
+  /* The enemy's telegraphed next move */
+  .qq-intent { display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: var(--c-indigo950); box-shadow: inset 2px 2px 0 var(--c-indigo900), inset -2px -2px 0 var(--c-indigo700); }
+  .qq-intent__label { font-family: "Jersey 10", ui-monospace, monospace; font-size: 20px; line-height: 1.1; letter-spacing: 0.04em; text-transform: uppercase; color: var(--c-bone); }
+  .qq-intent__power { color: var(--c-rust300); }
+  .qq-intent--heal .qq-intent__power { color: var(--c-rust300); }
+  .qq-intent__hint { font-size: 15px; line-height: 1.25; color: var(--c-stone400); }
+  .qq-intent--heavy { box-shadow: inset 2px 2px 0 var(--c-rust800), inset -2px -2px 0 var(--c-rust600); }
+  .qq-intent--heavy .qq-intent__label { color: var(--c-rust300); }
+  .qq-intent--taunt .qq-intent__label, .qq-intent--stunned .qq-intent__label { color: var(--c-brass300); }
+
+  /* Tip line after an ability (supportive, small) */
+  .qq-tip { display: flex; align-items: center; gap: 8px; justify-content: center; text-align: center; font-size: 17px; color: var(--c-moss300); }
+
+  /* Ability dock: stays at the bottom of the screen, in thumb reach */
+  .qq-abilitydock {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--c-indigo950) 92%, transparent);
+    box-shadow: 0 -2px 0 var(--c-indigo700);
+  }
+  .qq-turn { text-align: center; font-family: "Jersey 10", ui-monospace, monospace; font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-stone400); min-height: 1.4em; margin-bottom: 6px; }
+  .qq-turn.is-yours { color: var(--c-brass300); }
+  .qq-abilities { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  @media (max-width: 400px) { .qq-abilities { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .qq-ability {
+    position: relative;
+    min-height: 68px;
+    padding: 6px 2px 4px;
+    background: var(--c-indigo800);
+    box-shadow: inset 2px 2px 0 var(--c-indigo600), inset -2px -2px 0 var(--c-indigo950), 0 0 0 2px var(--c-indigo950);
+    color: var(--c-bone);
+    min-width: 0;
+  }
+  .qq-ability:not(.is-off):hover, .qq-ability:not(.is-off):focus-visible { background: var(--c-indigo700); outline: 2px solid var(--c-brass400); outline-offset: 1px; }
+  .qq-ability:not(.is-off):active { box-shadow: inset 2px 2px 0 var(--c-indigo950), inset -2px -2px 0 var(--c-indigo600), 0 0 0 2px var(--c-indigo950); }
+  .qq-ability.is-off { opacity: 0.45; }
+  .qq-ability__name { display: block; margin-top: 2px; font-family: "Jersey 10", ui-monospace, monospace; font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; overflow-wrap: anywhere; }
+  .qq-ability__badge { position: absolute; top: 2px; right: 3px; min-width: 18px; padding: 0 3px; font-family: "Jersey 10", ui-monospace, monospace; font-size: 15px; line-height: 18px; background: var(--c-moss600); color: var(--c-bone); }
+  .qq-ability__badge.is-wait { background: var(--c-stone700); color: var(--c-stone400); }
+
+  /* Distract tiles: a steady highlight, never a flash */
+  .qq-distract { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-width: 22rem; margin: 0 auto; }
+  .qq-distract__tile { min-height: 56px; display: flex; align-items: center; justify-content: center; background: var(--c-indigo800); box-shadow: inset 2px 2px 0 var(--c-indigo600), inset -2px -2px 0 var(--c-indigo950); }
+  .qq-distract__tile.is-lit { background: var(--c-brass500); box-shadow: inset 2px 2px 0 var(--c-brass300), inset -2px -2px 0 var(--c-brass700); }
+  .qq-distract__tile:active:not(:disabled) { background: var(--c-moss600); }
+
+  /* Breathing: a ring that grows (in) and shrinks (out), or a bar with Reduced Effects */
+  .qq-breathring { position: relative; width: min(132px, 55vw); height: min(132px, 55vw); margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+  .qq-breathring::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px dashed var(--c-indigo600); }
+  .qq-breathring__ring { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, var(--c-indigo600) 0 55%, var(--c-indigo500) 56% 70%, var(--c-moss500) 71% 100%); box-shadow: 0 0 0 3px var(--c-indigo950); transition: transform 60ms linear; }
+  .qq-breathring__ring.is-holding { background: radial-gradient(circle, var(--c-indigo600) 0 55%, var(--c-moss500) 56% 70%, var(--c-moss300) 71% 100%); }
+  .qq-breathbar { height: 16px; max-width: 18rem; margin: 0 auto; background: var(--c-indigo900); box-shadow: inset 2px 2px 0 var(--c-indigo950); }
+  .qq-breathbar > span { display: block; height: 100%; background: var(--c-moss500); }
+  .qq-holdbtn {
+    display: block; width: 100%; max-width: 20rem; min-height: 64px; margin: 0 auto;
+    font-family: "Jersey 10", ui-monospace, monospace; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--c-bone); background: var(--c-indigo700);
+    box-shadow: inset 2px 2px 0 var(--c-indigo500), inset -2px -2px 0 var(--c-indigo950), 0 0 0 2px var(--c-indigo950);
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  .qq-holdbtn.is-holding { background: var(--c-moss600); box-shadow: inset 2px 2px 0 var(--c-moss800), inset -2px -2px 0 var(--c-moss400), 0 0 0 2px var(--c-indigo950); }
+
+  /* Field: actors, moves, markers, bubbles, particles */
+  .qq-actor { position: absolute; bottom: 12px; }
+  .qq-actor--hero { left: 6%; }
+  .qq-actor--enemy { right: 6%; }
+  .qq-actor.is-resting { opacity: 0.6; }
+  .qq-move-lunge.qq-actor--hero { animation: qq-lunge-right 0.42s steps(6, end); }
+  .qq-move-lunge.qq-actor--enemy { animation: qq-lunge-left 0.42s steps(6, end); }
+  .qq-move-recoil.qq-actor--hero { animation: qq-recoil-left 0.3s steps(4, end); }
+  .qq-move-recoil.qq-actor--enemy { animation: qq-recoil-right 0.3s steps(4, end); }
+  .qq-move-squash { animation: qq-squash 0.32s steps(4, end); transform-origin: 50% 100%; }
+  .qq-move-windup.qq-actor--enemy { animation: qq-windup 0.5s steps(5, end); }
+  .qq-hitstop .qq-actor { animation-play-state: paused; }
+  .qq-field.qq-shake { animation: qq-shake 0.22s steps(4, end); }
+  .qq-field.qq-shake--big { animation: qq-shake-big 0.32s steps(6, end); }
+  .qq-marker { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); }
+  .qq-chargeglow { position: absolute; inset: -10px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c-brass300) 45%, transparent), transparent 70%); animation: qq-charge 1s steps(4, end) infinite alternate; }
+  .qq-resting { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-family: "Jersey 10", ui-monospace, monospace; font-size: 16px; color: var(--c-indigo300); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .qq-bubble {
+    position: absolute; top: 8px; right: 6%; max-width: 70%;
+    padding: 6px 8px; font-size: 15px; line-height: 1.25; color: var(--c-indigo950);
+    background: var(--c-bone); box-shadow: 0 0 0 2px var(--c-indigo950);
+    animation: qq-bubble-in 0.2s steps(2, end);
+  }
+  .qq-bubble--big { left: 6%; right: 6%; max-width: none; text-align: center; font-weight: 600; background: var(--c-rust300); }
+  .qq-particle { position: absolute; width: 4px; height: 4px; bottom: 44%; animation: qq-burst 0.6s steps(6, end) forwards; }
+  .qq-particle--enemy { right: 18%; }
+  .qq-particle--hero { left: 18%; }
+  .qq-damage--big { color: var(--c-brass300); font-size: 30px; }
+  .qq-damage--block { color: var(--c-indigo300); font-size: 16px; margin-top: 22px; }
+  .qq-damage--still { animation: qq-fade 1s steps(4, end) forwards; }
+
+  /* Results */
+  .qq-result--win { animation: qq-bubble-in 0.3s steps(3, end); }
+  .qq-confetti { position: absolute; top: -6px; width: 6px; height: 6px; animation: qq-confetti 1.4s steps(10, end) forwards; pointer-events: none; }
+
+  /* Urge Mode button in the header */
+  .qq-urge-btn { flex: 0 0 auto; }
+
   /* ---- Premium: locked previews ------------------------------------- */
   .qq-locked { position: relative; min-height: 15rem; }
   .qq-locked__content { pointer-events: none; user-select: none; }
@@ -404,3 +515,17 @@
   from { transform: translate3d(var(--qq-from), 0, 0); }
   to { transform: translate3d(var(--qq-to), 0, 0); }
 }
+
+@keyframes qq-lunge-right { 0% { transform: translateX(0); } 40% { transform: translateX(18px); } 100% { transform: translateX(0); } }
+@keyframes qq-lunge-left { 0% { transform: translateX(0); } 40% { transform: translateX(-18px); } 100% { transform: translateX(0); } }
+@keyframes qq-recoil-left { 0% { transform: translateX(0); } 40% { transform: translateX(-8px); } 100% { transform: translateX(0); } }
+@keyframes qq-recoil-right { 0% { transform: translateX(0); } 40% { transform: translateX(8px); } 100% { transform: translateX(0); } }
+@keyframes qq-squash { 0% { transform: scale(1, 1); } 35% { transform: scale(1.12, 0.86); } 70% { transform: scale(0.95, 1.06); } 100% { transform: scale(1, 1); } }
+@keyframes qq-windup { 0% { transform: translate(0, 0); } 50% { transform: translate(8px, -4px); } 100% { transform: translate(0, 0); } }
+@keyframes qq-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(-3px, 1px); } 50% { transform: translate(3px, -1px); } 75% { transform: translate(-2px, 0); } 100% { transform: translate(0, 0); } }
+@keyframes qq-shake-big { 0% { transform: translate(0, 0); } 20% { transform: translate(-6px, 2px); } 40% { transform: translate(6px, -2px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, 0); } 100% { transform: translate(0, 0); } }
+@keyframes qq-charge { from { opacity: 0.35; transform: scale(0.9); } to { opacity: 0.9; transform: scale(1.1); } }
+@keyframes qq-burst { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+@keyframes qq-bubble-in { from { transform: translateY(4px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes qq-fade { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes qq-confetti { 0% { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }

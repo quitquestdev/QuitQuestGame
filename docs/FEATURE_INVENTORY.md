@@ -118,3 +118,13 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - [ ] Hero tab: Help & Resources (quitline), Privacy & Terms, Delete My Data
 - [ ] Ads (mobile only) on dashboard, Records and world map; never in battles, craving flows, onboarding, Premium screen, first session, or for Premium
 
+## Battles (added on `feature/battle-overhaul`)
+
+- [ ] Battles start from the dashboard (Urge Mode, Mild / Medium / Strong), the Battle tab, the header Urge button, and the world map (camps, fortress)
+- [ ] The enemy telegraphs its next move; Strike, Delay, Breathe, Sip and Distract all work, with cooldowns and uses
+- [ ] Breathing round with Shorter, Skip and Stop; Distract tap pattern
+- [ ] Victory: XP (tapering after 3 wins a day), battles won, cravings defeated, flawless victories, achievements, battle log
+- [ ] Defeat and Leave: gentle screens, nothing lost, Try again, Need more help
+- [ ] Settings: Sound (off by default), Haptics, Reduced Effects (also follows system reduce-motion)
+- [ ] No ads on any battle, Urge Mode or result screen
+

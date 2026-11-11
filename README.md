@@ -244,6 +244,110 @@ On the road:
 
 The layer widths come from `lib/journey/regions.js`. If you change region widths, rebuild the placeholders or redraw the layers to the new sizes. Each layer's `meta.speed` and `meta.pad` tell the renderer how to place it. Run `npm run release:check` afterwards: it lists any map art still tagged as placeholder and checks every frame's size.
 
+## Battles
+
+A battle is a short (about one to three minutes) activity for riding out a
+craving. Design notes: [docs/BATTLE_DESIGN.md](docs/BATTLE_DESIGN.md).
+
+### Architecture
+
+- **Rules:** `lib/battle/engine.js` is a pure state machine with no React,
+  DOM or timers.
+  - `createBattle()` starts a fight.
+  - `playerAct(state, action)` resolves the player's move.
+  - `enemyAct(state)` carries out the enemy's telegraphed move.
+  - `available(state)` reports cooldowns and uses left.
+  - Each call returns the new state plus a list of events (`hit`, `heal`,
+    `shield`, `stun`, `charge`, `taunt`, `phase`, `victory`, `defeat`,
+    `tip`).
+  - Damage is fixed by data, so nothing random decides a fight.
+- **Data:** all numbers live in data files.
+  - `lib/battle/data/abilities.js`: Strike, Delay, Breathe, Sip, Distract,
+    each with damage or effect, cooldown or uses, icon and tip line.
+  - `lib/battle/data/enemies.js`: health, hit sizes, the repeating
+    telegraph pattern, taunts, loot, and the pools for practice battles and
+    Urge Mode.
+  - `lib/battle/data/tuning.js`: hero health, level scaling, and the reward
+    taper.
+- **Screen:** `components/battle/`.
+  - `BattleView` runs a fight: telegraph, health bars, ability dock, the
+    mini-games and pacing between turns.
+  - `BattleField` animates the events.
+  - `AbilityBar`, `BreathingPanel`, `DistractPanel`, `BattleResults`,
+    `BattleCamp` (the Battle tab when idle) and `SupportPanel`.
+- **Game glue:** `components/QuitQuestRPG.jsx` starts battles and applies
+  results.
+  - `startBattle(tier)`: the dashboard and map camps.
+  - `startBattleAgainst(id)`: the fortress.
+  - `startUrge()`: Urge Mode.
+  - `finishBattle`: XP, battles won, cravings defeated, flawless
+    victories, the battle log and achievements, as before.
+- **Rewards:** `lib/battle/rewards.js` keeps the original XP formula (enemy
+  XP + 10 × combo). After 3 wins in 24 hours, XP tapers to 50%, then 25%,
+  then 10%. It is never zero, and starting or losing battles never reduces
+  it.
+- **Feel:**
+  - `lib/fx/sound.js` holds named sounds (hit, heal, charge, victory, tap,
+    rest) from `public/assets/sounds/manifest.json`. Sound is off by default.
+  - `lib/fx/haptics.js` holds named pulses.
+  - `components/battle/useBattleFx.js` connects both to the Sound and
+    Haptics settings (Hero tab).
+  - Reduced Effects, or the system's reduce-motion setting, removes shake,
+    lunges, white flashes and particles.
+
+### Abilities and the tactics they rehearse
+
+| Ability | Effect | Tip shown |
+|---|---|---|
+| Strike | A steady blow | (none) |
+| Delay | Hold the line for 3 seconds; blocks 70% of the next hit | Urges tend to pass if you wait them out. |
+| Breathe | A paced breathing round charges a class strike (stronger with steadier rhythm) | Slow breaths can help you settle. |
+| Sip | Restores 30% health, twice per battle | A glass of water is a simple reset. |
+| Distract | Tap a 4-step pattern in 5 seconds; success stuns the enemy | Shifting your attention can take the edge off. |
+
+The old Attack is Strike. The old Special (a class strike charged by
+attacking) became Breathe, keeping its class names and multipliers. The
+never-used Defend and Potion actions became Delay and Sip.
+
+### Breathing input
+
+`lib/battle/breathInput.js` defines **BreathInput**: `start()`, `stop()`
+(returns samples) and `subscribe(fn)`. A sample is `{ t, active }`, where
+`active` means breathing in. `createTouchBreathInput()` is the touch version
+(hold the button to breathe in). `lib/battle/breath.js` scores rhythm and
+steadiness only: inhale and exhale count equally, and extra presses lower the
+score. It never rewards force, speed or holding longer. Another input source
+only needs to produce the same samples; the panel takes it as an `input`
+prop. Every round offers Shorter, Skip and Stop.
+
+### Adding an enemy
+
+1. Add an entry to `ENEMIES` in `lib/battle/data/enemies.js`: id, name,
+   sprite, tier, xp, hp, attack, heavy, heal, a `pattern` of intents
+   (`attack`, `charge`, `heavy`, `heal`, `taunt`) and a few kind taunts. For a
+   boss, use `phases` with `untilHp` thresholds instead of `pattern`.
+2. Add its id to a pool in `TIER_POOLS` and/or `REGION_POOLS`.
+3. Add its sprite (`enemy_<id>` with idle, attack and hurt) through the art
+   manifest, tagged placeholder until final, and credit it in CREDITS.
+4. Run `npm test`: the fight-length test checks every enemy is winnable in a
+   sensible number of turns at levels 1, 3 and 5.
+
+### Urge Mode
+
+The **Urge** button in the header (every main screen), the dashboard's
+Craving Emergency panel and the Battle tab start a short battle in one tap.
+The enemy is chosen from the map region you are in. No setup, no network
+and no microphone are needed. Every battle has **Leave** (always works, even
+mid-turn) and **Need more help** (the US quitline 1-800-QUIT-NOW and a
+not-medical-advice note). Ads are hard-blocked on all battle, Urge Mode and
+result screens.
+
+### Developer tools
+
+On local dev and Vercel previews only, the Hero tab can start any enemy,
+and every battle shows **Win now** and **Lose now**. The build flag strips
+both from production bundles.
+
 ## Premium and ads
 
 The core game is free forever. **Premium** is one optional, one-time purchase

@@ -121,3 +121,10 @@ test('Android never shows the ATT prompt; UMP failures fall back safely', async 
   const ads2 = createAdMob({ ...g, AdsConsentStatus: g.S, platform: 'android', units: TEST_UNITS.android });
   assert.deepEqual(await ads2.gatherConsent(), { status: 'unknown', personalized: false });
 });
+
+test('battle, Urge Mode and result screens hard-block every ad', () => {
+  assert.equal(bannerAllowed({ ...shown, screen: 'dashboard', hardBlocked: true }).reason, 'hard_block');
+  assert.equal(bannerAllowed({ ...shown, screen: 'worldMap', hardBlocked: true }).ok, false);
+  for (const screen of ['urge', 'battle_result']) assert.equal(bannerAllowed({ ...shown, screen }).ok, false, screen);
+  assert.equal(interstitialAllowed({ ...pause, hardBlocked: true }).reason, 'hard_block');
+});

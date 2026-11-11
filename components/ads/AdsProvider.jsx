@@ -40,6 +40,8 @@ export function AdsProvider({ children }) {
   const [consent, setConsent] = useState({ status: 'unknown', personalized: false });
   const [initialized, setInitialized] = useState(false);
   const interstitialShown = useRef(false);
+  // Hard block: set by the game while a battle, Urge Mode or result is showing.
+  const [hardBlocked, setHardBlock] = useState(false);
   const consentAsked = useRef(false);
 
   // Steps 1 and 2: consent, only for players confirmed not Premium.
@@ -64,8 +66,8 @@ export function AdsProvider({ children }) {
   const firstSession = sessionNumber <= 1;
 
   const banner = useCallback(
-    (screen, { inCravingFlow = false } = {}) => bannerAllowed({ screen, initialized, isPremium, firstSession, inCravingFlow }),
-    [initialized, isPremium, firstSession],
+    (screen, { inCravingFlow = false } = {}) => bannerAllowed({ screen, initialized, isPremium, firstSession, inCravingFlow, hardBlocked }),
+    [initialized, isPremium, firstSession, hardBlocked],
   );
 
   /** Call at a natural pause. Shows at most one interstitial per session, and only if the flag is on. */
@@ -80,17 +82,18 @@ export function AdsProvider({ children }) {
         shownThisSession: interstitialShown.current,
         lastBattleResult,
         inCravingFlow,
+        hardBlocked,
       });
       if (!rule.ok) return false;
       interstitialShown.current = true;
       return platform.showInterstitial();
     },
-    [initialized, isPremium, firstSession, platform],
+    [initialized, isPremium, firstSession, platform, hardBlocked],
   );
 
   const value = useMemo(
-    () => ({ supported: platform.supported, initialized, consent, firstSession, isPremium, banner, maybeInterstitial, platform }),
-    [platform, initialized, consent, firstSession, isPremium, banner, maybeInterstitial],
+    () => ({ supported: platform.supported, initialized, consent, firstSession, isPremium, banner, maybeInterstitial, platform, hardBlocked, setHardBlock }),
+    [platform, initialized, consent, firstSession, isPremium, banner, maybeInterstitial, hardBlocked],
   );
   return <AdsContext.Provider value={value}>{children}</AdsContext.Provider>;
 }
@@ -112,7 +115,7 @@ export function AdSlot({ screen, inCravingFlow = false }) {
   }
   // Web: no ads. Developer tools draw what the mobile app would do here.
   if (process.env.QQ_DEV_TOOLS === 'true') {
-    const asMobile = bannerAllowed({ screen, initialized: true, isPremium: ads.isPremium, firstSession: ads.firstSession, inCravingFlow });
+    const asMobile = bannerAllowed({ screen, initialized: true, isPremium: ads.isPremium, firstSession: ads.firstSession, inCravingFlow, hardBlocked: ads.hardBlocked });
     return (
       <div className="qq-ad-outline" data-ad-slot={screen} data-would-show={asMobile.ok ? 'yes' : 'no'}>
         DEV: banner slot ({screen}): {asMobile.ok ? 'the mobile app would show a banner here' : `hidden (${asMobile.reason.replace(/_/g, ' ')})`}

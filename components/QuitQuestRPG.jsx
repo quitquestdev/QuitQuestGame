@@ -18,6 +18,15 @@ import { advancedStats, savingsProjection, logBattle } from '../lib/premium/insi
 import { premiumChaptersFor } from '../lib/premium/story';
 import { skinManifestUrl } from '../lib/premium/skins';
 import { loadSkinManifest } from '../lib/sprites/SpriteProvider';
+import BattleView from './battle/BattleView';
+import BattleResults from './battle/BattleResults';
+import BattleCamp from './battle/BattleCamp';
+import SupportPanel from './battle/SupportPanel';
+import useBattleFx from './battle/useBattleFx';
+import { createBattle, isOver } from '../lib/battle/engine';
+import { ENEMIES, TIER_POOLS } from '../lib/battle/data/enemies';
+import { pickEnemy } from '../lib/battle/select';
+import { battleRewards } from '../lib/battle/rewards';
 import { devMockControls } from './premium/EntitlementProvider';
 import { env as qqEnv } from '../lib/monetization/env';
 import { deleteLocalData } from '../lib/account/deleteAccount';
@@ -309,7 +318,9 @@ const QuitQuestRPG = () => {
     comboCount: 0,
     specialCharge: 0,
     battlesWon: 0,
-    perfectVictories: 0
+    perfectVictories: 0,
+    engine: null, // the battle engine's state (lib/battle/engine.js) while a battle runs
+    result: null // the last battle's result screen
   });
 
   // User Data
@@ -377,8 +388,6 @@ const QuitQuestRPG = () => {
   // Animation states
   const [isLevelingUp, setIsLevelingUp] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
-  const [battleAnimation, setBattleAnimation] = useState('');
-  const [enemyAnimation, setEnemyAnimation] = useState('');
 
   // Story Content System
   const storyContent = {
@@ -501,6 +510,13 @@ const QuitQuestRPG = () => {
   }, [isPremium, heroSkin]);
   const chooseSkin = (id) => setUserData(prev => ({ ...prev, settings: { ...(prev.settings || {}), heroSkin: id } }));
 
+  // No ads ever on battle, Urge Mode or result screens: hard-block the ad
+  // layer while any of them is showing or a battle is running.
+  const adsBlocked = currentScreen === 'battle' || battleState.inBattle;
+  useEffect(() => {
+    if (ads && ads.setHardBlock) ads.setHardBlock(adsBlocked);
+  }, [ads, adsBlocked]);
+
   // Load data from localStorage on mount
   useEffect(() => {
     try {
@@ -518,9 +534,11 @@ const QuitQuestRPG = () => {
           setUserData(parsed.userData);
         }
 
-        // Restore battle state if in battle
+        // Restore battle state if in battle. Battles saved before the battle
+        // engine existed are closed quietly (counters are kept).
         if (parsed.battleState) {
-          setBattleState(parsed.battleState);
+          const b = parsed.battleState;
+          setBattleState(b.engine && b.engine.v ? b : { ...b, inBattle: false, engine: null, result: null });
         }
 
         // Restore story progress
@@ -809,213 +827,85 @@ const QuitQuestRPG = () => {
   // `id` doubles as the sprite key: the battle sprite is `enemy_<id>`.
   // Stats are unchanged from the original five enemies they replace
   // (Nicotine Imp, Smoke Specter, Craving Demon, Tar Monster, Addiction Dragon).
-  const enemyTypes = [
-    { id: 'social_pressure_imp', name: 'Social Pressure Imp', hp: 60, attack: 8, defense: 5, xp: 50, color: 'red', weakness: 'light' },
-    { id: 'smoke_wraith', name: 'Smoke Wraith', hp: 80, attack: 10, defense: 7, xp: 75, color: 'gray', weakness: 'wind' },
-    { id: 'cigarette_butt_goblin', name: 'Cigarette-Butt Goblin', hp: 70, attack: 9, defense: 6, xp: 60, color: 'brown', weakness: 'water' },
-    { id: 'stress_demon', name: 'Stress Demon', hp: 100, attack: 12, defense: 8, xp: 100, color: 'purple', weakness: 'fire' },
-    { id: 'boredom_slime', name: 'Boredom Slime', hp: 120, attack: 15, defense: 10, xp: 150, color: 'black', weakness: 'water' },
-    { id: 'nicotine_lord', name: 'The Nicotine Lord', hp: 150, attack: 18, defense: 12, xp: 200, color: 'orange', weakness: 'lightning', boss: true }
-  ];
+  // Enemies, abilities and tuning live in lib/battle/data/; the rules in
+  // lib/battle/engine.js. This component starts battles and applies results.
+  const heroClass = ['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior';
 
-  // Battle sprite for an enemy. Battles saved before the Stage 2 rename have
-  // no id, so map the old names onto the new roster.
-  const legacyEnemySprites = {
-    'Nicotine Imp': 'social_pressure_imp',
-    'Smoke Specter': 'smoke_wraith',
-    'Craving Demon': 'stress_demon',
-    'Tar Monster': 'boredom_slime',
-    'Addiction Dragon': 'nicotine_lord'
-  };
-  const enemySpriteId = (enemy) => `enemy_${enemy.id || legacyEnemySprites[enemy.name] || 'stress_demon'}`;
+  /** What other screens read about the current battle (kept in the saved shape). */
+  const battleSnapshot = (engine) => ({
+    engine,
+    inBattle: !isOver(engine),
+    currentEnemy: { id: engine.enemy.id, name: engine.enemy.name, boss: engine.enemy.boss },
+    tier: engine.tier,
+    playerHP: engine.hero.hp,
+    playerMaxHP: engine.hero.maxHp,
+    enemyHP: engine.enemy.hp,
+    enemyMaxHP: engine.enemy.maxHp,
+    battleLog: engine.log,
+  });
 
-  // Craving intensity -> which enemies can appear (picked at random).
-  const enemyTiers = {
-    mild: ['social_pressure_imp', 'smoke_wraith', 'cigarette_butt_goblin'],
-    medium: ['stress_demon'],
-    strong: ['boredom_slime', 'nicotine_lord']
-  };
-
-  const startBattle = (intensity = 'medium') => {
-    const pool = enemyTiers[intensity] || enemyTiers.medium;
-    const pickId = pool[Math.floor(Math.random() * pool.length)];
-    beginBattle(enemyTypes.find(e => e.id === pickId), intensity);
-  };
-
-  // Each battle's result goes in a small log (for Advanced Stats). Recording
-  // is the same for every player; only viewing the breakdown is Premium.
-  const recordBattle = (result) => {
-    const enemy = battleState.currentEnemy;
-    setUserData(prev => ({
-      ...prev,
-      history: logBattle(prev.history, { at: new Date().toISOString(), tier: battleState.tier || (enemy && enemy.id === 'nicotine_lord' ? 'boss' : 'other'), result, enemyId: enemy ? enemy.id : null })
-    }));
-  };
-
-  // A battle against one specific enemy (the world map's fortress uses this
-  // for the Nicotine Lord). Same setup as any other battle.
-  const startBattleAgainst = (enemyId) => {
-    const enemy = enemyTypes.find(e => e.id === enemyId);
-    if (enemy) beginBattle(enemy, enemyId === 'nicotine_lord' ? 'boss' : 'other');
-  };
-
-  const beginBattle = (enemy, tier = 'other') => {
-    const playerMaxHP = 100 + (stats.knightLevel * 20);
-    
-    setBattleState({
-      inBattle: true,
-      currentEnemy: enemy,
-      playerHP: playerMaxHP,
-      enemyHP: enemy.hp,
-      playerMaxHP: playerMaxHP,
-      enemyMaxHP: enemy.hp,
-      battleLog: [`A wild ${enemy.name} appears!`],
-      playerTurn: true,
-      battleReward: enemy.xp,
-      comboCount: 0,
-      specialCharge: 0,
-      battlesWon: battleState.battlesWon,
-      perfectVictories: battleState.perfectVictories,
-      tier
+  const beginBattle = (enemyId, tier = 'other', mode = 'practice') => {
+    const engine = createBattle({
+      enemyId,
+      level: Math.max(1, stats.knightLevel || 1),
+      heroClass,
+      heroName: userData.heroName || 'Hero',
+      tier,
+      mode,
     });
-    
+    setBattleState(prev => ({ ...prev, ...battleSnapshot(engine), result: null }));
     setCurrentScreen('battle');
   };
 
-  const playerAttack = (attackType = 'normal') => {
-    if (!battleState.playerTurn || !battleState.inBattle) return;
-    
-    let damage = 10 + (stats.knightLevel * 5);
-    let message = '';
-    
-    setBattleAnimation('player-attack');
-    setTimeout(() => setBattleAnimation(''), 500);
-    
-    if (attackType === 'normal') {
-      damage = Math.floor(damage + Math.random() * 10);
-      message = `${userData.heroName} attacks for ${damage} damage!`;
-    } else if (attackType === 'special') {
-      if (battleState.specialCharge < 100) return;
-      
-      if (userData.avatarClass === 'warrior') {
-        damage = Math.floor(damage * 2.5);
-        message = `${userData.heroName} uses MIGHTY STRIKE for ${damage} damage!`;
-      } else if (userData.avatarClass === 'mage') {
-        damage = Math.floor(damage * 2);
-        message = `${userData.heroName} casts FIREBALL for ${damage} damage!`;
-      } else {
-        damage = Math.floor(damage * 1.8);
-        message = `${userData.heroName} uses SHADOW STRIKE for ${damage} damage! CRITICAL!`;
-      }
-      
-      setBattleState(prev => ({ ...prev, specialCharge: 0 }));
-    } else if (attackType === 'defend') {
-      message = `${userData.heroName} takes a defensive stance!`;
-      damage = 0;
-    }
-    
-    const newEnemyHP = Math.max(0, battleState.enemyHP - damage);
-    const newCombo = damage > 0 ? battleState.comboCount + 1 : 0;
-    const newSpecialCharge = Math.min(100, battleState.specialCharge + 20);
-    
-    setBattleState(prev => ({
-      ...prev,
-      enemyHP: newEnemyHP,
-      battleLog: [...prev.battleLog, message],
-      playerTurn: false,
-      comboCount: newCombo,
-      specialCharge: attackType !== 'special' ? newSpecialCharge : prev.specialCharge
-    }));
-    
-    if (newEnemyHP <= 0) {
-      setTimeout(() => winBattle(), 1000);
-    } else {
-      setTimeout(() => enemyAttack(), 1500);
-    }
+  // Practice battles: a random enemy for the craving strength (as before).
+  const startBattle = (intensity = 'medium') => beginBattle(pickEnemy({ mode: 'practice', tier: intensity }), intensity, 'practice');
+
+  // A battle against one specific enemy (the world map's fortress uses this
+  // for the Nicotine Lord).
+  const startBattleAgainst = (enemyId) => {
+    if (ENEMIES[enemyId]) beginBattle(enemyId, enemyId === 'nicotine_lord' ? 'boss' : 'other', 'practice');
   };
 
-  const enemyAttack = () => {
-    if (!battleState.inBattle) return;
-    
-    setEnemyAnimation('enemy-attack');
-    setTimeout(() => setEnemyAnimation(''), 500);
-    
-    const damage = Math.floor(battleState.currentEnemy.attack + Math.random() * 8);
-    const newPlayerHP = Math.max(0, battleState.playerHP - damage);
-    
-    setBattleState(prev => ({
-      ...prev,
-      playerHP: newPlayerHP,
-      battleLog: [...prev.battleLog, `${prev.currentEnemy.name} attacks for ${damage} damage!`],
-      playerTurn: true
-    }));
-    
-    if (newPlayerHP <= 0) {
-      setTimeout(() => loseBattle(), 1000);
-    }
-  };
+  // Urge Mode: one tap, no setup, works offline. The enemy fits the map
+  // region the player is in.
+  const startUrge = () => beginBattle(pickEnemy({ mode: 'urge', day: stats.daysSmokeFree }), 'urge', 'urge');
 
-  const usePotion = () => {
-    if (!battleState.playerTurn || !battleState.inBattle) return;
-    
-    const healAmount = 50;
-    const newPlayerHP = Math.min(battleState.playerMaxHP, battleState.playerHP + healAmount);
-    
-    setBattleAnimation('heal');
-    setTimeout(() => setBattleAnimation(''), 1000);
-    
-    setBattleState(prev => ({
-      ...prev,
-      playerHP: newPlayerHP,
-      battleLog: [...prev.battleLog, `${userData.heroName} uses a health potion and heals ${healAmount} HP!`],
-      playerTurn: false
-    }));
-    
-    setTimeout(() => enemyAttack(), 1500);
-  };
+  const onBattleChange = (engine) => setBattleState(prev => ({ ...prev, ...battleSnapshot(engine) }));
 
-  const winBattle = () => {
-    const isPerfect = battleState.playerHP === battleState.playerMaxHP;
-    const xpGained = battleState.battleReward + (battleState.comboCount * 10);
-    
+  /**
+   * A battle ended. Victory keeps the original rewards (XP from the enemy and
+   * combo, battles won, cravings defeated, flawless victories) with XP tapering
+   * after several wins in a day. Defeat and leaving take nothing away.
+   * Every result goes in the battle log (Advanced Stats).
+   */
+  const finishBattle = (engine) => {
+    const outcome = engine.phase;
+    const history = userData.history?.battles || [];
+    const rewards = battleRewards(engine, history);
+    const result = { outcome, rewards, enemyName: engine.enemy.name, enemyId: engine.enemy.id, tier: engine.tier, mode: engine.mode, seed: engine.turn };
+    const entry = { at: new Date().toISOString(), tier: engine.tier, result: outcome === 'victory' ? 'win' : outcome === 'defeat' ? 'loss' : 'fled', enemyId: engine.enemy.id };
     setBattleState(prev => ({
       ...prev,
-      inBattle: false,
-      battleLog: [...prev.battleLog, `VICTORY! You defeated the ${prev.currentEnemy.name}!`, `Gained ${xpGained} XP!`],
-      battlesWon: prev.battlesWon + 1,
-      perfectVictories: isPerfect ? prev.perfectVictories + 1 : prev.perfectVictories
+      ...battleSnapshot(engine),
+      result,
+      battlesWon: outcome === 'victory' ? prev.battlesWon + 1 : prev.battlesWon,
+      perfectVictories: outcome === 'victory' && rewards.perfect ? prev.perfectVictories + 1 : prev.perfectVictories,
     }));
-    
     setUserData(prev => ({
       ...prev,
-      totalExperience: prev.totalExperience + xpGained,
-      battlesWon: prev.battlesWon + 1,
-      cravingsDefeated: prev.cravingsDefeated + 1
+      ...(outcome === 'victory'
+        ? { totalExperience: prev.totalExperience + rewards.xp, battlesWon: prev.battlesWon + 1, cravingsDefeated: prev.cravingsDefeated + 1 }
+        : {}),
+      history: logBattle(prev.history, entry),
     }));
-    
-    recordBattle('win');
-    setShowParticles(true);
-    setTimeout(() => setShowParticles(false), 3000);
+    if (outcome === 'victory' && !reducedEffectsOn) {
+      setShowParticles(true);
+      setTimeout(() => setShowParticles(false), 3000);
+    }
   };
 
-  const loseBattle = () => {
-    setBattleState(prev => ({
-      ...prev,
-      inBattle: false,
-      battleLog: [...prev.battleLog, `Defeated... But don't give up! Every battle makes you stronger!`]
-    }));
-    recordBattle('loss');
-  };
-
-  const fleeBattle = () => {
-    setBattleState(prev => ({
-      ...prev,
-      inBattle: false,
-      battleLog: [...prev.battleLog, `You fled from battle. Sometimes retreat is wisdom!`]
-    }));
-    if (battleState.inBattle) recordBattle('fled');
-    setCurrentScreen('dashboard');
-  };
+  // Sound and haptics follow the player's settings (Hero tab).
+  const battleFx = useBattleFx({ sound: userData.settings?.sound === true, haptics: userData.settings?.haptics !== false });
 
   const handleSetupSubmit = () => {
     const quitDate = new Date(setupForm.quitDate);
@@ -1203,7 +1093,8 @@ const QuitQuestRPG = () => {
 
   // Particle Effects Component
   const ParticleEffect = () => {
-    if (!showParticles) return null;
+    // Not over a battle (it has its own effects), and not with Reduced Effects.
+    if (!showParticles || currentScreen === 'battle' || userData.settings?.reducedEffects === true) return null;
 
     return (
       <div className="fixed inset-0 pointer-events-none z-50">
@@ -1267,9 +1158,9 @@ const QuitQuestRPG = () => {
     // Craving camps along the road start the same battles as the Quest tab's
     // Mild / Medium / Strong buttons; the fortress is the Nicotine Lord.
     encounters: [
-      { id: 'camp_mild', day: 9, tier: 'mild', enemies: enemyTiers.mild.map(id => enemyTypes.find(e => e.id === id).name) },
-      { id: 'camp_medium', day: 45, tier: 'medium', enemies: enemyTiers.medium.map(id => enemyTypes.find(e => e.id === id).name) },
-      { id: 'camp_strong', day: 100, tier: 'strong', enemies: enemyTiers.strong.map(id => enemyTypes.find(e => e.id === id).name) },
+      { id: 'camp_mild', day: 9, tier: 'mild', enemies: TIER_POOLS.mild.map(id => ENEMIES[id].name) },
+      { id: 'camp_medium', day: 45, tier: 'medium', enemies: TIER_POOLS.medium.map(id => ENEMIES[id].name) },
+      { id: 'camp_strong', day: 100, tier: 'strong', enemies: TIER_POOLS.strong.map(id => ENEMIES[id].name) },
       { id: 'fortress', day: 180, tier: 'boss', boss: true, enemyId: 'nicotine_lord', enemies: ['The Nicotine Lord'] }
     ]
   });
@@ -1709,6 +1600,10 @@ const QuitQuestRPG = () => {
             <Icon id="icon_alert" className="mr-2" />Craving Emergency?
           </h3>
           <p className="type-body text-bone">Fight the urge with an epic battle!</p>
+          <Button tone="moss" onClick={startUrge} className="w-full">
+            <Icon id="icon_alert" />Urge Mode: start now
+          </Button>
+          <p className="qq-label">Or pick how strong it feels</p>
           <div className="grid grid-cols-3 gap-2">
             <Button tone="moss" onClick={() => startBattle('mild')}>Mild</Button>
             <Button tone="moss" onClick={() => startBattle('medium')}>Medium</Button>
@@ -1929,80 +1824,35 @@ const QuitQuestRPG = () => {
 
   // Battle Screen Component
   const BattleScreen = () => {
-    if (!battleState.currentEnemy) return null;
-
-    return (
-      <div className="space-y-4">
-        {/* Battle Arena */}
-        <Panel tone="danger" className="space-y-3">
-          <Heading icon="icon_swords">Battle Mode</Heading>
-
-          {/* Enemy health is danger, so rust */}
-          <div>
-            <div className="flex items-baseline justify-between gap-2 mb-1">
-              <span className="type-subheading text-rust-300">{battleState.currentEnemy.name}</span>
-              <span className="type-stat text-bone whitespace-nowrap">{battleState.enemyHP}/{battleState.enemyMaxHP} HP</span>
-            </div>
-            <ProgressBar value={battleState.enemyHP} max={battleState.enemyMaxHP} tone="rust" label="Enemy health" />
-          </div>
-
-          <BattleField
-            enemySpriteId={enemySpriteId(battleState.currentEnemy)}
-            enemyName={battleState.currentEnemy.name}
-            isBoss={!!battleState.currentEnemy.boss || enemySpriteId(battleState.currentEnemy) === 'enemy_nicotine_lord'}
-            enemyHP={battleState.enemyHP}
-            playerHP={battleState.playerHP}
-            heroSpriteId={`hero_${['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}`}
-            heroName={userData.heroName}
-            battleAnimation={battleAnimation}
-            enemyAnimation={enemyAnimation}
-            inBattle={battleState.inBattle}
-            turn={battleState.battleLog.length}
-          />
-
-          {/* Your health is positive, so moss */}
-          <div>
-            <div className="flex items-baseline justify-between gap-2 mb-1">
-              <span className="type-subheading text-bone">{userData.heroName}</span>
-              <span className="type-stat text-bone whitespace-nowrap">{battleState.playerHP}/{battleState.playerMaxHP} HP</span>
-            </div>
-            <ProgressBar value={battleState.playerHP} max={battleState.playerMaxHP} tone="moss" label="Your health" />
-          </div>
-        </Panel>
-
-        {/* Battle Actions */}
-        {battleState.inBattle ? (
-          <Panel className="space-y-3">
-            <h3 className="type-subheading text-brass-300">Your Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={() => playerAttack('normal')}
-                disabled={!battleState.playerTurn}
-              >
-                <Icon id="icon_sword" />Attack
-              </Button>
-
-              <Button
-                onClick={() => playerAttack('special')}
-                disabled={!battleState.playerTurn || battleState.specialCharge < 100}
-                className={battleState.playerTurn && battleState.specialCharge >= 100 ? 'animate-pulse' : ''}
-              >
-                <Icon id="icon_lightning" />Special
-              </Button>
-            </div>
-          </Panel>
-        ) : (
-          <Panel className="text-center space-y-3">
-            <p className="type-subheading text-brass-300 text-balance">
-              {battleState.battleLog[battleState.battleLog.length - 1]}
-            </p>
-            <Button onClick={() => setCurrentScreen('dashboard')}>
-              Continue Quest
-            </Button>
-          </Panel>
-        )}
-      </div>
-    );
+    const engine = battleState.engine;
+    if (engine && !isOver(engine)) {
+      return (
+        <BattleView
+          battle={engine}
+          onChange={onBattleChange}
+          onFinish={finishBattle}
+          heroSpriteId={`hero_${heroClass}`}
+          reducedEffects={reducedEffectsOn}
+          fx={battleFx}
+        />
+      );
+    }
+    if (battleState.result) {
+      const r = battleState.result;
+      return (
+        <BattleResults
+          result={r}
+          onContinue={() => {
+            setBattleState(prev => ({ ...prev, result: null }));
+            setCurrentScreen('dashboard');
+          }}
+          onRetry={() => beginBattle(r.enemyId, r.tier, r.mode)}
+          onUrgeAgain={startUrge}
+          reducedEffects={reducedEffectsOn}
+        />
+      );
+    }
+    return <BattleCamp onUrge={startUrge} onPractice={startBattle} />;
   };
 
   // Achievements Screen Component
@@ -2108,7 +1958,15 @@ const QuitQuestRPG = () => {
     }));
   };
 
-  // Reduced Effects: calmer world map (no particles, parallax or animated reveals).
+  /** Flip a boolean setting; `fallback` is its value when never set. */
+  const toggleSetting = (key, fallback) => {
+    setUserData(prev => {
+      const current = prev.settings && typeof prev.settings[key] === 'boolean' ? prev.settings[key] : fallback;
+      return { ...prev, settings: { ...(prev.settings || {}), [key]: !current } };
+    });
+  };
+
+  // Reduced Effects: calmer battles and world map (no shake, flashes, heavy particles or parallax).
   const reducedEffectsOn = userData.settings?.reducedEffects === true;
   const toggleReducedEffects = () => {
     setUserData(prev => ({
@@ -2127,15 +1985,7 @@ const QuitQuestRPG = () => {
   // Settings on the Hero tab: help, legal, data, and (dev builds only) tools.
   const SettingsPanels = () => (
     <>
-      <Panel className="space-y-3">
-        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_heart" scale={2} />Help &amp; Resources</h3>
-        <p className="type-body text-bone">
-          Free, confidential help from a quit coach, in the US: call <a className="qq-link" href="tel:+18007848669">1-800-QUIT-NOW</a> (1-800-784-8669).
-        </p>
-        <p className="type-caption text-stone-400">
-          Quit Quest helps you track your quit and stay motivated. It is not a substitute for medical advice. Talk to a doctor or pharmacist about quit medicines and any health concerns.
-        </p>
-      </Panel>
+      <SupportPanel />
 
       <Panel className="space-y-3">
         <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_scroll" scale={2} />Privacy &amp; Terms</h3>
@@ -2201,6 +2051,13 @@ const QuitQuestRPG = () => {
           ))}
         </div>
         <Button size="sm" onClick={() => { devMockControls.resetPurchase(); window.location.reload(); }}>Reset mock purchase</Button>
+        <p className="type-caption text-stone-400">Battle: jump into any enemy (win or lose instantly from inside the battle).</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.values(ENEMIES).map((e) => (
+            <Button key={e.id} size="sm" onClick={() => beginBattle(e.id, e.boss ? 'boss' : e.tier, 'practice')}>{e.name}</Button>
+          ))}
+          <Button size="sm" onClick={startUrge}>Urge Mode</Button>
+        </div>
       </Panel>
     );
   };
@@ -2230,11 +2087,26 @@ const QuitQuestRPG = () => {
       <Panel className="space-y-3">
         <h3 className="type-subheading text-brass-300">Reduced Effects</h3>
         <p className="type-body text-bone">
-          A calmer world map: no drifting particles or parallax, and the knight, reveals and camera move without animation. Turns on by itself if your device asks for reduced motion.
+          Calmer motion everywhere: no screen shake, flashes or heavy particles in battle, and on the world map no drifting particles or parallax, with the knight, reveals and camera moving without animation. Turns on by itself if your device asks for reduced motion.
         </p>
         <Button selected={reducedEffectsOn} onClick={toggleReducedEffects}>
           {reducedEffectsOn ? 'Reduced Effects on' : 'Reduced Effects off'}
         </Button>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300">Sound &amp; Haptics</h3>
+        <p className="type-body text-bone">
+          Battle sounds are off unless you turn them on, and follow your device's silent switch. Haptics are short, gentle buzzes on hits and breathing cues, where your device supports them.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button selected={userData.settings?.sound === true} onClick={() => toggleSetting('sound', false)}>
+            {userData.settings?.sound === true ? 'Sound on' : 'Sound off'}
+          </Button>
+          <Button selected={userData.settings?.haptics !== false} onClick={() => toggleSetting('haptics', true)}>
+            {userData.settings?.haptics !== false ? 'Haptics on' : 'Haptics off'}
+          </Button>
+        </div>
       </Panel>
 
       {/* Premium */}
@@ -2303,6 +2175,12 @@ const QuitQuestRPG = () => {
         <header className="bg-indigo-950 border-b-2 border-brass-700 relative">
           <div className="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <h1 className="type-heading text-brass-300 min-w-0"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
+            {/* Urge Mode: one tap from any screen into a short battle */}
+            {!battleState.inBattle && (
+              <Button tone="moss" size="sm" onClick={startUrge} className="qq-urge-btn" aria-label="Urge Mode: start a short battle now">
+                <Icon id="icon_alert" />Urge
+              </Button>
+            )}
             <div className="flex items-center gap-3 min-w-0">
               <CharacterAvatar level={stats.knightLevel} size="small" />
               <div className="text-right min-w-0">
