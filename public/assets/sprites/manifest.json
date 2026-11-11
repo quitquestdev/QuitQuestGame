@@ -1344,6 +1344,20 @@
         }
       }
     },
+    "icon_taunt": {
+      "category": "icons",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "placeholder": true,
+      "source": "code",
+      "animations": {
+        "idle": {
+          "path": "placeholder/icons/icon_taunt_idle_##.png",
+          "frames": 1,
+          "fps": 0
+        }
+      }
+    },
     "icon_tree": {
       "category": "icons",
       "frameWidth": 16,

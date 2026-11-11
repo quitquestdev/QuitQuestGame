@@ -13,6 +13,26 @@ const MOSS = { h: 'moss300', m: 'moss500', d: 'moss700' };
 const SKY = { h: 'indigo300', m: 'indigo400', d: 'indigo600' };
 
 const ICONS = {
+  // Battle telegraph: the enemy is only talking (a free turn).
+  taunt: [[
+    '................',
+    '..XXXXXXXXXXXX..',
+    '.XbbbbbbbbbbbsX.',
+    'XbbbbbbbbbbbbbsX',
+    'XbbkkbbkkbbkkbsX',
+    'XbbkkbbkkbbkkbsX',
+    'XbbbbbbbbbbbbbsX',
+    'XsbbbbbbbbbbbssX',
+    '.XssbbbbbbbbssX.',
+    '..XXXXbbXXXXXX..',
+    '.....XbsX.......',
+    '.....XsX........',
+    '....XsX.........',
+    '....XX..........',
+    '................',
+    '................',
+  ], { b: 'bone', s: 'stone400', k: 'indigo700' }],
+
   heartbeat: [[
     '................',
     '...XXX....XXX...',

@@ -5,7 +5,8 @@
  *   npm run release:check:strict   also fail while any placeholder art remains
  *
  * Checks every entry in the default manifest and in every skin pack
- * (public/assets/skins/<pack>/manifest.json, including the Premium knight skins):
+ * (public/assets/skins/<pack>/manifest.json, including the Premium knight skins)
+ * and every sound effect (public/assets/sounds/manifest.json):
  *   - lists entries still tagged "placeholder": true, grouped by category
  *   - every frame file exists
  *   - every frame is exactly frameWidth x frameHeight (art is never pre-scaled)
@@ -87,6 +88,19 @@ for (const dir of fs.existsSync(skinsDir) ? fs.readdirSync(skinsDir).sort() : []
   const pack = JSON.parse(fs.readFileSync(file, 'utf8'));
   skinPacks.push(pack.id);
   checkManifest(pack, { packLabel: `skin ${pack.id}`, group: 'skin packs', packDevOnly: dir.startsWith('dev-') });
+}
+
+// Sound effects (public/assets/sounds/manifest.json): every file exists, and
+// placeholder sounds are listed like placeholder art.
+const soundManifestPath = path.join(ROOT, 'public/assets/sounds/manifest.json');
+if (fs.existsSync(soundManifestPath)) {
+  const sm = JSON.parse(fs.readFileSync(soundManifestPath, 'utf8'));
+  for (const [id, entry] of Object.entries(sm.sounds || {})) {
+    const key = `sound ${id}`;
+    sources[key] = entry.source;
+    if (!fs.existsSync(path.join(ROOT, 'public', sm.baseUrl, entry.path))) errors.push(`missing sound file: ${id} (${entry.path})`);
+    if (entry.placeholder) (placeholders.sounds = placeholders.sounds || []).push(key);
+  }
 }
 
 const total = Object.keys(sources).length;
