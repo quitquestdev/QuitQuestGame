@@ -38,6 +38,7 @@
 
   /* Panel: translucent body, brass nine-slice trim, notched corners. */
   .qq-panel {
+    overflow-wrap: break-word; /* long words wrap on very narrow screens (e.g. 200% zoom) */
     --qq-body: color-mix(in srgb, var(--c-indigo900) 88%, transparent);
     position: relative;
     border: 8px solid transparent;
@@ -88,8 +89,8 @@
   .qq-hbar { height: 8px; background: var(--c-indigo900); box-shadow: inset 1px 1px 0 var(--c-indigo950); }
   .qq-hbar__fill { display: block; height: 100%; background: var(--c-moss500); }
 
-  .qq-table { width: 100%; border-collapse: collapse; font-size: 16px; color: var(--c-bone); }
-  .qq-table th { text-align: left; font-weight: 600; color: var(--c-brass300); border-bottom: 2px solid var(--c-indigo700); padding: 4px 6px 4px 0; }
+  .qq-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 16px; color: var(--c-bone); }
+  .qq-table th { text-align: left; font-weight: 600; overflow-wrap: anywhere; hyphens: auto; color: var(--c-brass300); border-bottom: 2px solid var(--c-indigo700); padding: 4px 6px 4px 0; }
   .qq-table td { border-bottom: 1px solid var(--c-indigo800); padding: 4px 6px 4px 0; overflow-wrap: anywhere; }
   .qq-table tr.is-reached td { color: var(--c-moss300); }
   .qq-details summary { cursor: pointer; }
@@ -320,6 +321,11 @@
   /* Very narrow screens (e.g. 200% zoom on a small phone): tabs show icons only. */
   @media (max-width: 220px) {
     .qq-tab-label { display: none; }
+    /* Very narrow (e.g. 200% browser zoom on a small phone): titles step down
+       so long words fit, and anything still too long is hyphenated. */
+    .qq-panel .type-title { font-size: 18px; }
+    .qq-panel .type-heading { font-size: 16px; }
+    .qq-panel { hyphens: auto; }
   }
 
   /* Places on the world map: transparent buttons over their sprites. */

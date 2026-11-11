@@ -1682,7 +1682,7 @@ const QuitQuestRPG = () => {
     ][Math.min(5, Math.max(1, stats.knightLevel))];
 
     return (
-      <div className="space-y-4 relative">
+      <div className="space-y-4 relative overflow-x-clip">
         <PixelBackground environment={
           stats.knightLevel === 1 ? 'forest' :
           stats.knightLevel === 2 ? 'forest' :
@@ -1727,7 +1727,7 @@ const QuitQuestRPG = () => {
                 <p className="type-statXL text-moss-300">{stats.daysSmokeFree}</p>
                 <p className="qq-label">Days Smoke-Free</p>
               </div>
-              <p className="mt-2 qq-label text-bone flex items-center gap-2">
+              <p className="mt-2 qq-label text-bone flex flex-wrap items-center gap-x-2">
                 <Sprite id="icon_swords" scale={1} />
                 Battles Won: <span className="type-stat text-brass-300">{userData.battlesWon}</span>
               </p>
@@ -2128,7 +2128,7 @@ const QuitQuestRPG = () => {
   const SettingsPanels = () => (
     <>
       <Panel className="space-y-3">
-        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_heart" scale={2} />Help &amp; Resources</h3>
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_heart" scale={2} />Help &amp; Resources</h3>
         <p className="type-body text-bone">
           Free, confidential help from a quit coach, in the US: call <a className="qq-link" href="tel:+18007848669">1-800-QUIT-NOW</a> (1-800-784-8669).
         </p>
@@ -2138,7 +2138,7 @@ const QuitQuestRPG = () => {
       </Panel>
 
       <Panel className="space-y-3">
-        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_scroll" scale={2} />Privacy &amp; Terms</h3>
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_scroll" scale={2} />Privacy &amp; Terms</h3>
         <ul className="space-y-1 type-body">
           <li>{qqEnv.legal.privacyPolicyUrl ? <a className="qq-link" href={qqEnv.legal.privacyPolicyUrl} target="_blank" rel="noopener noreferrer">Privacy Policy</a> : <span className="text-stone-400">Privacy Policy (coming soon)</span>}</li>
           <li>{qqEnv.legal.termsUrl ? <a className="qq-link" href={qqEnv.legal.termsUrl} target="_blank" rel="noopener noreferrer">Terms of Use</a> : <span className="text-stone-400">Terms of Use (coming soon)</span>}</li>
@@ -2179,12 +2179,13 @@ const QuitQuestRPG = () => {
         )}
       </Panel>
 
-      {devMockControls.enabled && DevToolsPanel()}
+      {process.env.QQ_DEV_TOOLS === 'true' && DevToolsPanel()}
     </>
   );
 
-  // DEVELOPER TOOLS: present only in development and preview builds.
-  const DevToolsPanel = () => {
+  // DEVELOPER TOOLS: present only in development and preview builds. The
+  // build flag is inlined, so production bundles drop this panel entirely.
+  const DevToolsPanel = process.env.QQ_DEV_TOOLS !== 'true' ? () => null : () => {
     const current = devMockControls.scenario || 'off';
     const choose = (sc) => {
       devMockControls.set(sc === 'off' ? null : sc);
@@ -2238,7 +2239,7 @@ const QuitQuestRPG = () => {
 
       {/* Premium */}
       <Panel tone={isPremium ? 'raised' : 'default'} className="space-y-3">
-        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_crown" scale={2} />Premium</h3>
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_crown" scale={2} />Premium</h3>
         <p className="type-body text-bone">
           {isPremium
             ? 'Premium is unlocked: advanced stats, savings projections, knight skins and no ads. Thank you!'
@@ -2256,7 +2257,7 @@ const QuitQuestRPG = () => {
 
       {/* Knight skins (Premium) */}
       <Panel className="space-y-3">
-        <h3 className="type-subheading text-brass-300 flex items-center gap-2"><Sprite id="icon_helmet" scale={2} />Knight Armour</h3>
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_helmet" scale={2} />Knight Armour</h3>
         <SkinPicker
           heroClass={['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}
           selected={heroSkin}

@@ -126,7 +126,7 @@ export function AdvancedStats({ data }) {
   const tiers = Object.entries(d.byTier);
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 min-[260px]:grid-cols-2 gap-3">
         <Tile icon="icon_calendar" label="Current streak" value={`${count(d.streak.current)} days`} sub={`${d.streak.weeks} full weeks`} />
         <Tile icon="icon_trophy" label="Longest streak" value={`${count(d.streak.longest)} days`} />
         <Tile icon="icon_shield" label="Cravings resisted" value={count(d.totals.cravingsResisted)} />
@@ -174,7 +174,7 @@ export function SavingsProjections({ data }) {
   const s = data;
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 min-[260px]:grid-cols-2 gap-3">
         <Tile icon="icon_coins" label="Saved so far" value={money(s.sofar.money)} sub={`${count(s.sofar.cigarettes)} cigarettes not smoked`} />
         <Tile icon="icon_chest" label="Next 12 months" value={money(s.nextYear.money)} sub={`${count(s.nextYear.cigarettes)} cigarettes not smoked`} />
       </div>
@@ -270,7 +270,7 @@ export function SkinPicker({ heroClass = 'warrior', selected = null, onSelect, o
   const options = [{ id: null, name: 'Classic', description: 'The armour you started with.' }, ...SKINS];
   return (
     <div className="space-y-3">
-      <ul className="grid grid-cols-2 gap-3">
+      <ul className="grid grid-cols-1 min-[260px]:grid-cols-2 gap-3">
         {options.map((s) => {
           const registry = s.id ? previews[s.id] : classic;
           const isSel = (selected || null) === s.id;

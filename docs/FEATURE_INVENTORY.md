@@ -107,3 +107,14 @@ Tailwind, `lucide-react`. Persistence is browser `localStorage` under key `quitQ
 - XP bar uses `% 500`, which does not match the XP level thresholds.
 - At 320px the "LV 3" badge wraps onto two lines and the header name wraps. (Fixed in Stage 4.)
 - Next.js warns that `viewport` and `themeColor` belong in a `viewport` export.
+
+## Premium and settings (added on `feature/monetization`)
+
+- [ ] Core game stays free: tracker, battles, 180-day story, world map, health milestones, achievements
+- [ ] Records screen (Quest tab > Open Records): advanced stats and savings projections, locked previews for free players
+- [ ] Knight armour (Hero tab): classic plus three Premium skins
+- [ ] Premium screen: store price, buy, Restore Purchases, web note
+- [ ] One-time Premium note after day 7 and day 30, dismissible
+- [ ] Hero tab: Help & Resources (quitline), Privacy & Terms, Delete My Data
+- [ ] Ads (mobile only) on dashboard, Records and world map; never in battles, craving flows, onboarding, Premium screen, first session, or for Premium
+

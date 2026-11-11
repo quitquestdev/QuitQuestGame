@@ -16,7 +16,7 @@ A gamified quit-smoking app that turns your journey into a 16-bit RPG adventure.
 
 ## Running it
 
-Requires Node 18 or newer.
+Requires Node 18 or newer. Run the unit tests with `npm test`.
 
 ```bash
 npm ci
@@ -243,6 +243,44 @@ On the road:
 | `hero_*` | 32x32 | walk | The knight's walk on the map |
 
 The layer widths come from `lib/journey/regions.js`. If you change region widths, rebuild the placeholders or redraw the layers to the new sizes. Each layer's `meta.speed` and `meta.pad` tell the renderer how to place it. Run `npm run release:check` afterwards: it lists any map art still tagged as placeholder and checks every frame's size.
+
+## Premium and ads
+
+The core game is free forever. **Premium** is one optional, one-time purchase
+(advanced stats, savings projections, three knight skins, no ads), sold only
+through the App Store and Google Play via RevenueCat. Full details:
+[docs/MONETIZATION.md](docs/MONETIZATION.md).
+
+- **Entitlement module:** screens ask `useEntitlements()` (`isPremium`,
+  `hasEntitlement('premium')`) from `components/premium/EntitlementProvider.jsx`
+  and never touch a billing SDK. The store logic is in
+  `lib/monetization/entitlements.js` with swappable adapters (RevenueCat for
+  the mobile apps, "unavailable" for the web, a dev-only mock). Product and
+  entitlement IDs are in `lib/monetization/config.js`; a future subscription
+  maps to the same `premium` entitlement with no screen changes.
+- **Offline and failures:** entitlements are cached on the device and
+  refreshed on launch and foreground; a failed check never removes Premium,
+  and players never see raw errors.
+- **Ads (mobile only):** one banner on the dashboard, Records and world map
+  screens only. There are no ads in battles, craving flows, onboarding, the
+  Premium screen, the first session, or for Premium players. Interstitials
+  are off behind a flag. Nothing ad-related loads before consent (UMP, then
+  ATT) or before the app knows the player is not Premium. The rules are in
+  `lib/ads/policy.js`.
+- **Web:** Premium features show as locked previews, and the Premium screen
+  explains that purchases happen in the mobile apps.
+- **Environment variables:** see `.env.example` (RevenueCat public SDK keys,
+  ad switches and production ad unit IDs, privacy and terms URLs).
+- **Testing:** `npm test` covers the entitlement states, the RevenueCat
+  adapter, the ad rules and consent order. On local dev and Vercel previews,
+  the Hero tab's **Developer tools** switch a pretend store between locked,
+  unlocked, pending, failing and offline. It is compiled out of production
+  builds. Sandbox testing for both stores is described in
+  docs/MONETIZATION.md.
+- **Settings (Hero tab):** Premium and Restore Purchases, knight armour, Help
+  & Resources (US quitline 1-800-QUIT-NOW, and a note that the app is not a
+  substitute for medical advice), Privacy Policy and Terms links, how to
+  manage purchases, and Delete My Data.
 
 ## Credits
 

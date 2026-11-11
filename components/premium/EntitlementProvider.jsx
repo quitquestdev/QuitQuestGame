@@ -124,23 +124,29 @@ const LOCKED = {
   reloadOffers: async () => {},
 };
 
-/** DEV ONLY helpers for the developer panel. No-ops in production builds. */
-export const devMockControls = {
-  enabled: process.env.QQ_DEV_TOOLS === 'true',
-  get scenario() {
-    const s = safeStorage();
-    return s ? s.getItem(DEV_SCENARIO_KEY) : null;
-  },
-  set(scenario) {
-    const s = safeStorage();
-    if (!s || process.env.QQ_DEV_TOOLS !== 'true') return;
-    if (scenario) s.setItem(DEV_SCENARIO_KEY, scenario);
-    else s.removeItem(DEV_SCENARIO_KEY);
-  },
-  resetPurchase() {
-    const s = safeStorage();
-    if (!s || process.env.QQ_DEV_TOOLS !== 'true') return;
-    s.removeItem('qq.devMock.owned');
-    Object.keys(s).filter((k) => k.startsWith('qq.entitlements.v1')).forEach((k) => s.removeItem(k));
-  },
-};
+/**
+ * DEV ONLY helpers for the developer panel. In production builds the flag is
+ * inlined as 'false' and only the no-op object below remains.
+ */
+export const devMockControls =
+  process.env.QQ_DEV_TOOLS !== 'true'
+    ? { enabled: false, scenario: null, set() {}, resetPurchase() {} }
+    : {
+        enabled: true,
+        get scenario() {
+          const s = safeStorage();
+          return s ? s.getItem(DEV_SCENARIO_KEY) : null;
+        },
+        set(scenario) {
+          const s = safeStorage();
+          if (!s) return;
+          if (scenario) s.setItem(DEV_SCENARIO_KEY, scenario);
+          else s.removeItem(DEV_SCENARIO_KEY);
+        },
+        resetPurchase() {
+          const s = safeStorage();
+          if (!s) return;
+          s.removeItem('qq.devMock.owned');
+          Object.keys(s).filter((k) => k.startsWith('qq.entitlements.v1')).forEach((k) => s.removeItem(k));
+        },
+      };
