@@ -29,7 +29,7 @@ function countSession() {
     window.localStorage.setItem(SESSIONS_KEY, String(n));
     return n;
   } catch (e) {
-    return 1; // unknown: treat as a first session (no ads)
+    return 1; // unknown: count it as a first session (no ads)
   }
 }
 

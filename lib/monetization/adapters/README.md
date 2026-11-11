@@ -28,4 +28,4 @@ Info = { active: { [entitlementId]: { productId, since } }, products?: [productI
 
 Adapters throw errors whose `code` is one of `PURCHASE_ERRORS` in
 `../config.js`: `cancelled`, `pending`, `network`, `store_unavailable`,
-`not_allowed`, `unsupported` or `unknown`. Anything else is treated as `unknown`.
+`not_allowed`, `unsupported` or `unknown`. Anything else counts as `unknown`.
