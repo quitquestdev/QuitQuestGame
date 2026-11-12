@@ -14,9 +14,27 @@ A gamified quit-smoking app that turns your journey into a 16-bit RPG adventure.
 - **Activity logging:** walks, exercise, meditation and water.
 - **World regrowth:** as the streak grows, moss creeps into the interface (can be turned off on the Hero tab).
 
+## Platforms and codebase
+
+This repository is the **single codebase for the web app**: a Next.js 14
+(App Router) project in JavaScript, deployed by Vercel from GitHub. All game
+code is plain React plus platform-neutral modules (`lib/battle`,
+`lib/journey`, `lib/monetization`, `lib/ads`, `lib/premium`, `theme/`), so the
+planned **React Native / Expo** app for iOS and Android can reuse them.
+
+The Expo app itself is not in this repository yet. A separate, early Expo
+prototype exists in another repository and does not contain this work. The
+native-only pieces are written and tested behind small adapters, ready to be
+wired up in the Expo port. These are RevenueCat purchases, AdMob with consent,
+expo-haptics, expo-av sound, a touch BreathInput, and Firebase account
+deletion. Until then, iOS and Android users use the web app in the browser.
+The adapters are documented in `docs/MONETIZATION.md` and the Battles
+section below.
+
 ## Running it
 
-Requires Node 18 or newer. Run the unit tests with `npm test`.
+Requires Node 18 or newer. Run the unit tests with `npm test`; run every check
+(lint, type check, tests, release check) with `npm run check`.
 
 ```bash
 npm ci
@@ -39,22 +57,85 @@ Every push to a branch also builds a **Vercel preview**. `/dev` works on preview
 | `npm run brand` | Rebuild app icons and splash from the hero sprite |
 | `npm run release:check` | List placeholder art and check every frame file |
 | `npm run release:check:strict` | Same, but fail while any placeholder art remains |
+| `npm run lint` | ESLint (`next/core-web-vitals`); `next build` runs it too |
+| `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
+| `npm test` | Unit tests (Node's built-in runner) |
+| `npm run check` | All of the above in one go |
+| `npm run sprites:skins` | Rebuild the Premium knight skin packs |
+| `npm run sounds:placeholders` | Rebuild the placeholder sound effects |
+
+## Deploying the web app
+
+Vercel builds this repository (settings in `vercel.json`):
+
+| Setting | Value |
+|---|---|
+| Framework | Next.js |
+| Root directory | the repository root |
+| Install command | `npm install` |
+| Build command | `next build` (it runs ESLint and the TypeScript check) |
+| Output directory | `.next` |
+| Production branch | `main` |
+
+- **Every push to any other branch** gets a preview deployment at
+  `quit-quest-game-git-<branch>-quitquestdevs-projects.vercel.app`. Developer
+  tools (the purchase mock, Win now / Lose now, `/dev`) are on in previews and
+  compiled out of production.
+- **Merging to `main`** deploys to production.
+- **Roll back** in Vercel under Deployments: open the last good production
+  deployment, then use "..." > Promote to Production (or Instant Rollback).
+- **Before launch** the site is `noindex`. Set
+  `NEXT_PUBLIC_QQ_ALLOW_INDEXING=true` in Vercel and redeploy to allow
+  search engines.
+
+### Environment variables
+
+Every variable is listed and explained in `.env.example`. All are public
+values that ship inside the app (`NEXT_PUBLIC_` on the web, `EXPO_PUBLIC_` in
+the future Expo app). None is a secret, and the web app needs none of them to
+run.
+
+| Variable | Web | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_QQ_PRIVACY_POLICY_URL`, `NEXT_PUBLIC_QQ_TERMS_URL` | yes | Settings links; "coming soon" until set |
+| `NEXT_PUBLIC_QQ_SITE_URL` | optional | Public address for share images; defaults to the Vercel URL |
+| `NEXT_PUBLIC_QQ_ALLOW_INDEXING` | yes | `true` only at launch; otherwise noindex |
+| `NEXT_PUBLIC_QQ_REVENUECAT_IOS_KEY`, `..._ANDROID_KEY` | no | Mobile apps only (public SDK keys) |
+| `NEXT_PUBLIC_QQ_ADS_ENABLED`, `..._INTERSTITIALS_ENABLED`, `..._ADMOB_*_ID` | no | Mobile apps only; the web never shows ads |
+| `QQ_DEV_TOOLS`, `NEXT_PUBLIC_ENABLE_DEV_HARNESS` | no | Local overrides for developer tools; never set in production |
+
+Server-side secrets (Firebase admin keys and the like) must never use the
+`NEXT_PUBLIC_` or `EXPO_PUBLIC_` prefixes; this codebase has none today.
+
 
 ## Project structure
 
 ```
-app/                     Next.js App Router: layout, global CSS, icons, web manifest
-  dev/                   Dev harness route (/dev)
+app/                     Next.js App Router: layout and metadata, global CSS, icons,
+                         share image, web manifest, robots, 404 page
+  dev/                   Dev harness route (/dev; 404 in production)
 components/
-  QuitQuestRPG.jsx       The game: state, rules and screens
-  map/                   World map: JourneyMap (renderer), MapParticles, place helpers
+  QuitQuestRPG.jsx       The game: state and screens
+  CreditsScreen.jsx      Shows CREDITS.md in the app (Hero > Privacy & Terms > Credits)
+  map/                   World maps (OverworldMap from above, JourneyMap on the road)
+  battle/                Battle screen, field effects, mini-games, results, Battle Camp
+  premium/               Entitlement provider, Premium screen, gated features
+  ads/                   Ads provider and slots (mobile only; nothing on the web)
   Sprite.jsx             The only way pixel art is drawn
   SpriteBackground.jsx   Tiled sprite backgrounds
   ui/                    Panel, Button, ProgressBar, streak greening
-  battle/                BattleScene (parallax) and BattleField (animation, damage numbers)
   dev/                   Dev harness
-lib/sprites/             Sprite registry, React provider and idle preloading
-lib/journey/             World map data layer: regions and day ranges, pure layout
+lib/
+  battle/                Battle engine and data (enemies, abilities, tuning)
+  journey/               World map data layer: regions, layout, overhead geometry
+  monetization/          Entitlements, product config, billing adapters
+  ads/                   Ad placement rules and AdMob adapter
+  premium/               Stats, savings, skins, story hook
+  fx/                    Sound and haptics
+  account/               Data and account deletion
+  sprites/               Sprite registry, React provider and idle preloading
+tests/                   Unit tests (npm test)
+archive/                 Retired files kept for reference (see archive/README.md)
 theme/
   palette.js             The 32-colour master palette
   typography.js          Type roles (pixel, display, body)
@@ -67,6 +148,20 @@ scripts/                 Sprite, brand and release-check scripts
 docs/                    Feature inventory, backlog, baseline screenshots
 CREDITS.md               Every third-party asset, author and licence
 ```
+
+## Adding an asset
+
+1. Draw it to the 32-colour palette at native size (never pre-scaled).
+2. Add it to `public/assets/sprites/manifest.json` under a stable ID, either
+   by hand or through a part in `scripts/sprites/parts/` and
+   `npm run sprites:placeholders`. Tag it `"placeholder": true` until the
+   final art lands.
+3. Draw it with `<Sprite id="..." scale={2} />`; never reference image paths.
+4. Credit it in `CREDITS.md`. The in-app Credits screen updates
+   automatically.
+5. Run `npm run release:check`.
+
+To add an enemy, see "Adding an enemy" under Battles.
 
 ## Look and feel rules
 

@@ -19,6 +19,13 @@ module.exports = (phase) => {
   return {
     reactStrictMode: true,
     swcMinify: true,
+    poweredByHeader: false,
+    // CREDITS.md is bundled as text for the in-app Credits screen, so the
+    // screen always shows exactly what the file says.
+    webpack(config) {
+      config.module.rules.push({ test: /\.md$/, type: 'asset/source' });
+      return config;
+    },
     env: {
       QQ_DEV_TOOLS: devTools ? 'true' : 'false',
     },

@@ -76,3 +76,36 @@ out('public/icons/icon-512.png', centred(512, 512, b.scaleInt(12)));
 out('public/icons/icon-maskable-512.png', centred(512, 512, b.scaleInt(9)));
 out('assets/brand/icon-1024.png', centred(1024, 1024, b.scaleInt(24)));
 out('assets/brand/splash-1284x2778.png', centred(1284, 2778, b.scaleInt(10), 'indigo950'));
+
+/**
+ * Share image (Open Graph / Twitter card), 1200x630: the knight's badge faces
+ * the Nicotine Lord across a dithered horizon. Placeholder, like all brand art.
+ * Next.js serves app/opengraph-image.png and app/twitter-image.png itself.
+ */
+function shareImage() {
+  const W = 1200;
+  const H = 630;
+  const img = canvas(W, H, 'indigo950');
+  // Sky bands, then a dithered horizon and ground, in palette steps of 6 px.
+  const bands = ['indigo900', 'indigo800', 'indigo700'];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const px = Math.floor(x / 6);
+      const py = Math.floor(y / 6);
+      let token = bands[Math.min(2, Math.floor(y / 140))];
+      if (y > 450) token = (px + py) % 2 ? 'indigo800' : 'stone800';
+      if (y > 480) token = 'stone800';
+      if (y < 12 || y >= H - 12 || x < 12 || x >= W - 12) token = 'brass500';
+      if (y < 6 || y >= H - 6 || x < 6 || x >= W - 6) token = 'indigo950';
+      img.set(x, y, rgbOf(token));
+    }
+  }
+  img.paste(b.scaleInt(9), 120, 135); // 360x360 badge
+  const lordEntry = manifest.sprites.enemy_nicotine_lord;
+  const lord = Img.load(path.join(ROOT, 'public', manifest.baseUrl, lordEntry.animations.idle.path.replace('##', '01')));
+  img.paste(lord.scaleInt(6), 1200 - 120 - 384, 480 - 384 + 30); // 384x384, standing on the horizon
+  return img;
+}
+const share = shareImage();
+out('app/opengraph-image.png', share);
+out('app/twitter-image.png', share);

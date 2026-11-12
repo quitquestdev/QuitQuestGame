@@ -60,7 +60,7 @@ export default function PlaceDetail({ place, day, onClose, onOpenStory, onFight 
   } else {
     body = (
       <>
-        <p className="type-subheading text-rust-300">The Nicotine Lord's Fortress</p>
+        <p className="type-subheading text-rust-300">The Nicotine Lord&rsquo;s Fortress</p>
         {active ? (
           <>
             <p className="type-body text-bone">Six months free. The Nicotine Lord waits behind these walls.</p>

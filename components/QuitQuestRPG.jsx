@@ -13,6 +13,7 @@ import { REGIONS } from '../lib/journey/regions';
 import { useEntitlements } from './premium/EntitlementProvider';
 import { PremiumGate, AdvancedStats, SavingsProjections, SkinPicker, SAMPLE_STATS, SAMPLE_SAVINGS } from './premium/PremiumFeatures';
 import PremiumScreen from './premium/PremiumScreen';
+import CreditsScreen from './CreditsScreen';
 import { AdSlot, useAds } from './ads/AdsProvider';
 import { advancedStats, savingsProjection, logBattle } from '../lib/premium/insights';
 import { premiumChaptersFor } from '../lib/premium/story';
@@ -162,7 +163,7 @@ const SetupScreen = React.memo(({
           {setupStep === 2 && (
             <div className="text-center">
               {stepHeading('icon_swords', 'Choose Your Class')}
-              <p className="type-body text-bone mb-4">Select your hero's class</p>
+              <p className="type-body text-bone mb-4">Select your hero&rsquo;s class</p>
               <div className="space-y-2">
                 {[
                   { id: 'warrior', name: 'Warrior', icon: 'hero_warrior', desc: 'Strong and resilient' },
@@ -225,7 +226,7 @@ const SetupScreen = React.memo(({
                 max="100"
                 className="qq-input"
               />
-              <p className="type-caption text-stone-400 mt-2">Be honest - we'll track your victories!</p>
+              <p className="type-caption text-stone-400 mt-2">Be honest - we&rsquo;ll track your victories!</p>
             </div>
           )}
 
@@ -245,7 +246,7 @@ const SetupScreen = React.memo(({
                 step="0.01"
                 className="qq-input"
               />
-              <p className="type-caption text-stone-400 mt-2">We'll track your gold savings!</p>
+              <p className="type-caption text-stone-400 mt-2">We&rsquo;ll track your gold savings!</p>
             </div>
           )}
 
@@ -274,6 +275,11 @@ const SetupScreen = React.memo(({
 });
 
 SetupScreen.displayName = 'SetupScreen';
+
+// Development-only logging: silent in production builds.
+const devLog = (...args) => {
+  if (process.env.NODE_ENV !== 'production') console.log(...args); // eslint-disable-line no-console
+};
 
 const QuitQuestRPG = () => {
   // Game States
@@ -551,7 +557,7 @@ const QuitQuestRPG = () => {
           setUnlockedStoryDays(parsed.unlockedStoryDays);
         }
 
-        console.log('Progress loaded from localStorage');
+        devLog('Progress loaded from localStorage');
       }
     } catch (error) {
       console.error('Failed to load data from localStorage:', error);
@@ -572,7 +578,7 @@ const QuitQuestRPG = () => {
         };
 
         localStorage.setItem('quitQuestData', JSON.stringify(dataToSave));
-        console.log('Progress auto-saved');
+        devLog('Progress auto-saved');
       } catch (error) {
         console.error('Failed to save data to localStorage:', error);
       }
@@ -1054,7 +1060,7 @@ const QuitQuestRPG = () => {
 
       // Clear localStorage
       localStorage.removeItem('quitQuestData');
-      console.log('Progress reset - localStorage cleared');
+      devLog('Progress reset - localStorage cleared');
     }
   };
 
@@ -1511,7 +1517,7 @@ const QuitQuestRPG = () => {
             {/* Progress Summary */}
             <div className="qq-inset text-center space-y-2">
               <p className="type-caption text-bone">
-                You've unlocked {availableStories.length} of {storyContent.chapters.filter(ch => ch.day > 0).length} story entries
+                You&rsquo;ve unlocked {availableStories.length} of {storyContent.chapters.filter(ch => ch.day > 0).length} story entries
               </p>
               <ProgressBar value={stats.daysSmokeFree} max={180} tone="moss" label="Six-month journey" />
               <p className="qq-label text-moss-300">
@@ -1762,7 +1768,8 @@ const QuitQuestRPG = () => {
           </div>
         </Panel>
 
-        <div className="relative z-10">
+        {/* Collapses to nothing when no ad shows (always on the web) */}
+        <div className="relative z-10 empty:hidden">
           <AdSlot screen="dashboard" inCravingFlow={battleState.inBattle} />
         </div>
       </div>
@@ -1970,7 +1977,7 @@ const QuitQuestRPG = () => {
             <Sprite id="icon_special" scale={2} className="mx-auto block" />
             <h3 className="type-title text-brass-300">Legendary Hero!</h3>
             <p className="type-body text-bone">
-              You've unlocked every achievement! You are a true legend of Quit Quest!
+              You&rsquo;ve unlocked every achievement! You are a true legend of Quit Quest!
             </p>
           </Panel>
         )}
@@ -2025,6 +2032,9 @@ const QuitQuestRPG = () => {
         <p className="type-caption text-stone-400">
           Manage or cancel: Premium is a one-time purchase with nothing to cancel. Purchases are managed in your App Store or Google Play account settings.
         </p>
+        <Button size="sm" onClick={() => { setCurrentScreen('credits'); if (typeof window !== 'undefined') window.scrollTo({ top: 0 }); }}>
+          <Sprite id="icon_scroll" scale={1} />Credits
+        </Button>
       </Panel>
 
       <Panel tone="danger" className="space-y-3">
@@ -2126,7 +2136,7 @@ const QuitQuestRPG = () => {
       <Panel className="space-y-3">
         <h3 className="type-subheading text-brass-300">Sound &amp; Haptics</h3>
         <p className="type-body text-bone">
-          Battle sounds are off unless you turn them on, and follow your device's silent switch. Haptics are short, gentle buzzes on hits and breathing cues, where your device supports them.
+          Battle sounds are off unless you turn them on, and follow your device&rsquo;s silent switch. Haptics are short, gentle buzzes on hits and breathing cues, where your device supports them.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button selected={userData.settings?.sound === true} onClick={() => toggleSetting('sound', false)}>
@@ -2263,6 +2273,7 @@ const QuitQuestRPG = () => {
           {currentScreen === 'profile' && ProfileScreen()}
           {currentScreen === 'stats' && RecordsScreen()}
           {currentScreen === 'premium' && <PremiumScreen onClose={() => setCurrentScreen(returnScreen)} />}
+          {currentScreen === 'credits' && <CreditsScreen onClose={() => setCurrentScreen('profile')} />}
         </main>
       </div>
     </GreeningProvider>

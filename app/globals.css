@@ -242,6 +242,7 @@
   }
   .qq-ad-outline[data-would-show='yes'] { border-color: var(--c-brass500); color: var(--c-brass300); }
 
+  .qq-code { font-family: ui-monospace, monospace; font-size: 0.85em; color: var(--c-brass300); background: var(--c-indigo950); padding: 0 3px; overflow-wrap: anywhere; }
   .qq-link { color: var(--c-brass300); text-decoration: underline; text-underline-offset: 3px; }
   .qq-link:hover, .qq-link:focus-visible { color: var(--c-bone); }
 

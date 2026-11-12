@@ -9,16 +9,30 @@ import '@fontsource/cormorant-garamond/600-italic.css'
 import '@fontsource/jersey-10/400.css'
 import { palette } from '../theme/palette'
 
+import { siteUrl, allowIndexing } from '../lib/site'
+
+const description = 'A pixel-art RPG companion for quitting smoking: battle cravings, follow your recovery milestones and walk a 180-day story.'
+
 export const metadata = {
-  title: 'Quit Quest - Stop Smoking RPG',
-  description: 'Turn your quit smoking journey into an epic RPG adventure!',
-  // Icons come from app/icon.png and app/apple-icon.png (npm run brand).
+  metadataBase: new URL(siteUrl),
+  title: { default: 'Quit Quest: Stop Smoking RPG', template: '%s | Quit Quest' },
+  description,
+  applicationName: 'Quit Quest',
+  // Icons come from app/icon.png and app/apple-icon.png, and the share image
+  // from app/opengraph-image.png and app/twitter-image.png (npm run brand).
+  openGraph: { type: 'website', siteName: 'Quit Quest', title: 'Quit Quest: Stop Smoking RPG', description },
+  twitter: { card: 'summary_large_image', title: 'Quit Quest: Stop Smoking RPG', description },
+  // Pre-launch: not indexed until NEXT_PUBLIC_QQ_ALLOW_INDEXING is 'true'.
+  robots: allowIndexing ? { index: true, follow: true } : { index: false, follow: false },
+  appleWebApp: { capable: true, title: 'Quit Quest', statusBarStyle: 'black-translucent' },
+  formatDetection: { telephone: false },
 }
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale: people must be able to zoom in.
+  viewportFit: 'cover',
   themeColor: palette.indigo900,
 }
 

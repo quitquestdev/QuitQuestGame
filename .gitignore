@@ -22,9 +22,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# local env files: every .env file except the documented example
 .env
+.env.*
+.env*.local
+!.env.example
 
 # vercel
 .vercel
@@ -32,3 +34,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# native (Expo / EAS) and other local tool output
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.log
+.idea/
+.vscode/
+
