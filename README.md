@@ -1,24 +1,501 @@
-Quit Quest RPG
-A gamified quit-smoking application that turns your journey to quit smoking into an epic RPG adventure!
+# Quit Quest RPG
 
-Description
-Quit Quest RPG is a web-based React application that helps users quit smoking by gamifying the experience. Track your progress, battle cravings, unlock story chapters, earn achievements, and watch your health improve day by day.
+A gamified quit-smoking app that turns your journey into a 16-bit RPG adventure.
 
-Features
-Character Creation: Choose your hero name and class (Warrior, Mage, or Rogue)
-Progress Tracking: Track days smoke-free, money saved, and cigarettes avoided
-Story System: Unlock 180+ days of story content as you progress
-Battle System: Fight cravings and demons in an RPG-style battle system
-Achievements: Earn over 50 achievements based on time, battles, streaks, and more
-Health Milestones: See real health benefits as you progress
-Activity Logging: Track healthy activities like walks, meditation, and exercise
+## Features
 
-Browser Support
-Works best on modern browsers:
+- **Character creation:** name your hero and choose a class (Warrior, Mage or Rogue), each a knight in its own colours.
+- **Progress tracking:** days smoke-free, money saved and cigarettes avoided.
+- **Story:** 180+ days of story content in six chapters, with a story archive and a 180-day journey map.
+- **World map:** one road from the start of the quit to the Nicotine Lord's fortress at day 180. The world heals as the streak grows: smog lifts region by region, health milestones light up as landmarks, and the knight walks to today's position.
+- **Craving battles:** turn-based battles against addiction-themed enemies (a smoke wraith, a cigarette-butt goblin, a social pressure imp, a stress demon, a boredom slime and the Nicotine Lord) on a parallax battlefield.
+- **Achievements:** 68 achievements across health milestones, time, money, battles, activities, streaks and cigarettes avoided.
+- **Health milestones:** real recovery milestones from 20 minutes to 15 years.
+- **Activity logging:** walks, exercise, meditation and water.
+- **World regrowth:** as the streak grows, moss creeps into the interface (can be turned off on the Hero tab).
 
-Chrome/Edge (latest)
-Firefox (latest)
-Safari (latest)
+## Platforms and codebase
+
+This repository is the **single codebase for the web app**: a Next.js 14
+(App Router) project in JavaScript, deployed by Vercel from GitHub. All game
+code is plain React plus platform-neutral modules (`lib/battle`,
+`lib/journey`, `lib/monetization`, `lib/ads`, `lib/premium`, `theme/`), so the
+planned **React Native / Expo** app for iOS and Android can reuse them.
+
+The Expo app itself is not in this repository yet. A separate, early Expo
+prototype exists in another repository and does not contain this work. The
+native-only pieces are written and tested behind small adapters, ready to be
+wired up in the Expo port. These are RevenueCat purchases, AdMob with consent,
+expo-haptics, expo-av sound, a touch BreathInput, and Firebase account
+deletion. Until then, iOS and Android users use the web app in the browser.
+The adapters are documented in `docs/MONETIZATION.md` and the Battles
+section below.
+
+## Running it
+
+Requires Node 18 or newer. Run the unit tests with `npm test`; run every check
+(lint, type check, tests, release check) with `npm run check`.
+
+```bash
+npm ci
+npm run dev
+```
+
+Open http://localhost:3000 for the game and http://localhost:3000/dev for the dev harness, which shows every palette colour, type style, sprite, battle scene and UI component.
+
+```bash
+npm run build && npm start
+```
+
+Every push to a branch also builds a **Vercel preview**. `/dev` works on previews and returns 404 on the production site, so a stage can be reviewed from the preview link without running anything locally.
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run sprites:placeholders` | Rebuild all placeholder art from `art-sources/` |
+| `npm run brand` | Rebuild app icons and splash from the hero sprite |
+| `npm run release:check` | List placeholder art and check every frame file |
+| `npm run release:check:strict` | Same, but fail while any placeholder art remains |
+| `npm run lint` | ESLint (`next/core-web-vitals`); `next build` runs it too |
+| `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
+| `npm test` | Unit tests (Node's built-in runner) |
+| `npm run check` | All of the above in one go |
+| `npm run sprites:skins` | Rebuild the Premium knight skin packs |
+| `npm run sounds:placeholders` | Rebuild the placeholder sound effects |
+
+## Deploying the web app
+
+Vercel builds this repository (settings in `vercel.json`):
+
+| Setting | Value |
+|---|---|
+| Framework | Next.js |
+| Root directory | the repository root |
+| Install command | `npm install` |
+| Build command | `next build` (it runs ESLint and the TypeScript check) |
+| Output directory | `.next` |
+| Production branch | `main` |
+
+- **Every push to any other branch** gets a preview deployment at
+  `quit-quest-game-git-<branch>-quitquestdevs-projects.vercel.app`. Developer
+  tools (the purchase mock, Win now / Lose now, `/dev`) are on in previews and
+  compiled out of production.
+- **Merging to `main`** deploys to production.
+- **Roll back** in Vercel under Deployments: open the last good production
+  deployment, then use "..." > Promote to Production (or Instant Rollback).
+- **Before launch** the site is `noindex`. Set
+  `NEXT_PUBLIC_QQ_ALLOW_INDEXING=true` in Vercel and redeploy to allow
+  search engines.
+
+### Environment variables
+
+Every variable is listed and explained in `.env.example`. All are public
+values that ship inside the app (`NEXT_PUBLIC_` on the web, `EXPO_PUBLIC_` in
+the future Expo app). None is a secret, and the web app needs none of them to
+run.
+
+| Variable | Web | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_QQ_PRIVACY_POLICY_URL`, `NEXT_PUBLIC_QQ_TERMS_URL` | yes | Settings links; "coming soon" until set |
+| `NEXT_PUBLIC_QQ_SITE_URL` | optional | Public address for share images; defaults to the Vercel URL |
+| `NEXT_PUBLIC_QQ_ALLOW_INDEXING` | yes | `true` only at launch; otherwise noindex |
+| `NEXT_PUBLIC_QQ_REVENUECAT_IOS_KEY`, `..._ANDROID_KEY` | no | Mobile apps only (public SDK keys) |
+| `NEXT_PUBLIC_QQ_ADS_ENABLED`, `..._INTERSTITIALS_ENABLED`, `..._ADMOB_*_ID` | no | Mobile apps only; the web never shows ads |
+| `QQ_DEV_TOOLS`, `NEXT_PUBLIC_ENABLE_DEV_HARNESS` | no | Local overrides for developer tools; never set in production |
+
+Server-side secrets (Firebase admin keys and the like) must never use the
+`NEXT_PUBLIC_` or `EXPO_PUBLIC_` prefixes; this codebase has none today.
+
+
+## Project structure
+
+```
+app/                     Next.js App Router: layout and metadata, global CSS, icons,
+                         share image, web manifest, robots, 404 page
+  dev/                   Dev harness route (/dev; 404 in production)
+components/
+  QuitQuestRPG.jsx       The game: state and screens
+  CreditsScreen.jsx      Shows CREDITS.md in the app (Hero > Privacy & Terms > Credits)
+  map/                   World maps (OverworldMap from above, JourneyMap on the road)
+  battle/                Battle screen, field effects, mini-games, results, Battle Camp
+  premium/               Entitlement provider, Premium screen, gated features
+  ads/                   Ads provider and slots (mobile only; nothing on the web)
+  Sprite.jsx             The only way pixel art is drawn
+  SpriteBackground.jsx   Tiled sprite backgrounds
+  ui/                    Panel, Button, ProgressBar, streak greening
+  dev/                   Dev harness
+lib/
+  battle/                Battle engine and data (enemies, abilities, tuning)
+  journey/               World map data layer: regions, layout, overhead geometry
+  monetization/          Entitlements, product config, billing adapters
+  ads/                   Ad placement rules and AdMob adapter
+  premium/               Stats, savings, skins, story hook
+  fx/                    Sound and haptics
+  account/               Data and account deletion
+  sprites/               Sprite registry, React provider and idle preloading
+tests/                   Unit tests (npm test)
+archive/                 Retired files kept for reference (see archive/README.md)
+theme/
+  palette.js             The 32-colour master palette
+  typography.js          Type roles (pixel, display, body)
+public/assets/sprites/   Sprite manifest and art, by category
+  placeholder/           Temporary alpha art, NOT FOR RELEASE
+public/assets/skins/     Skin-pack manifests (dev-demo is an example)
+art-sources/             Unmodified sources of the placeholder art (not shipped)
+assets/brand/            Large icon and splash images for the native port
+scripts/                 Sprite, brand and release-check scripts
+docs/                    Feature inventory, backlog, baseline screenshots
+CREDITS.md               Every third-party asset, author and licence
+```
+
+## Adding an asset
+
+1. Draw it to the 32-colour palette at native size (never pre-scaled).
+2. Add it to `public/assets/sprites/manifest.json` under a stable ID, either
+   by hand or through a part in `scripts/sprites/parts/` and
+   `npm run sprites:placeholders`. Tag it `"placeholder": true` until the
+   final art lands.
+3. Draw it with `<Sprite id="..." scale={2} />`; never reference image paths.
+4. Credit it in `CREDITS.md`. The in-app Credits screen updates
+   automatically.
+5. Run `npm run release:check`.
+
+To add an enemy, see "Adding an enemy" under Battles.
+
+## Look and feel rules
+
+- **Palette:** only the 32 colours in `theme/palette.js` (indigo, brass, rust, moss, stone and bone). Tailwind's default colours are removed, so `bg-indigo-800` works and `bg-blue-500` generates nothing.
+- **Green is a meaning colour.** Moss appears only for positive things: health, XP and recovery progress, completed achievements, the smoke-free day counter, and positive actions such as fighting a craving or logging an activity. It is never decoration.
+- **Type:** Cinzel for headings, Cormorant Garamond for reading text, Jersey 10 only for numbers, stats and short labels. Use the `.type-*` classes generated from `theme/typography.js`.
+- **Pixels:** sprites and UI frames render with nearest-neighbour scaling at whole-number scales (usually 2x). Motion uses stepped timing and whole-pixel distances. Nothing zooms, and no filters shift colours off the palette.
+- **Components:** use `Panel`, `Button` (brass, moss or rust) and `ProgressBar` from `components/ui` instead of styling boxes by hand.
+
+## Art and the sprite manifest
+
+All art is loaded through the sprite manifest. Components never reference an image path; they ask for a stable ID:
+
+```jsx
+<Sprite id="enemy_smoke_wraith" animation="attack" scale={3} />
+```
+
+The default manifest is `public/assets/sprites/manifest.json`. Each entry looks like this:
+
+```json
+"enemy_smoke_wraith": {
+  "category": "enemies",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "placeholder": true,
+  "animations": {
+    "idle":   { "path": "enemies/smoke_wraith_idle_##.png", "frames": 4, "fps": 5 },
+    "attack": { "path": "enemies/smoke_wraith_attack_##.png", "frames": 4, "fps": 12, "loop": false }
+  }
+}
+```
+
+### Manifest rules
+
+1. **IDs are stable** and lowercase with underscores: `hero_warrior`, `enemy_nicotine_lord`, `icon_heart`, `bg_forest_trees`, `ui_button_moss`. Code only ever uses the ID.
+2. **File names** follow `name_action_NN.png`, for example `knight_attack_01.png` or `boss_nicotine_lord_idle_01.png`. In the manifest, `##` stands for the frame number.
+3. **PNG, transparent background, native size, never pre-scaled.** Every frame of an entry is exactly `frameWidth` x `frameHeight`. The app scales by whole numbers with nearest-neighbour sampling.
+4. **Colours** should come from the master palette. The release check warns about anything else.
+5. **Placeholder art** lives in `sprites/placeholder/` and is tagged `"placeholder": true`.
+6. **Missing IDs** fall back from the skin pack to the default manifest, then to a visible checkered placeholder, with a warning in development.
+
+The sizes the game expects:
+
+| Kind | Size | Animations |
+|---|---|---|
+| Hero (`hero_warrior`, `hero_mage`, `hero_rogue`) | 32x32 | idle, attack, hurt, victory |
+| Enemies (`enemy_*`) | 32x32 | idle, attack, hurt |
+| Boss (`enemy_nicotine_lord`) | 64x64 | idle, attack, hurt |
+| Icons (`icon_*`) | 16x16 | idle (one frame) |
+| Battle backgrounds (`bg_<scene>_<layer>`) | any width that tiles, one height per scene | idle; `meta.scene`, `meta.layer`, `meta.parallax` |
+| UI pieces (`ui_*`) | nine-slice: 24x24 with 8px corners | buttons use normal, pressed, disabled |
+| World map layers (`journey_*`) | see [World map](#world-map) | idle |
+
+### Swapping in new art
+
+1. Export each frame as a PNG at native size with a transparent background, named `name_action_NN.png`.
+2. Put the files in the category folder: `public/assets/sprites/characters`, `enemies`, `icons`, `backgrounds` or `ui`.
+3. In `manifest.json`, point the entry's `path` at the new files, set `frames` and `fps`, and set `"placeholder": false`. Keep the ID the same.
+4. Run `npm run release:check` to confirm the files exist, the sizes match and the colours are on palette. If the hero changed, run `npm run brand` to regenerate the icons.
+5. Open `/dev` to see the art at 1x, 2x and 3x.
+
+`npm run sprites:placeholders` never overwrites an entry whose `placeholder` flag is `false`, so rebuilding the placeholders is safe once real art is in.
+
+### Skin packs
+
+A skin pack is a second manifest with its own `id`, `baseUrl` and only the IDs it changes. It can replace a single animation and inherit the rest from the default art. Load it and layer it on top:
+
+```js
+import { defaultRegistry, loadSkinManifest } from './lib/sprites/SpriteProvider';
+
+const pack = await loadSkinManifest('/assets/skins/dev-demo/manifest.json');
+if (pack) defaultRegistry.setSkins([pack]); // later packs override earlier ones
+```
+
+Every `Sprite`, panel, button and battle scene updates without code changes. A pack that fails to load or validate is ignored, and the default art stays. The dev harness has an "Apply demo skin pack" button that shows this working.
+
+## World map
+
+The world map leads the **Quest tab** (compact: no region list), so the home screen is the journey itself, with the dashboard panels below it. The full map with the region list is under Story > World Map (also reached from "Regions & full map" on the Quest tab). Both use one shared renderer (`renderWorldMap` in `components/QuitQuestRPG.jsx`), which waits until the day count is known so reveals and the knight's walk always start from the right place. It has two views of the same journey, chosen with the toggle above the map and remembered with progress:
+
+- **From above** (the default): the whole land seen from above. You can drag, zoom and walk the knight along the road, and land you haven't reached yet is in shadow.
+- **On the road**: a side-scrolling road with parallax layers.
+
+Both show eight regions:
+
+| Region | Quit days |
+|---|---|
+| Ashen Wastes | 0-3 |
+| Smog Marsh | 4-14 |
+| Thinning Haze | 15-30 |
+| Mending Fields | 31-60 |
+| Whispering Woods | 61-120 |
+| Sunlit Heights | 121-179 |
+| The Nicotine Lord's Fortress | 180 |
+| The Long Road (epilogue: 9 months to 15 years) | 181+ |
+
+The ranges follow the health milestones already in the game (the first three days hold the 20-minute to 3-day milestones; the marsh ends at 2 weeks, the haze at 1 month).
+
+### How it is built
+
+- **Data layer** (`lib/journey/`, no React and no game state):
+  - `regions.js` lists the regions, day ranges, world sizes and parallax speeds. The art script and the renderer both read it.
+  - `layout.js` turns a `JourneyData` object into positions: the day, the milestones (`{ id, day, title, description, icon, unlocked }`), story beats and encounters. Milestones are spaced so the knight stands exactly on them.
+- **Adapter:** `journeyData()` in `components/QuitQuestRPG.jsx` builds `JourneyData` from the game's own health achievements, story chapters and battle tiers. The map only renders a layout, so a different data source can drive it without touching the renderer.
+- **Renderer** (`components/map/JourneyMap.jsx`):
+  - Five parallax layers (sky 0.25, far 0.5, mid 0.75, ground 1, foreground 1.25) at a whole-number scale (2x, or 1x on very narrow screens).
+  - Places on the road: milestone landmarks, story signposts, craving camps and the fortress.
+  - Fog and one-time reveals, the knight's walk, the time-of-day light and particles.
+  - While you drag, layers move directly on the DOM in whole pixels.
+- **Saved with progress:** `userData.journey.revealsSeen` (each reveal plays once), `userData.journey.lastDay` (where the knight walks from next time) and `userData.settings.reducedEffects`.
+- **Places keep their existing behaviour:**
+  - Milestone landmarks show the achievement's own title and description, and are lit when it is unlocked.
+  - Signposts open the story archive.
+  - Camps start the same battles as the Quest tab's Mild, Medium and Strong buttons.
+  - The fortress starts the Nicotine Lord fight from day 180.
+- **Reduced Effects** (Hero tab, or automatic with the system's reduce-motion setting):
+  - turns off particles;
+  - keeps background layers still while dragging;
+  - shows reveals, the knight's walk and camera moves instantly;
+  - pauses prop animations.
+
+### The view from above
+
+- **Geometry** (`lib/journey/overworld.js`, shared by the renderer and the art script):
+  - The map is 320x240 native pixels.
+  - `ROUTE` holds the road's waypoints for each region.
+  - `pointForJourneyX()` projects any position from `layout.js` onto the map. The data layer is the same as the road view's, and it knows nothing about either view.
+  - `TERRITORY` sets how far each region's land reaches from its stretch of road.
+- **Renderer** (`components/map/OverworldMap.jsx`):
+  - **Scale:** whole numbers only (Wider is 1x, then 2x, Closer is 3x). It starts at 2x, or 1x on very narrow screens.
+  - **Moving around:** drag to pan; pinch, the buttons, `+`/`-` or ctrl + wheel to zoom; arrow keys to pan; Home to return to the knight.
+  - **Shadow:** land not yet reached is shown by one shadow sprite per region. Its soft edge reaches a few pixels onto land already lit, and where two shadows meet they join without a seam. The first time the knight arrives in a region, its `lift` animation plays once, drawing the shadow back from the land you came from.
+  - **Places:** milestone landmarks, camps and the fortress stay visible above the shadow as goals. Story signposts sit under it, so a region's chapters show once you arrive. Signposts are hidden at 1x so the zoomed-out view stays readable. Places are set beside the road, clear of each other.
+  - **Ambience:** the knight walks the road from the last day you saw, glints move on the sea, two clouds drift over the land, and the time-of-day light follows the device clock.
+- **Shared by both views** (`components/map/useJourneyMap.js`, `PlaceDetail.jsx`, `places.js`): reveals, Reduced Effects, the time of day and the place details panel. Reveals and the saved state (`revealsSeen`, `lastDay`) work the same in both views, so a region revealed in one is clear in the other.
+- **Reduced Effects** turns off the walk, clouds and sea glints, and shows reveals and camera moves instantly.
+
+### Map art in the manifest
+
+All map art is code-drawn placeholder art (`npm run sprites:placeholders`, `scripts/sprites/parts/journey.js` for the road and `scripts/sprites/parts/overworld.js` for the view from above). To replace it, keep the ID and the size and point the manifest entry at the new files.
+
+View from above:
+
+| ID | Size | Animations | Notes |
+|---|---|---|---|
+| `overworld_terrain` | 320x240 | idle | The whole land, lit from the north-west; the road follows `ROUTE` |
+| `overworld_sea` | 320x240 | idle (3) | Glints on open water, transparent elsewhere |
+| `overworld_shadow_<region>` | varies | idle, lift (4) | One region's shadow, cropped; `meta.x`/`meta.y` place it on the map |
+| `overworld_lm_beacon`, `_lantern`, `_spring`, `_tree`, `_stone` | 9x11 | lit, locked | Milestone landmarks |
+| `overworld_story` | 7x9 | unlocked, locked | Story signpost |
+| `overworld_camp` | 9x9 | idle, locked | Craving camp |
+| `overworld_fortress` | 24x24 | idle | The Nicotine Lord's fortress |
+| `overworld_knight_warrior`, `_mage`, `_rogue` | 9x13 | idle, walk | The knight on the map |
+| `overworld_cloud` | 36x16 | idle | A drifting cloud |
+
+A repainted terrain must keep the road where `ROUTE` puts it. The shadow sprites are built from the terrain (each pixel pushed down into the indigo family), so rebuild or redraw them together with it.
+
+On the road:
+
+| ID | Size | Animations | Notes |
+|---|---|---|---|
+| `journey_sky` | 630x120 | idle | Whole world at speed 0.25 plus 120px padding each side |
+| `journey_far` | 940x120 | idle | Speed 0.5, padding 80 |
+| `journey_mid` | 1250x120 | idle | Speed 0.75, padding 40 |
+| `journey_ground` | 1560x120 | idle | The road the knight walks; trail on rows 100-107, props stand on row 99 |
+| `journey_fore` | 2030x120 | idle | Speed 1.25, padding 40; keep it below row 106 so the knight stays visible |
+| `journey_fog` | 1560x120 | idle, lift (4) | Smog over unreached land; `lift` dissolves it for a reveal |
+| `journey_lm_beacon`, `_lantern`, `_spring`, `_tree`, `_stone` | 16x24 | lit, locked | Milestone landmarks |
+| `journey_story` | 12x16 | unlocked, locked | Story signpost |
+| `journey_camp` | 16x16 | idle, locked | Craving camp |
+| `journey_fortress` | 64x64 | idle | The Nicotine Lord's fortress |
+| `journey_fortress_far` | 32x24 | idle | The fortress on the horizon |
+| `journey_grass` | 8x8 | idle | Swaying grass in the living regions |
+| `hero_*` | 32x32 | walk | The knight's walk on the map |
+
+The layer widths come from `lib/journey/regions.js`. If you change region widths, rebuild the placeholders or redraw the layers to the new sizes. Each layer's `meta.speed` and `meta.pad` tell the renderer how to place it. Run `npm run release:check` afterwards: it lists any map art still tagged as placeholder and checks every frame's size.
+
+## Battles
+
+A battle is a short (about one to three minutes) activity for riding out a
+craving. Design notes: [docs/BATTLE_DESIGN.md](docs/BATTLE_DESIGN.md).
+
+### Architecture
+
+- **Rules:** `lib/battle/engine.js` is a pure state machine with no React,
+  DOM or timers.
+  - `createBattle()` starts a fight.
+  - `playerAct(state, action)` resolves the player's move.
+  - `enemyAct(state)` carries out the enemy's telegraphed move.
+  - `available(state)` reports cooldowns and uses left.
+  - Each call returns the new state plus a list of events (`hit`, `heal`,
+    `shield`, `stun`, `charge`, `taunt`, `phase`, `victory`, `defeat`,
+    `tip`).
+  - Damage is fixed by data, so nothing random decides a fight.
+- **Data:** all numbers live in data files.
+  - `lib/battle/data/abilities.js`: Strike, Delay, Breathe, Sip, Distract,
+    each with damage or effect, cooldown or uses, icon and tip line.
+  - `lib/battle/data/enemies.js`: health, hit sizes, the repeating
+    telegraph pattern, taunts, loot, and the pools for practice battles and
+    Urge Mode.
+  - `lib/battle/data/tuning.js`: hero health, level scaling, and the reward
+    taper.
+- **Screen:** `components/battle/`.
+  - `BattleView` runs a fight: telegraph, health bars, ability dock, the
+    mini-games and pacing between turns.
+  - `BattleField` animates the events.
+  - `AbilityBar`, `BreathingPanel`, `DistractPanel`, `BattleResults`,
+    `BattleCamp` (the Battle tab when idle) and `SupportPanel`.
+- **Game glue:** `components/QuitQuestRPG.jsx` starts battles and applies
+  results.
+  - `startBattle(tier)`: the dashboard and map camps.
+  - `startBattleAgainst(id)`: the fortress.
+  - `startUrge()`: Urge Mode.
+  - `finishBattle`: XP, battles won, cravings defeated, flawless
+    victories, the battle log and achievements, as before.
+- **Rewards:** `lib/battle/rewards.js` keeps the original XP formula (enemy
+  XP + 10 × combo). After 3 wins in 24 hours, XP tapers to 50%, then 25%,
+  then 10%. It is never zero, and starting or losing battles never reduces
+  it.
+- **Feel:**
+  - `lib/fx/sound.js` holds named sounds (hit, heal, charge, victory, tap,
+    rest) from `public/assets/sounds/manifest.json`. Sound is off by default.
+  - `lib/fx/haptics.js` holds named pulses.
+  - `components/battle/useBattleFx.js` connects both to the Sound and
+    Haptics settings (Hero tab).
+  - Reduced Effects, or the system's reduce-motion setting, removes shake,
+    lunges, white flashes and particles.
+
+### Abilities and the tactics they rehearse
+
+| Ability | Effect | Tip shown |
+|---|---|---|
+| Strike | A steady blow | (none) |
+| Delay | Hold the line for 3 seconds; blocks 70% of the next hit | Urges tend to pass if you wait them out. |
+| Breathe | A paced breathing round charges a class strike (stronger with steadier rhythm) | Slow breaths can help you settle. |
+| Sip | Restores 30% health, twice per battle | A glass of water is a simple reset. |
+| Distract | Tap a 4-step pattern in 5 seconds; success stuns the enemy | Shifting your attention can take the edge off. |
+
+The old Attack is Strike. The old Special (a class strike charged by
+attacking) became Breathe, keeping its class names and multipliers. The
+never-used Defend and Potion actions became Delay and Sip.
+
+### Breathing input
+
+`lib/battle/breathInput.js` defines **BreathInput**: `start()`, `stop()`
+(returns samples) and `subscribe(fn)`. A sample is `{ t, active }`, where
+`active` means breathing in. `createTouchBreathInput()` is the touch version
+(hold the button to breathe in). `lib/battle/breath.js` scores rhythm and
+steadiness only: inhale and exhale count equally, and extra presses lower the
+score. It never rewards force, speed or holding longer. Another input source
+only needs to produce the same samples; the panel takes it as an `input`
+prop. Every round offers Shorter, Skip and Stop.
+
+### Adding an enemy
+
+1. Add an entry to `ENEMIES` in `lib/battle/data/enemies.js`: id, name,
+   sprite, tier, xp, hp, attack, heavy, heal, a `pattern` of intents
+   (`attack`, `charge`, `heavy`, `heal`, `taunt`) and a few kind taunts. For a
+   boss, use `phases` with `untilHp` thresholds instead of `pattern`.
+2. Add its id to a pool in `TIER_POOLS` and/or `REGION_POOLS`.
+3. Add its sprite (`enemy_<id>` with idle, attack and hurt) through the art
+   manifest, tagged placeholder until final, and credit it in CREDITS.
+4. Run `npm test`: the fight-length test checks every enemy is winnable in a
+   sensible number of turns at levels 1, 3 and 5.
+
+### The end of a battle
+
+The battle stays on screen when it ends: after the final hit the enemy breaks
+into a puff and fades, the knight takes a victory pose with a burst of
+sparkles, and a **Victory!** banner drops over the field while the XP counts
+up. The results panel (supportive line, loot, buttons) appears beneath after
+a moment, or at once with **Skip**. After a loss, the knight rests on the
+field under a soft "Resting..." note. **Continue the journey** (or **Back to
+the map**) returns to the Quest tab, where after a win the knight hops on the
+map and the XP floats up once. With Reduced Effects the numbers appear
+at once and nothing moves.
+
+### Urge Mode
+
+The **Urge** button in the header (every main screen), the dashboard's
+Craving Emergency panel and the Battle tab start a short battle in one tap.
+The enemy is chosen from the map region you are in. No setup, no network
+and no microphone are needed. Every battle has **Leave** (always works, even
+mid-turn) and **Need more help** (the US quitline 1-800-QUIT-NOW and a
+not-medical-advice note). Ads are hard-blocked on all battle, Urge Mode and
+result screens.
+
+### Developer tools
+
+On local dev and Vercel previews only, the Hero tab can start any enemy,
+and every battle shows **Win now** and **Lose now**. The build flag strips
+both from production bundles.
+
+## Premium and ads
+
+The core game is free forever. **Premium** is one optional, one-time purchase
+(advanced stats, savings projections, three knight skins, no ads), sold only
+through the App Store and Google Play via RevenueCat. Full details:
+[docs/MONETIZATION.md](docs/MONETIZATION.md).
+
+- **Entitlement module:** screens ask `useEntitlements()` (`isPremium`,
+  `hasEntitlement('premium')`) from `components/premium/EntitlementProvider.jsx`
+  and never touch a billing SDK. The store logic is in
+  `lib/monetization/entitlements.js` with swappable adapters (RevenueCat for
+  the mobile apps, "unavailable" for the web, a dev-only mock). Product and
+  entitlement IDs are in `lib/monetization/config.js`; a future subscription
+  maps to the same `premium` entitlement with no screen changes.
+- **Offline and failures:** entitlements are cached on the device and
+  refreshed on launch and foreground; a failed check never removes Premium,
+  and players never see raw errors.
+- **Ads (mobile only):** one banner on the dashboard, Records and world map
+  screens only. There are no ads in battles, craving flows, onboarding, the
+  Premium screen, the first session, or for Premium players. Interstitials
+  are off behind a flag. Nothing ad-related loads before consent (UMP, then
+  ATT) or before the app knows the player is not Premium. The rules are in
+  `lib/ads/policy.js`.
+- **Web:** Premium features show as locked previews, and the Premium screen
+  explains that purchases happen in the mobile apps.
+- **Environment variables:** see `.env.example` (RevenueCat public SDK keys,
+  ad switches and production ad unit IDs, privacy and terms URLs).
+- **Testing:** `npm test` covers the entitlement states, the RevenueCat
+  adapter, the ad rules and consent order. On local dev and Vercel previews,
+  the Hero tab's **Developer tools** switch a pretend store between locked,
+  unlocked, pending, failing and offline. It is compiled out of production
+  builds. Sandbox testing for both stores is described in
+  docs/MONETIZATION.md.
+- **Settings (Hero tab):** Premium and Restore Purchases, knight armour, Help
+  & Resources (US quitline 1-800-QUIT-NOW, and a note that the app is not a
+  substitute for medical advice), Privacy Policy and Terms links, how to
+  manage purchases, and Delete My Data.
+
+## Credits
+
+See [CREDITS.md](CREDITS.md). The placeholder art is CC0 or public domain; the fonts are under the SIL Open Font License.
 
 Copyright
 

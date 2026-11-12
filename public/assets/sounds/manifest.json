@@ -1,0 +1,43 @@
+{
+  "id": "default-sounds",
+  "version": 1,
+  "baseUrl": "/assets/sounds/",
+  "sounds": {
+    "hit": {
+      "path": "placeholder/hit.wav",
+      "durationMs": 130,
+      "placeholder": true,
+      "source": "code"
+    },
+    "heal": {
+      "path": "placeholder/heal.wav",
+      "durationMs": 260,
+      "placeholder": true,
+      "source": "code"
+    },
+    "charge": {
+      "path": "placeholder/charge.wav",
+      "durationMs": 450,
+      "placeholder": true,
+      "source": "code"
+    },
+    "victory": {
+      "path": "placeholder/victory.wav",
+      "durationMs": 650,
+      "placeholder": true,
+      "source": "code"
+    },
+    "tap": {
+      "path": "placeholder/tap.wav",
+      "durationMs": 35,
+      "placeholder": true,
+      "source": "code"
+    },
+    "rest": {
+      "path": "placeholder/rest.wav",
+      "durationMs": 620,
+      "placeholder": true,
+      "source": "code"
+    }
+  }
+}

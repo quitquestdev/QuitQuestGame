@@ -1,23 +1,59 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Calendar, Trophy, User, Shield, Sword, Crown, Heart, Star, TrendingUp, Award, AlertCircle, Settings, DollarSign, Target, Sparkles, Flame, Wind, Zap, Swords, AlertTriangle, Activity, BookOpen, Scroll, Map } from 'lucide-react';
+import Sprite from './Sprite';
+import SpriteBackground from './SpriteBackground';
+import Panel from './ui/Panel';
+import Button from './ui/Button';
+import ProgressBar from './ui/ProgressBar';
+import { GreeningProvider, greeningStage } from './ui/Greening';
+import BattleField from './battle/BattleField';
+import JourneyMap from './map/JourneyMap';
+import OverworldMap from './map/OverworldMap';
+import { buildJourneyLayout } from '../lib/journey/layout';
+import { REGIONS } from '../lib/journey/regions';
+import { useEntitlements } from './premium/EntitlementProvider';
+import { PremiumGate, AdvancedStats, SavingsProjections, SkinPicker, SAMPLE_STATS, SAMPLE_SAVINGS } from './premium/PremiumFeatures';
+import PremiumScreen from './premium/PremiumScreen';
+import CreditsScreen from './CreditsScreen';
+import { AdSlot, useAds } from './ads/AdsProvider';
+import { advancedStats, savingsProjection, logBattle } from '../lib/premium/insights';
+import { premiumChaptersFor } from '../lib/premium/story';
+import { skinManifestUrl } from '../lib/premium/skins';
+import { loadSkinManifest } from '../lib/sprites/SpriteProvider';
+import BattleView from './battle/BattleView';
+import BattleCamp from './battle/BattleCamp';
+import SupportPanel from './battle/SupportPanel';
+import useBattleFx from './battle/useBattleFx';
+import { createBattle, isOver } from '../lib/battle/engine';
+import { ENEMIES, TIER_POOLS } from '../lib/battle/data/enemies';
+import { pickEnemy } from '../lib/battle/select';
+import { battleRewards } from '../lib/battle/rewards';
+import { devMockControls } from './premium/EntitlementProvider';
+import { env as qqEnv } from '../lib/monetization/env';
+import { deleteLocalData } from '../lib/account/deleteAccount';
+import { defaultRegistry } from '../lib/sprites/SpriteProvider';
+import { preloadSprites } from '../lib/sprites/preload';
+
+const REGION_IDS = REGIONS.map(r => r.id);
+
+// Inline icon: a manifest sprite sitting on the text line.
+const Icon = ({ id, scale = 1, className = '' }) => (
+  <Sprite id={id} scale={scale} className={`align-middle ${className}`} />
+);
 
 // Pixel Background Component (extracted to prevent re-renders)
 const PixelBackground = React.memo(({ environment = 'forest' }) => {
+  // Faint scenery behind the content, drawn from the battle-scene layers.
   const backgrounds = {
-    forest: '🌲🌳🌲🌳🌲',
-    mountain: '🏔️⛰️🏔️⛰️🏔️',
-    castle: '🏰🏯🏰🏯🏰',
-    dungeon: '⬛🟫⬛🟫⬛',
-    dragon: '🌋🔥🌋🔥🌋'
+    forest: 'bg_forest_trees',
+    mountain: 'bg_village_mountains',
+    castle: 'bg_village_town',
+    dungeon: 'bg_lair_town',
+    dragon: 'bg_lair_sky'
   };
 
   return (
     <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
-      <div className="text-6xl leading-none">
-        {[...Array(20)].map((_, i) => (
-          <div key={i}>{backgrounds[environment]}</div>
-        ))}
-      </div>
+      <SpriteBackground id={backgrounds[environment] || backgrounds.forest} className="absolute inset-0" />
     </div>
   );
 });
@@ -66,8 +102,12 @@ const SetupScreen = React.memo(({
     }));
   }, []);
 
+  const stepHeading = (icon, text) => (
+    <h2 className="type-heading text-brass-300 mb-2 text-balance"><Icon id={icon} scale={2} className="mr-2" />{text}</h2>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 p-6 relative">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 p-4 sm:p-6 relative">
       <PixelBackground environment="castle" />
 
       <div className="max-w-md mx-auto relative z-10">
@@ -83,103 +123,100 @@ const SetupScreen = React.memo(({
                 animationDelay: `${star.delay}s`
               }}
             >
-              ⭐
+              <Sprite id="icon_star" scale={1} />
             </div>
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 mb-6 shadow-2xl relative overflow-hidden pixelated">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
-          <h1 className="text-3xl font-black-hero text-slate-900 text-center mb-2 relative z-10">🏰 QUIT QUEST</h1>
-          <p className="text-slate-800 text-center relative z-10 font-medium-text">Begin your legendary smoke-free adventure!</p>
-        </div>
+        <Panel tone="legendary" className="mb-4 text-center">
+          <h1 className="type-title text-brass-300 text-balance"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
+          <p className="type-body text-bone mt-1">Begin your legendary smoke-free adventure!</p>
+        </Panel>
 
-        <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-6 mb-4 backdrop-blur-lg bg-opacity-90">
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-yellow-500 text-sm pixelated">Quest Setup Progress</span>
-              <span className="text-gray-400 text-sm pixelated">Step {setupStep} of 5</span>
+        <Panel className="mb-4 space-y-6">
+          <div>
+            <div className="flex justify-between items-center mb-1 qq-label">
+              <span className="text-brass-300">Quest Setup Progress</span>
+              <span>Step {setupStep} of 5</span>
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-yellow-500 to-amber-400 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${(setupStep / 5) * 100}%` }}
-              />
-            </div>
+            <ProgressBar value={setupStep} max={5} tone="brass" label="Setup progress" />
           </div>
 
           {setupStep === 1 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">🏰 CREATE YOUR HERO</h2>
-              <p className="text-gray-300 mb-6 font-light-body">What shall we call you on this quest?</p>
+              {stepHeading('icon_helmet', 'Create Your Hero')}
+              <label htmlFor="setup-hero-name" className="type-body text-bone block mb-4">What shall we call you on this quest?</label>
               <input
+                id="setup-hero-name"
                 ref={heroNameRef}
                 type="text"
                 placeholder="Enter your hero name"
                 value={setupForm.heroName}
                 onChange={(e) => setSetupForm({...setupForm, heroName: e.target.value})}
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
                 maxLength={20}
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">Choose a name that inspires you!</p>
+              <p className="type-caption text-stone-400 mt-2">Choose a name that inspires you!</p>
             </div>
           )}
 
           {setupStep === 2 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">⚔️ CHOOSE YOUR CLASS</h2>
-              <p className="text-gray-300 mb-6 font-light-body">Select your hero's class</p>
-              <div className="space-y-3">
+              {stepHeading('icon_swords', 'Choose Your Class')}
+              <p className="type-body text-bone mb-4">Select your hero&rsquo;s class</p>
+              <div className="space-y-2">
                 {[
-                  { id: 'warrior', name: 'Warrior', icon: '🛡️', desc: 'Strong and resilient' },
-                  { id: 'mage', name: 'Mage', icon: '🔮', desc: 'Wise and mystical' },
-                  { id: 'rogue', name: 'Rogue', icon: '🗡️', desc: 'Swift and cunning' }
-                ].map(cls => (
-                  <button
-                    key={cls.id}
-                    onClick={() => setSetupForm({...setupForm, avatarClass: cls.id})}
-                    className={`w-full p-4 rounded-lg border-2 transition-all pixelated ${
-                      setupForm.avatarClass === cls.id
-                        ? 'bg-yellow-600 border-yellow-500 text-slate-900'
-                        : 'bg-slate-700 border-slate-600 text-white hover:border-yellow-500'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{cls.icon}</span>
-                        <div className="text-left">
-                          <p className="font-bold-heading">{cls.name}</p>
-                          <p className="text-sm opacity-80 font-light-body">{cls.desc}</p>
+                  { id: 'warrior', name: 'Warrior', icon: 'hero_warrior', desc: 'Strong and resilient' },
+                  { id: 'mage', name: 'Mage', icon: 'hero_mage', desc: 'Wise and mystical' },
+                  { id: 'rogue', name: 'Rogue', icon: 'hero_rogue', desc: 'Swift and cunning' }
+                ].map(cls => {
+                  const chosen = setupForm.avatarClass === cls.id;
+                  return (
+                    <button
+                      key={cls.id}
+                      onClick={() => setSetupForm({...setupForm, avatarClass: cls.id})}
+                      aria-pressed={chosen}
+                      className={`qq-chip w-full p-3 text-left ${chosen ? 'qq-chip--brass' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <Sprite id={cls.icon} scale={1} playing={chosen} />
+                          <div>
+                            <p className="type-subheading">{cls.name}</p>
+                            <p className={`type-caption ${chosen ? 'text-indigo-900' : 'text-stone-400'}`}>{cls.desc}</p>
+                          </div>
                         </div>
+                        {chosen && <Sprite id="icon_check" scale={1} label="Selected" />}
                       </div>
-                      {setupForm.avatarClass === cls.id && <span>✓</span>}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {setupStep === 3 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">📅 QUIT DATE</h2>
-              <p className="text-gray-300 mb-6 font-light-body">When did you start your smoke-free journey?</p>
+              {stepHeading('icon_calendar', 'Quit Date')}
+              <label htmlFor="setup-quit-date" className="type-body text-bone block mb-4">When did you start your smoke-free journey?</label>
               <input
+                id="setup-quit-date"
                 type="date"
                 value={setupForm.quitDate}
                 onChange={(e) => setSetupForm({...setupForm, quitDate: e.target.value})}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">This can be today or a past date</p>
+              <p className="type-caption text-stone-400 mt-2">This can be today or a past date</p>
             </div>
           )}
 
           {setupStep === 4 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">🚬 DAILY HABIT</h2>
-              <p className="text-gray-300 mb-6 font-light-body">How many cigarettes did you smoke per day?</p>
+              {stepHeading('icon_cigarette', 'Daily Habit')}
+              <label htmlFor="setup-cigarettes" className="type-body text-bone block mb-4">How many cigarettes did you smoke per day?</label>
               <input
+                id="setup-cigarettes"
                 ref={cigarettesRef}
                 type="number"
                 placeholder="20"
@@ -187,17 +224,18 @@ const SetupScreen = React.memo(({
                 onChange={(e) => setSetupForm({...setupForm, cigarettesPerDay: e.target.value})}
                 min="1"
                 max="100"
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">Be honest - we'll track your victories!</p>
+              <p className="type-caption text-stone-400 mt-2">Be honest - we&rsquo;ll track your victories!</p>
             </div>
           )}
 
           {setupStep === 5 && (
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold-title text-yellow-500 mb-4 pixelated">💰 COST PER PACK</h2>
-              <p className="text-gray-300 mb-6 font-light-body">How much did you spend on a pack?</p>
+              {stepHeading('icon_coin_bag', 'Cost Per Pack')}
+              <label htmlFor="setup-price" className="type-body text-bone block mb-4">How much did you spend on a pack?</label>
               <input
+                id="setup-price"
                 ref={priceRef}
                 type="number"
                 placeholder="12.50"
@@ -206,36 +244,31 @@ const SetupScreen = React.memo(({
                 min="0.01"
                 max="100"
                 step="0.01"
-                className="w-full p-3 bg-slate-700 border-2 border-slate-600 rounded text-white text-center focus:border-yellow-500 focus:outline-none transition-colors pixelated"
+                className="qq-input"
               />
-              <p className="text-gray-500 text-sm mt-2 font-medium-text">We'll track your gold savings!</p>
+              <p className="type-caption text-stone-400 mt-2">We&rsquo;ll track your gold savings!</p>
             </div>
           )}
 
-          <div className="flex gap-3 mt-8">
+          <div className="flex gap-3">
             {setupStep > 1 && (
-              <button
-                onClick={() => setSetupStep(setupStep - 1)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg border-2 border-slate-600 transition-all transform hover:scale-105 pixelated"
-              >
-                Previous
-              </button>
+              <Button className="flex-1" onClick={() => setSetupStep(setupStep - 1)}>
+                <Icon id="icon_arrow_left" />Previous
+              </Button>
             )}
-            <button
+            {/* Beginning the quest is a positive commitment, so the last step is moss */}
+            <Button
+              className="flex-1"
+              tone={setupStep === 5 ? 'moss' : 'brass'}
               onClick={nextStep}
               disabled={!validateStep()}
-              className={`flex-1 py-3 rounded-lg border-2 transition-all transform hover:scale-105 pixelated ${
-                validateStep()
-                  ? setupStep === 5
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 border-green-500 text-white'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-blue-500 text-white'
-                  : 'bg-slate-700 border-slate-600 text-gray-500 cursor-not-allowed'
-              }`}
             >
-              {setupStep === 5 ? '⚔️ Begin Quest!' : 'Next →'}
-            </button>
+              {setupStep === 5
+                ? <><Icon id="icon_swords" />Begin Quest!</>
+                : <>Next<Icon id="icon_arrow_right" /></>}
+            </Button>
           </div>
-        </div>
+        </Panel>
       </div>
     </div>
   );
@@ -243,15 +276,38 @@ const SetupScreen = React.memo(({
 
 SetupScreen.displayName = 'SetupScreen';
 
+// Development-only logging: silent in production builds.
+const devLog = (...args) => {
+  if (process.env.NODE_ENV !== 'production') console.log(...args); // eslint-disable-line no-console
+};
+
 const QuitQuestRPG = () => {
   // Game States
   const [gameState, setGameState] = useState('setup'); // 'setup', 'playing'
-  const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'achievements', 'profile', 'battle', 'story'
+  const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'achievements', 'profile', 'battle', 'story', 'stats', 'premium'
+  // Screens opened from elsewhere (Records, Premium) return to where they came from.
+  const [returnScreen, setReturnScreen] = useState('dashboard');
+  const openScreen = (screen) => {
+    setReturnScreen(currentScreen === 'premium' || currentScreen === 'stats' ? returnScreen : currentScreen);
+    setCurrentScreen(screen);
+  };
+  const openPremium = () => openScreen('premium');
+  const [deleteStep, setDeleteStep] = useState(0); // 0 closed, 1 explain, 2 type to confirm
+  const [deleteText, setDeleteText] = useState('');
+
+  // Premium is read from the entitlement layer only; ads follow their own rules.
+  const entitlements = useEntitlements();
+  const isPremium = entitlements.isPremium;
+  const ads = useAds();
   
   // Story System
   const [storyChapter, setStoryChapter] = useState(0);
   const [unlockedStoryDays, setUnlockedStoryDays] = useState([]);
   const [todayStoryViewed, setTodayStoryViewed] = useState(false);
+  // Story tab view and selected day live here (not inside StoryScreen) so
+  // other screens can open a view, and they survive re-renders.
+  const [storyView, setStoryView] = useState('today'); // 'today', 'archive', 'map', 'world'
+  const [storyDay, setStoryDay] = useState(null); // null = today
   
   // Battle State
   const [battleState, setBattleState] = useState({
@@ -267,7 +323,9 @@ const QuitQuestRPG = () => {
     comboCount: 0,
     specialCharge: 0,
     battlesWon: 0,
-    perfectVictories: 0
+    perfectVictories: 0,
+    engine: null, // the battle engine's state (lib/battle/engine.js) while a battle runs
+    result: null // the last battle's result screen
   });
 
   // User Data
@@ -321,6 +379,9 @@ const QuitQuestRPG = () => {
   });
 
   // Calculated Stats
+  // True once stats (days smoke-free and so on) have been worked out from the
+  // saved quit date. The world map waits for it, so it never sees a stale day.
+  const [statsReady, setStatsReady] = useState(false);
   const [stats, setStats] = useState({
     daysSmokeFree: 0,
     moneySaved: 0,
@@ -335,8 +396,6 @@ const QuitQuestRPG = () => {
   // Animation states
   const [isLevelingUp, setIsLevelingUp] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
-  const [battleAnimation, setBattleAnimation] = useState('');
-  const [enemyAnimation, setEnemyAnimation] = useState('');
 
   // Story Content System
   const storyContent = {
@@ -378,7 +437,7 @@ const QuitQuestRPG = () => {
       
       // Chapter 5: Days 121-150 (The Mastery)
       { day: 130, title: "The Teacher", text: "Young squires seek your guidance. You've become a beacon of hope for those still fighting the Shadow." },
-      { day: 140, title: "Deep Healing", text: "Your cells regenerate with newfound vigor. The damage of years past continues to reverse itself." },
+      { day: 140, title: "Deep Healing", text: "Your body keeps repairing itself with newfound vigor, day after day." },
       { day: 150, title: "The Milestone", text: "150 days! The royal court honors you with a feast. Your transformation inspires an entire movement against the Shadow." },
       
       // Chapter 6: Days 151-180 (The Legend)
@@ -434,6 +493,38 @@ const QuitQuestRPG = () => {
     }
   }, [stats.daysSmokeFree]);
 
+  // Once the game is running, decode the world map's large layers while the
+  // browser is idle, so opening the map later does not hitch.
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    preloadSprites(defaultRegistry, ['overworld_terrain', 'overworld_sea', ...REGION_IDS.map(id => `overworld_shadow_${id}`), 'journey_sky', 'journey_far', 'journey_mid', 'journey_ground', 'journey_fore', 'journey_fog']);
+  }, [gameState]);
+
+  // Knight skins (Premium): layered over the default art through the sprite
+  // registry's skin packs. Without Premium the classic armour is always used.
+  const heroSkin = userData.settings?.heroSkin || null;
+  useEffect(() => {
+    let live = true;
+    if (!isPremium || !heroSkin) {
+      defaultRegistry.setSkins([]);
+      return undefined;
+    }
+    loadSkinManifest(skinManifestUrl(heroSkin)).then((m) => {
+      if (live) defaultRegistry.setSkins(m ? [m] : []);
+    });
+    return () => {
+      live = false;
+    };
+  }, [isPremium, heroSkin]);
+  const chooseSkin = (id) => setUserData(prev => ({ ...prev, settings: { ...(prev.settings || {}), heroSkin: id } }));
+
+  // No ads ever on battle, Urge Mode or result screens: hard-block the ad
+  // layer while any of them is showing or a battle is running.
+  const adsBlocked = currentScreen === 'battle' || battleState.inBattle;
+  useEffect(() => {
+    if (ads && ads.setHardBlock) ads.setHardBlock(adsBlocked);
+  }, [ads, adsBlocked]);
+
   // Load data from localStorage on mount
   useEffect(() => {
     try {
@@ -451,9 +542,11 @@ const QuitQuestRPG = () => {
           setUserData(parsed.userData);
         }
 
-        // Restore battle state if in battle
+        // Restore battle state if in battle. Battles saved before the battle
+        // engine existed are closed quietly (counters are kept).
         if (parsed.battleState) {
-          setBattleState(parsed.battleState);
+          const b = parsed.battleState;
+          setBattleState(b.engine && b.engine.v ? b : { ...b, inBattle: false, engine: null, result: null });
         }
 
         // Restore story progress
@@ -464,7 +557,7 @@ const QuitQuestRPG = () => {
           setUnlockedStoryDays(parsed.unlockedStoryDays);
         }
 
-        console.log('✅ Progress loaded from localStorage');
+        devLog('Progress loaded from localStorage');
       }
     } catch (error) {
       console.error('Failed to load data from localStorage:', error);
@@ -485,7 +578,7 @@ const QuitQuestRPG = () => {
         };
 
         localStorage.setItem('quitQuestData', JSON.stringify(dataToSave));
-        console.log('💾 Progress auto-saved');
+        devLog('Progress auto-saved');
       } catch (error) {
         console.error('Failed to save data to localStorage:', error);
       }
@@ -537,6 +630,7 @@ const QuitQuestRPG = () => {
       setTimeout(() => setIsLevelingUp(false), 2000);
     }
     
+    setStatsReady(true);
     setStats({
       daysSmokeFree,
       moneySaved,
@@ -568,13 +662,24 @@ const QuitQuestRPG = () => {
   };
 
   const getHealthMessage = (days) => {
-    if (days === 0) return "🏰 Your quest begins now! Every moment counts.";
-    if (days === 1) return "🫁 Your oxygen levels are improving!";
-    if (days < 7) return "💓 Your heart rate is normalizing!";
-    if (days < 30) return "🌟 Your energy levels are increasing!";
-    if (days < 90) return "💪 Your lung function is improving significantly!";
-    if (days < 365) return "🛡️ Your risk of heart disease is dropping!";
-    return "👑 You're a legendary smoke-free hero!";
+    if (days === 0) return "Your quest begins now! Every moment counts.";
+    if (days === 1) return "Your oxygen levels are improving!";
+    if (days < 7) return "Your heart rate is settling down!";
+    if (days < 30) return "Your energy levels are increasing!";
+    if (days < 90) return "Your lung function is improving!";
+    if (days < 365) return "Your risk of heart disease is dropping!";
+    return "You're a legendary smoke-free hero!";
+  };
+
+  // Sprite shown beside the health message (same day bands as above).
+  const getHealthIcon = (days) => {
+    if (days === 0) return 'icon_castle';
+    if (days === 1) return 'icon_lung';
+    if (days < 7) return 'icon_heartbeat';
+    if (days < 30) return 'icon_star';
+    if (days < 90) return 'icon_strength';
+    if (days < 365) return 'icon_shield';
+    return 'icon_crown';
   };
 
   const getNextGoal = (days) => {
@@ -588,86 +693,86 @@ const QuitQuestRPG = () => {
 
   const achievementsList = [
     // Health-Based Achievements (Real Medical Milestones)
-    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate & blood pressure normalizing!', icon: '💓', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide levels dropping!', icon: '🩸', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'CO levels normal, oxygen levels rising!', icon: '💨', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
-    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Heart attack risk begins to drop!', icon: '❤️', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings regrowing! Taste & smell improving!', icon: '👃', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Bronchial tubes relaxing! Breathing easier!', icon: '🫁', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
-    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Blood circulation improving dramatically!', icon: '🔄', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function increasing significantly!', icon: '🌬️', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia regrowing! Coughing decreasing!', icon: '🌱', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
-    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Major lung healing! Shortness of breath gone!', icon: '💪', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
-    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Heart disease risk cut by 50%!', icon: '💚', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
-    { id: 'HEALTH_5YEAR', title: 'Stroke Survivor', description: 'Stroke risk reduced to non-smoker level!', icon: '🧠', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
-    { id: 'HEALTH_10YEAR', title: 'Cancer Conqueror', description: 'Lung cancer risk cut by 50%!', icon: '🛡️', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
-    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk equals non-smoker!', icon: '🔥', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_20MIN', title: 'First Breath of Freedom', description: 'Heart rate and blood pressure start to come down.', icon: 'icon_heartbeat', minutesRequired: 20, experience: 50, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_8HR', title: 'Clean Blood Rising', description: 'Carbon monoxide in your blood is dropping.', icon: 'icon_blood_drop', hoursRequired: 8, experience: 100, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_12HR', title: 'Oxygen Warrior', description: 'Carbon monoxide usually returns to normal, and oxygen levels rise.', icon: 'icon_breath', hoursRequired: 12, experience: 150, rarity: 'common', category: 'health' },
+    { id: 'HEALTH_24HR', title: 'Heart Guardian', description: 'Your risk of heart attack begins to drop.', icon: 'icon_heart', daysRequired: 1, experience: 200, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_48HR', title: 'Senses Awakening', description: 'Nerve endings begin to recover; taste and smell often improve.', icon: 'icon_nose', daysRequired: 2, experience: 300, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_3DAY', title: 'Breathing Master', description: 'Airways begin to relax, and breathing often gets easier.', icon: 'icon_lung', daysRequired: 3, experience: 400, rarity: 'uncommon', category: 'health' },
+    { id: 'HEALTH_2WEEK', title: 'Circulation Hero', description: 'Circulation usually starts to improve.', icon: 'icon_circulation', daysRequired: 14, experience: 600, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_1MONTH', title: 'Lung Capacity Rising', description: 'Lung function often improves over the coming months.', icon: 'icon_breath', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_3MONTH', title: 'Cilia Regeneration', description: 'Lung cilia begin to recover, and coughing often eases.', icon: 'icon_sprout', daysRequired: 90, experience: 2000, rarity: 'rare', category: 'health' },
+    { id: 'HEALTH_9MONTH', title: 'Respiratory Champion', description: 'Coughing and shortness of breath usually keep easing.', icon: 'icon_strength', daysRequired: 270, experience: 5000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_1YEAR', title: 'Heart Disease Halved', description: 'Your added risk of heart disease is about half that of a smoker.', icon: 'icon_heart_healed', daysRequired: 365, experience: 10000, rarity: 'epic', category: 'health' },
+    { id: 'HEALTH_5YEAR', title: 'Steady Mind', description: 'Stroke risk can fall to about that of a non-smoker.', icon: 'icon_brain', daysRequired: 1825, experience: 25000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_10YEAR', title: 'Ten-Year Sentinel', description: 'Lung cancer risk drops to about half that of a smoker.', icon: 'icon_shield', daysRequired: 3650, experience: 50000, rarity: 'legendary', category: 'health' },
+    { id: 'HEALTH_15YEAR', title: 'Reborn Phoenix', description: 'Heart disease risk is close to that of a non-smoker.', icon: 'icon_flame', daysRequired: 5475, experience: 100000, rarity: 'legendary', category: 'health' },
 
     // Time-Based Achievements
-    { id: 'HOUR_1', title: 'The First Hour', description: 'One hour smoke-free!', icon: '⏰', hoursRequired: 1, experience: 10, rarity: 'common', category: 'time' },
-    { id: 'HOUR_12', title: 'Half Day Hero', description: '12 hours smoke-free!', icon: '🌓', hoursRequired: 12, experience: 25, rarity: 'common', category: 'time' },
-    { id: 'DAY_1', title: 'First Victory', description: 'Survived your first day!', icon: '🛡️', daysRequired: 1, experience: 100, rarity: 'common', category: 'time' },
-    { id: 'DAY_3', title: 'Three Day Trial', description: '3 days smoke-free!', icon: '🥉', daysRequired: 3, experience: 200, rarity: 'common', category: 'time' },
-    { id: 'WEEK_1', title: 'Weekly Warrior', description: 'One week of freedom!', icon: '⚔️', daysRequired: 7, experience: 500, rarity: 'uncommon', category: 'time' },
-    { id: 'WEEK_2', title: 'Fortnight Fighter', description: 'Two weeks strong!', icon: '🏹', daysRequired: 14, experience: 750, rarity: 'uncommon', category: 'time' },
-    { id: 'DAY_21', title: 'Habit Breaker', description: '21 days - new habits formed!', icon: '🔨', daysRequired: 21, experience: 900, rarity: 'uncommon', category: 'time' },
-    { id: 'MONTH_1', title: 'Monthly Champion', description: 'A full month smoke-free!', icon: '🏆', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'time' },
-    { id: 'DAY_50', title: 'Half Century', description: '50 days of victory!', icon: '5️⃣0️⃣', daysRequired: 50, experience: 1500, rarity: 'rare', category: 'time' },
-    { id: 'MONTH_2', title: 'Two Moon Warrior', description: 'Two months conquered!', icon: '🌙', daysRequired: 60, experience: 1800, rarity: 'rare', category: 'time' },
-    { id: 'DAY_90', title: 'Season Master', description: '90 days - a full season!', icon: '🍂', daysRequired: 90, experience: 2200, rarity: 'rare', category: 'time' },
-    { id: 'MILESTONE_100', title: 'Century Mark', description: '100 days of triumph!', icon: '💯', daysRequired: 100, experience: 2500, rarity: 'epic', category: 'time' },
-    { id: 'MONTH_6', title: 'Half Year Hero', description: 'Six months smoke-free!', icon: '🌟', daysRequired: 180, experience: 5000, rarity: 'epic', category: 'time' },
-    { id: 'DAY_300', title: 'Almost There', description: '300 days strong!', icon: '🎯', daysRequired: 300, experience: 7500, rarity: 'epic', category: 'time' },
-    { id: 'YEAR_1', title: 'Dragon Slayer', description: 'One year smoke-free!', icon: '🐉', daysRequired: 365, experience: 10000, rarity: 'legendary', category: 'time' },
-    { id: 'DAY_500', title: 'Eternal Warrior', description: '500 days of freedom!', icon: '♾️', daysRequired: 500, experience: 12500, rarity: 'legendary', category: 'time' },
-    { id: 'YEAR_2', title: 'Legend Reborn', description: 'Two years smoke-free!', icon: '🔥', daysRequired: 730, experience: 20000, rarity: 'legendary', category: 'time' },
-    { id: 'DAY_1000', title: 'Millennial Master', description: '1000 days - truly legendary!', icon: '🌌', daysRequired: 1000, experience: 25000, rarity: 'legendary', category: 'time' },
+    { id: 'HOUR_1', title: 'The First Hour', description: 'One hour smoke-free!', icon: 'icon_hourglass', hoursRequired: 1, experience: 10, rarity: 'common', category: 'time' },
+    { id: 'HOUR_12', title: 'Half Day Hero', description: '12 hours smoke-free!', icon: 'icon_moon', hoursRequired: 12, experience: 25, rarity: 'common', category: 'time' },
+    { id: 'DAY_1', title: 'First Victory', description: 'Survived your first day!', icon: 'icon_shield', daysRequired: 1, experience: 100, rarity: 'common', category: 'time' },
+    { id: 'DAY_3', title: 'Three Day Trial', description: '3 days smoke-free!', icon: 'icon_medal_bronze', daysRequired: 3, experience: 200, rarity: 'common', category: 'time' },
+    { id: 'WEEK_1', title: 'Weekly Warrior', description: 'One week of freedom!', icon: 'icon_swords', daysRequired: 7, experience: 500, rarity: 'uncommon', category: 'time' },
+    { id: 'WEEK_2', title: 'Fortnight Fighter', description: 'Two weeks strong!', icon: 'icon_bow', daysRequired: 14, experience: 750, rarity: 'uncommon', category: 'time' },
+    { id: 'DAY_21', title: 'Habit Breaker', description: '21 days - new habits formed!', icon: 'icon_hammer', daysRequired: 21, experience: 900, rarity: 'uncommon', category: 'time' },
+    { id: 'MONTH_1', title: 'Monthly Champion', description: 'A full month smoke-free!', icon: 'icon_trophy', daysRequired: 30, experience: 1000, rarity: 'rare', category: 'time' },
+    { id: 'DAY_50', title: 'Half Century', description: '50 days of victory!', icon: 'icon_medal_silver', daysRequired: 50, experience: 1500, rarity: 'rare', category: 'time' },
+    { id: 'MONTH_2', title: 'Two Moon Warrior', description: 'Two months conquered!', icon: 'icon_moon', daysRequired: 60, experience: 1800, rarity: 'rare', category: 'time' },
+    { id: 'DAY_90', title: 'Season Master', description: '90 days - a full season!', icon: 'icon_leaf', daysRequired: 90, experience: 2200, rarity: 'rare', category: 'time' },
+    { id: 'MILESTONE_100', title: 'Century Mark', description: '100 days of triumph!', icon: 'icon_medal_gold', daysRequired: 100, experience: 2500, rarity: 'epic', category: 'time' },
+    { id: 'MONTH_6', title: 'Half Year Hero', description: 'Six months smoke-free!', icon: 'icon_star', daysRequired: 180, experience: 5000, rarity: 'epic', category: 'time' },
+    { id: 'DAY_300', title: 'Almost There', description: '300 days strong!', icon: 'icon_target', daysRequired: 300, experience: 7500, rarity: 'epic', category: 'time' },
+    { id: 'YEAR_1', title: 'Dragon Slayer', description: 'One year smoke-free!', icon: 'icon_dragon', daysRequired: 365, experience: 10000, rarity: 'legendary', category: 'time' },
+    { id: 'DAY_500', title: 'Eternal Warrior', description: '500 days of freedom!', icon: 'icon_infinity', daysRequired: 500, experience: 12500, rarity: 'legendary', category: 'time' },
+    { id: 'YEAR_2', title: 'Legend Reborn', description: 'Two years smoke-free!', icon: 'icon_flame', daysRequired: 730, experience: 20000, rarity: 'legendary', category: 'time' },
+    { id: 'DAY_1000', title: 'Millennial Master', description: '1000 days - truly legendary!', icon: 'icon_special', daysRequired: 1000, experience: 25000, rarity: 'legendary', category: 'time' },
 
     // Money Saved Achievements
-    { id: 'SAVE_10', title: 'Copper Collector', description: 'Saved $10!', icon: '🪙', moneySaved: 10, experience: 50, rarity: 'common', category: 'money' },
-    { id: 'SAVE_25', title: 'Silver Saver', description: 'Saved $25!', icon: '🥈', moneySaved: 25, experience: 100, rarity: 'common', category: 'money' },
-    { id: 'SAVE_50', title: 'Gold Getter', description: 'Saved $50!', icon: '🥇', moneySaved: 50, experience: 200, rarity: 'uncommon', category: 'money' },
-    { id: 'SAVE_100', title: 'Treasure Hunter', description: 'Saved $100!', icon: '💰', moneySaved: 100, experience: 400, rarity: 'uncommon', category: 'money' },
-    { id: 'SAVE_250', title: 'Vault Builder', description: 'Saved $250!', icon: '🏦', moneySaved: 250, experience: 750, rarity: 'rare', category: 'money' },
-    { id: 'SAVE_500', title: 'Fortune Finder', description: 'Saved $500!', icon: '💎', moneySaved: 500, experience: 1500, rarity: 'rare', category: 'money' },
-    { id: 'SAVE_1000', title: 'Wealth Warrior', description: 'Saved $1,000!', icon: '👑', moneySaved: 1000, experience: 3000, rarity: 'epic', category: 'money' },
-    { id: 'SAVE_2500', title: 'Treasury Master', description: 'Saved $2,500!', icon: '🏰', moneySaved: 2500, experience: 6000, rarity: 'epic', category: 'money' },
-    { id: 'SAVE_5000', title: 'Dragon\'s Hoard', description: 'Saved $5,000!', icon: '🐲', moneySaved: 5000, experience: 10000, rarity: 'legendary', category: 'money' },
-    { id: 'SAVE_10000', title: 'Kingdom\'s Fortune', description: 'Saved $10,000!', icon: '🌍', moneySaved: 10000, experience: 20000, rarity: 'legendary', category: 'money' },
+    { id: 'SAVE_10', title: 'Copper Collector', description: 'Saved $10!', icon: 'icon_coin', moneySaved: 10, experience: 50, rarity: 'common', category: 'money' },
+    { id: 'SAVE_25', title: 'Silver Saver', description: 'Saved $25!', icon: 'icon_medal_silver', moneySaved: 25, experience: 100, rarity: 'common', category: 'money' },
+    { id: 'SAVE_50', title: 'Gold Getter', description: 'Saved $50!', icon: 'icon_medal_gold', moneySaved: 50, experience: 200, rarity: 'uncommon', category: 'money' },
+    { id: 'SAVE_100', title: 'Treasure Hunter', description: 'Saved $100!', icon: 'icon_coin_bag', moneySaved: 100, experience: 400, rarity: 'uncommon', category: 'money' },
+    { id: 'SAVE_250', title: 'Vault Builder', description: 'Saved $250!', icon: 'icon_chest', moneySaved: 250, experience: 750, rarity: 'rare', category: 'money' },
+    { id: 'SAVE_500', title: 'Fortune Finder', description: 'Saved $500!', icon: 'icon_gem', moneySaved: 500, experience: 1500, rarity: 'rare', category: 'money' },
+    { id: 'SAVE_1000', title: 'Wealth Warrior', description: 'Saved $1,000!', icon: 'icon_crown', moneySaved: 1000, experience: 3000, rarity: 'epic', category: 'money' },
+    { id: 'SAVE_2500', title: 'Treasury Master', description: 'Saved $2,500!', icon: 'icon_castle', moneySaved: 2500, experience: 6000, rarity: 'epic', category: 'money' },
+    { id: 'SAVE_5000', title: 'Dragon\'s Hoard', description: 'Saved $5,000!', icon: 'icon_dragon', moneySaved: 5000, experience: 10000, rarity: 'legendary', category: 'money' },
+    { id: 'SAVE_10000', title: 'Kingdom\'s Fortune', description: 'Saved $10,000!', icon: 'icon_coins', moneySaved: 10000, experience: 20000, rarity: 'legendary', category: 'money' },
 
     // Battle Achievements
-    { id: 'BATTLE_1', title: 'First Blood', description: 'Won your first battle!', icon: '🩸', battlesRequired: 1, experience: 50, rarity: 'common', category: 'battle' },
-    { id: 'BATTLE_10', title: 'Craving Fighter', description: 'Defeated 10 cravings!', icon: '⚔️', battlesRequired: 10, experience: 300, rarity: 'uncommon', category: 'battle' },
-    { id: 'BATTLE_25', title: 'Demon Hunter', description: 'Defeated 25 cravings!', icon: '👹', battlesRequired: 25, experience: 800, rarity: 'uncommon', category: 'battle' },
-    { id: 'BATTLE_50', title: 'Craving Slayer', description: 'Defeated 50 cravings!', icon: '🗡️', battlesRequired: 50, experience: 1500, rarity: 'rare', category: 'battle' },
-    { id: 'BATTLE_100', title: 'Centurion', description: 'Won 100 battles!', icon: '🏛️', battlesRequired: 100, experience: 3000, rarity: 'epic', category: 'battle' },
-    { id: 'BATTLE_250', title: 'War Legend', description: 'Defeated 250 cravings!', icon: '⚡', battlesRequired: 250, experience: 7500, rarity: 'epic', category: 'battle' },
-    { id: 'PERFECT_5', title: 'Flawless Fighter', description: '5 perfect victories!', icon: '✨', perfectRequired: 5, experience: 500, rarity: 'uncommon', category: 'battle' },
-    { id: 'PERFECT_10', title: 'Perfect Warrior', description: '10 flawless victories!', icon: '💫', perfectRequired: 10, experience: 1000, rarity: 'rare', category: 'battle' },
-    { id: 'PERFECT_25', title: 'Untouchable Champion', description: '25 perfect victories!', icon: '🌟', perfectRequired: 25, experience: 2500, rarity: 'epic', category: 'battle' },
+    { id: 'BATTLE_1', title: 'First Blood', description: 'Won your first battle!', icon: 'icon_blood_drop', battlesRequired: 1, experience: 50, rarity: 'common', category: 'battle' },
+    { id: 'BATTLE_10', title: 'Craving Fighter', description: 'Defeated 10 cravings!', icon: 'icon_swords', battlesRequired: 10, experience: 300, rarity: 'uncommon', category: 'battle' },
+    { id: 'BATTLE_25', title: 'Demon Hunter', description: 'Defeated 25 cravings!', icon: 'icon_skull', battlesRequired: 25, experience: 800, rarity: 'uncommon', category: 'battle' },
+    { id: 'BATTLE_50', title: 'Craving Slayer', description: 'Defeated 50 cravings!', icon: 'icon_sword', battlesRequired: 50, experience: 1500, rarity: 'rare', category: 'battle' },
+    { id: 'BATTLE_100', title: 'Centurion', description: 'Won 100 battles!', icon: 'icon_helmet', battlesRequired: 100, experience: 3000, rarity: 'epic', category: 'battle' },
+    { id: 'BATTLE_250', title: 'War Legend', description: 'Defeated 250 cravings!', icon: 'icon_lightning', battlesRequired: 250, experience: 7500, rarity: 'epic', category: 'battle' },
+    { id: 'PERFECT_5', title: 'Flawless Fighter', description: '5 perfect victories!', icon: 'icon_sparkle', perfectRequired: 5, experience: 500, rarity: 'uncommon', category: 'battle' },
+    { id: 'PERFECT_10', title: 'Perfect Warrior', description: '10 flawless victories!', icon: 'icon_star', perfectRequired: 10, experience: 1000, rarity: 'rare', category: 'battle' },
+    { id: 'PERFECT_25', title: 'Untouchable Champion', description: '25 perfect victories!', icon: 'icon_special', perfectRequired: 25, experience: 2500, rarity: 'epic', category: 'battle' },
 
     // Activity Achievements
-    { id: 'WALK_10', title: 'Wanderer', description: 'Logged 10 walks!', icon: '🚶', activityRequired: { type: 'walks', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
-    { id: 'WALK_50', title: 'Pathfinder', description: 'Logged 50 walks!', icon: '🥾', activityRequired: { type: 'walks', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
-    { id: 'EXERCISE_10', title: 'Fitness Initiate', description: 'Completed 10 workouts!', icon: '💪', activityRequired: { type: 'exercises', count: 10 }, experience: 250, rarity: 'common', category: 'activity' },
-    { id: 'EXERCISE_50', title: 'Gym Champion', description: 'Completed 50 workouts!', icon: '🏋️', activityRequired: { type: 'exercises', count: 50 }, experience: 1250, rarity: 'uncommon', category: 'activity' },
-    { id: 'MEDITATE_10', title: 'Inner Peace Seeker', description: 'Meditated 10 times!', icon: '🧘', activityRequired: { type: 'meditations', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
-    { id: 'MEDITATE_50', title: 'Zen Master', description: 'Meditated 50 times!', icon: '☮️', activityRequired: { type: 'meditations', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
-    { id: 'WATER_25', title: 'Hydration Hero', description: 'Drank water 25 times!', icon: '💧', activityRequired: { type: 'waterDrinks', count: 25 }, experience: 300, rarity: 'common', category: 'activity' },
-    { id: 'WATER_100', title: 'Aqua Champion', description: 'Drank water 100 times!', icon: '💦', activityRequired: { type: 'waterDrinks', count: 100 }, experience: 1200, rarity: 'uncommon', category: 'activity' },
+    { id: 'WALK_10', title: 'Wanderer', description: 'Logged 10 walks!', icon: 'icon_walk', activityRequired: { type: 'walks', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
+    { id: 'WALK_50', title: 'Pathfinder', description: 'Logged 50 walks!', icon: 'icon_walk', activityRequired: { type: 'walks', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
+    { id: 'EXERCISE_10', title: 'Fitness Initiate', description: 'Completed 10 workouts!', icon: 'icon_strength', activityRequired: { type: 'exercises', count: 10 }, experience: 250, rarity: 'common', category: 'activity' },
+    { id: 'EXERCISE_50', title: 'Gym Champion', description: 'Completed 50 workouts!', icon: 'icon_strength', activityRequired: { type: 'exercises', count: 50 }, experience: 1250, rarity: 'uncommon', category: 'activity' },
+    { id: 'MEDITATE_10', title: 'Inner Peace Seeker', description: 'Meditated 10 times!', icon: 'icon_meditate', activityRequired: { type: 'meditations', count: 10 }, experience: 200, rarity: 'common', category: 'activity' },
+    { id: 'MEDITATE_50', title: 'Zen Master', description: 'Meditated 50 times!', icon: 'icon_meditate', activityRequired: { type: 'meditations', count: 50 }, experience: 1000, rarity: 'uncommon', category: 'activity' },
+    { id: 'WATER_25', title: 'Hydration Hero', description: 'Drank water 25 times!', icon: 'icon_droplet', activityRequired: { type: 'waterDrinks', count: 25 }, experience: 300, rarity: 'common', category: 'activity' },
+    { id: 'WATER_100', title: 'Aqua Champion', description: 'Drank water 100 times!', icon: 'icon_water', activityRequired: { type: 'waterDrinks', count: 100 }, experience: 1200, rarity: 'uncommon', category: 'activity' },
 
     // Streak Achievements
-    { id: 'STREAK_7', title: 'Week Streak', description: '7 day streak maintained!', icon: '🔥', streakDays: 7, experience: 500, rarity: 'uncommon', category: 'streak' },
-    { id: 'STREAK_30', title: 'Unstoppable', description: '30 day streak!', icon: '⚡', streakDays: 30, experience: 1500, rarity: 'rare', category: 'streak' },
-    { id: 'STREAK_100', title: 'Unbreakable', description: '100 day streak!', icon: '💎', streakDays: 100, experience: 5000, rarity: 'epic', category: 'streak' },
-    { id: 'STREAK_365', title: 'Year of Iron Will', description: '365 day streak!', icon: '🏆', streakDays: 365, experience: 15000, rarity: 'legendary', category: 'streak' },
+    { id: 'STREAK_7', title: 'Week Streak', description: '7 day streak maintained!', icon: 'icon_flame', streakDays: 7, experience: 500, rarity: 'uncommon', category: 'streak' },
+    { id: 'STREAK_30', title: 'Unstoppable', description: '30 day streak!', icon: 'icon_lightning', streakDays: 30, experience: 1500, rarity: 'rare', category: 'streak' },
+    { id: 'STREAK_100', title: 'Unbreakable', description: '100 day streak!', icon: 'icon_gem', streakDays: 100, experience: 5000, rarity: 'epic', category: 'streak' },
+    { id: 'STREAK_365', title: 'Year of Iron Will', description: '365 day streak!', icon: 'icon_trophy', streakDays: 365, experience: 15000, rarity: 'legendary', category: 'streak' },
 
     // Cigarette Avoidance Achievements
-    { id: 'CIGS_100', title: 'Century Saver', description: 'Avoided 100 cigarettes!', icon: '🚭', cigarettesAvoided: 100, experience: 300, rarity: 'common', category: 'avoidance' },
-    { id: 'CIGS_500', title: 'Half Thousand', description: 'Avoided 500 cigarettes!', icon: '🛡️', cigarettesAvoided: 500, experience: 1000, rarity: 'uncommon', category: 'avoidance' },
-    { id: 'CIGS_1000', title: 'Thousand Strong', description: 'Avoided 1,000 cigarettes!', icon: '⭐', cigarettesAvoided: 1000, experience: 2000, rarity: 'rare', category: 'avoidance' },
-    { id: 'CIGS_5000', title: 'Five Thousand Victory', description: 'Avoided 5,000 cigarettes!', icon: '🌟', cigarettesAvoided: 5000, experience: 5000, rarity: 'epic', category: 'avoidance' },
-    { id: 'CIGS_10000', title: 'Ten Thousand Triumph', description: 'Avoided 10,000 cigarettes!', icon: '👑', cigarettesAvoided: 10000, experience: 10000, rarity: 'legendary', category: 'avoidance' },
+    { id: 'CIGS_100', title: 'Century Saver', description: 'Avoided 100 cigarettes!', icon: 'icon_no_smoking', cigarettesAvoided: 100, experience: 300, rarity: 'common', category: 'avoidance' },
+    { id: 'CIGS_500', title: 'Half Thousand', description: 'Avoided 500 cigarettes!', icon: 'icon_shield', cigarettesAvoided: 500, experience: 1000, rarity: 'uncommon', category: 'avoidance' },
+    { id: 'CIGS_1000', title: 'Thousand Strong', description: 'Avoided 1,000 cigarettes!', icon: 'icon_star', cigarettesAvoided: 1000, experience: 2000, rarity: 'rare', category: 'avoidance' },
+    { id: 'CIGS_5000', title: 'Five Thousand Victory', description: 'Avoided 5,000 cigarettes!', icon: 'icon_special', cigarettesAvoided: 5000, experience: 5000, rarity: 'epic', category: 'avoidance' },
+    { id: 'CIGS_10000', title: 'Ten Thousand Triumph', description: 'Avoided 10,000 cigarettes!', icon: 'icon_crown', cigarettesAvoided: 10000, experience: 10000, rarity: 'legendary', category: 'avoidance' },
   ];
 
   const checkAchievements = (days) => {
@@ -728,176 +833,88 @@ const QuitQuestRPG = () => {
   };
 
   // Battle System Functions
-  const enemyTypes = [
-    { name: 'Nicotine Imp', hp: 60, attack: 8, defense: 5, xp: 50, icon: '👹', color: 'red', weakness: 'light' },
-    { name: 'Smoke Specter', hp: 80, attack: 10, defense: 7, xp: 75, icon: '👻', color: 'gray', weakness: 'wind' },
-    { name: 'Craving Demon', hp: 100, attack: 12, defense: 8, xp: 100, icon: '👺', color: 'purple', weakness: 'fire' },
-    { name: 'Tar Monster', hp: 120, attack: 15, defense: 10, xp: 150, icon: '🦠', color: 'black', weakness: 'water' },
-    { name: 'Addiction Dragon', hp: 150, attack: 18, defense: 12, xp: 200, icon: '🐲', color: 'orange', weakness: 'lightning' }
-  ];
+  // `id` doubles as the sprite key: the battle sprite is `enemy_<id>`.
+  // Stats are unchanged from the original five enemies they replace
+  // (Nicotine Imp, Smoke Specter, Craving Demon, Tar Monster, Addiction Dragon).
+  // Enemies, abilities and tuning live in lib/battle/data/; the rules in
+  // lib/battle/engine.js. This component starts battles and applies results.
+  const heroClass = ['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior';
 
-  const startBattle = (intensity = 'medium') => {
-    let enemy;
-    if (intensity === 'mild') {
-      enemy = enemyTypes[Math.floor(Math.random() * 2)];
-    } else if (intensity === 'strong') {
-      enemy = enemyTypes[Math.floor(Math.random() * 2) + 3];
-    } else {
-      enemy = enemyTypes[2];
-    }
+  /** What other screens read about the current battle (kept in the saved shape). */
+  const battleSnapshot = (engine) => ({
+    engine,
+    inBattle: !isOver(engine),
+    currentEnemy: { id: engine.enemy.id, name: engine.enemy.name, boss: engine.enemy.boss },
+    tier: engine.tier,
+    playerHP: engine.hero.hp,
+    playerMaxHP: engine.hero.maxHp,
+    enemyHP: engine.enemy.hp,
+    enemyMaxHP: engine.enemy.maxHp,
+    battleLog: engine.log,
+  });
 
-    const playerMaxHP = 100 + (stats.knightLevel * 20);
-    
-    setBattleState({
-      inBattle: true,
-      currentEnemy: enemy,
-      playerHP: playerMaxHP,
-      enemyHP: enemy.hp,
-      playerMaxHP: playerMaxHP,
-      enemyMaxHP: enemy.hp,
-      battleLog: [`A wild ${enemy.name} appears!`],
-      playerTurn: true,
-      battleReward: enemy.xp,
-      comboCount: 0,
-      specialCharge: 0,
-      battlesWon: battleState.battlesWon,
-      perfectVictories: battleState.perfectVictories
+  const beginBattle = (enemyId, tier = 'other', mode = 'practice') => {
+    const engine = createBattle({
+      enemyId,
+      level: Math.max(1, stats.knightLevel || 1),
+      heroClass,
+      heroName: userData.heroName || 'Hero',
+      tier,
+      mode,
     });
-    
+    setBattleState(prev => ({ ...prev, ...battleSnapshot(engine), result: null }));
     setCurrentScreen('battle');
   };
 
-  const playerAttack = (attackType = 'normal') => {
-    if (!battleState.playerTurn || !battleState.inBattle) return;
-    
-    let damage = 10 + (stats.knightLevel * 5);
-    let message = '';
-    
-    setBattleAnimation('player-attack');
-    setTimeout(() => setBattleAnimation(''), 500);
-    
-    if (attackType === 'normal') {
-      damage = Math.floor(damage + Math.random() * 10);
-      message = `${userData.heroName} attacks for ${damage} damage!`;
-    } else if (attackType === 'special') {
-      if (battleState.specialCharge < 100) return;
-      
-      if (userData.avatarClass === 'warrior') {
-        damage = Math.floor(damage * 2.5);
-        message = `${userData.heroName} uses MIGHTY STRIKE for ${damage} damage!`;
-      } else if (userData.avatarClass === 'mage') {
-        damage = Math.floor(damage * 2);
-        message = `${userData.heroName} casts FIREBALL for ${damage} damage!`;
-      } else {
-        damage = Math.floor(damage * 1.8);
-        message = `${userData.heroName} uses SHADOW STRIKE for ${damage} damage! CRITICAL!`;
-      }
-      
-      setBattleState(prev => ({ ...prev, specialCharge: 0 }));
-    } else if (attackType === 'defend') {
-      message = `${userData.heroName} takes a defensive stance!`;
-      damage = 0;
-    }
-    
-    const newEnemyHP = Math.max(0, battleState.enemyHP - damage);
-    const newCombo = damage > 0 ? battleState.comboCount + 1 : 0;
-    const newSpecialCharge = Math.min(100, battleState.specialCharge + 20);
-    
-    setBattleState(prev => ({
-      ...prev,
-      enemyHP: newEnemyHP,
-      battleLog: [...prev.battleLog, message],
-      playerTurn: false,
-      comboCount: newCombo,
-      specialCharge: attackType !== 'special' ? newSpecialCharge : prev.specialCharge
-    }));
-    
-    if (newEnemyHP <= 0) {
-      setTimeout(() => winBattle(), 1000);
-    } else {
-      setTimeout(() => enemyAttack(), 1500);
-    }
+  // Practice battles: a random enemy for the craving strength (as before).
+  const startBattle = (intensity = 'medium') => beginBattle(pickEnemy({ mode: 'practice', tier: intensity }), intensity, 'practice');
+
+  // A battle against one specific enemy (the world map's fortress uses this
+  // for the Nicotine Lord).
+  const startBattleAgainst = (enemyId) => {
+    if (ENEMIES[enemyId]) beginBattle(enemyId, enemyId === 'nicotine_lord' ? 'boss' : 'other', 'practice');
   };
 
-  const enemyAttack = () => {
-    if (!battleState.inBattle) return;
-    
-    setEnemyAnimation('enemy-attack');
-    setTimeout(() => setEnemyAnimation(''), 500);
-    
-    const damage = Math.floor(battleState.currentEnemy.attack + Math.random() * 8);
-    const newPlayerHP = Math.max(0, battleState.playerHP - damage);
-    
-    setBattleState(prev => ({
-      ...prev,
-      playerHP: newPlayerHP,
-      battleLog: [...prev.battleLog, `${prev.currentEnemy.name} attacks for ${damage} damage!`],
-      playerTurn: true
-    }));
-    
-    if (newPlayerHP <= 0) {
-      setTimeout(() => loseBattle(), 1000);
-    }
-  };
+  // Urge Mode: one tap, no setup, works offline. The enemy fits the map
+  // region the player is in.
+  const startUrge = () => beginBattle(pickEnemy({ mode: 'urge', day: stats.daysSmokeFree }), 'urge', 'urge');
 
-  const usePotion = () => {
-    if (!battleState.playerTurn || !battleState.inBattle) return;
-    
-    const healAmount = 50;
-    const newPlayerHP = Math.min(battleState.playerMaxHP, battleState.playerHP + healAmount);
-    
-    setBattleAnimation('heal');
-    setTimeout(() => setBattleAnimation(''), 1000);
-    
-    setBattleState(prev => ({
-      ...prev,
-      playerHP: newPlayerHP,
-      battleLog: [...prev.battleLog, `${userData.heroName} uses a health potion and heals ${healAmount} HP!`],
-      playerTurn: false
-    }));
-    
-    setTimeout(() => enemyAttack(), 1500);
-  };
+  const onBattleChange = (engine) => setBattleState(prev => ({ ...prev, ...battleSnapshot(engine) }));
 
-  const winBattle = () => {
-    const isPerfect = battleState.playerHP === battleState.playerMaxHP;
-    const xpGained = battleState.battleReward + (battleState.comboCount * 10);
-    
+  /**
+   * A battle ended. Victory keeps the original rewards (XP from the enemy and
+   * combo, battles won, cravings defeated, flawless victories) with XP tapering
+   * after several wins in a day. Defeat and leaving take nothing away.
+   * Every result goes in the battle log (Advanced Stats).
+   */
+  const finishBattle = (engine) => {
+    const outcome = engine.phase;
+    const history = userData.history?.battles || [];
+    const rewards = battleRewards(engine, history);
+    const result = { outcome, rewards, enemyName: engine.enemy.name, enemyId: engine.enemy.id, tier: engine.tier, mode: engine.mode, seed: engine.turn };
+    const entry = { at: new Date().toISOString(), tier: engine.tier, result: outcome === 'victory' ? 'win' : outcome === 'defeat' ? 'loss' : 'fled', enemyId: engine.enemy.id };
     setBattleState(prev => ({
       ...prev,
-      inBattle: false,
-      battleLog: [...prev.battleLog, `VICTORY! You defeated the ${prev.currentEnemy.name}!`, `Gained ${xpGained} XP!`],
-      battlesWon: prev.battlesWon + 1,
-      perfectVictories: isPerfect ? prev.perfectVictories + 1 : prev.perfectVictories
+      ...battleSnapshot(engine),
+      result,
+      battlesWon: outcome === 'victory' ? prev.battlesWon + 1 : prev.battlesWon,
+      perfectVictories: outcome === 'victory' && rewards.perfect ? prev.perfectVictories + 1 : prev.perfectVictories,
     }));
-    
     setUserData(prev => ({
       ...prev,
-      totalExperience: prev.totalExperience + xpGained,
-      battlesWon: prev.battlesWon + 1,
-      cravingsDefeated: prev.cravingsDefeated + 1
+      ...(outcome === 'victory'
+        ? { totalExperience: prev.totalExperience + rewards.xp, battlesWon: prev.battlesWon + 1, cravingsDefeated: prev.cravingsDefeated + 1 }
+        : {}),
+      history: logBattle(prev.history, entry),
     }));
-    
-    setShowParticles(true);
-    setTimeout(() => setShowParticles(false), 3000);
+    if (outcome === 'victory' && !reducedEffectsOn) {
+      setShowParticles(true);
+      setTimeout(() => setShowParticles(false), 3000);
+    }
   };
 
-  const loseBattle = () => {
-    setBattleState(prev => ({
-      ...prev,
-      inBattle: false,
-      battleLog: [...prev.battleLog, `Defeated... But don't give up! Every battle makes you stronger!`]
-    }));
-  };
-
-  const fleeBattle = () => {
-    setBattleState(prev => ({
-      ...prev,
-      inBattle: false,
-      battleLog: [...prev.battleLog, `You fled from battle. Sometimes retreat is wisdom!`]
-    }));
-    setCurrentScreen('dashboard');
-  };
+  // Sound and haptics follow the player's settings (Hero tab).
+  const battleFx = useBattleFx({ sound: userData.settings?.sound === true, haptics: userData.settings?.haptics !== false });
 
   const handleSetupSubmit = () => {
     const quitDate = new Date(setupForm.quitDate);
@@ -1043,115 +1060,39 @@ const QuitQuestRPG = () => {
 
       // Clear localStorage
       localStorage.removeItem('quitQuestData');
-      console.log('🗑️ Progress reset - localStorage cleared');
+      devLog('Progress reset - localStorage cleared');
     }
   };
 
-  // Character Avatar Component with SVG Icons
+  // Character portrait: the class-coloured knight in a bevelled frame.
+  // Level 4 adds a brass ring, level 5 a bright ring and a crown.
   const CharacterAvatar = ({ level, className, size = 'large', animate = false }) => {
     const baseClass = className || userData.avatarClass;
 
-    // Size configurations
+    // Hero sprite is 32px; scale is a whole number that fits the frame.
     const sizeConfig = {
-      small: { container: 'w-12 h-12', icon: 'w-6 h-6', badge: 'text-xs px-1.5 py-0.5' },
-      medium: { container: 'w-20 h-20', icon: 'w-10 h-10', badge: 'text-xs px-2 py-1' },
-      large: { container: 'w-28 h-28', icon: 'w-14 h-14', badge: 'text-sm px-2 py-1' }
+      small: { box: 'w-12 h-12', scale: 1 },
+      medium: { box: 'w-20 h-20', scale: 2 },
+      large: { box: 'w-28 h-28', scale: 3 }
     };
-
     const config = sizeConfig[size];
-
-    // Class-based icon and color
-    const classConfig = {
-      warrior: {
-        icon: Shield,
-        baseColor: 'from-red-600 to-red-700',
-        glowColor: 'shadow-red-500/50',
-        borderColor: 'border-red-400'
-      },
-      mage: {
-        icon: Sparkles,
-        baseColor: 'from-purple-600 to-purple-700',
-        glowColor: 'shadow-purple-500/50',
-        borderColor: 'border-purple-400'
-      },
-      rogue: {
-        icon: Sword,
-        baseColor: 'from-gray-700 to-gray-800',
-        glowColor: 'shadow-gray-500/50',
-        borderColor: 'border-gray-400'
-      }
-    };
-
-    const avatarConfig = classConfig[baseClass] || classConfig.warrior;
-    const IconComponent = avatarConfig.icon;
-
-    // Level progression effects
-    const getLevelEffects = () => {
-      if (level >= 5) {
-        return {
-          border: 'border-4 border-yellow-400',
-          glow: 'shadow-xl shadow-yellow-500/70',
-          ring: 'ring-4 ring-yellow-300 ring-offset-2 ring-offset-slate-900'
-        };
-      } else if (level >= 4) {
-        return {
-          border: 'border-4 border-yellow-500',
-          glow: 'shadow-lg shadow-yellow-500/50',
-          ring: 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-slate-900'
-        };
-      } else if (level >= 3) {
-        return {
-          border: `border-3 ${avatarConfig.borderColor}`,
-          glow: `shadow-lg ${avatarConfig.glowColor}`,
-          ring: ''
-        };
-      } else {
-        return {
-          border: `border-2 ${avatarConfig.borderColor}`,
-          glow: `shadow-md ${avatarConfig.glowColor}`,
-          ring: ''
-        };
-      }
-    };
-
-    const effects = getLevelEffects();
+    const sprite = { warrior: 'hero_warrior', mage: 'hero_mage', rogue: 'hero_rogue' }[baseClass] || 'hero_warrior';
+    const frame = level >= 5 ? 'qq-portrait--legend' : level >= 4 ? 'qq-portrait--veteran' : '';
 
     return (
-      <div className={`relative inline-block ${animate ? 'animate-bounce' : ''}`}>
-        {/* Avatar Circle */}
-        <div className={`
-          ${config.container}
-          rounded-full
-          bg-gradient-to-br ${avatarConfig.baseColor}
-          ${effects.border}
-          ${effects.glow}
-          ${effects.ring}
-          flex items-center justify-center
-          transition-all duration-300
-          hover:scale-110
-        `}>
-          <IconComponent className={`${config.icon} text-white`} />
-
-          {/* Crown for max level */}
-          {level >= 5 && (
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Crown className="w-6 h-6 text-yellow-400 animate-pulse" />
-            </div>
-          )}
+      <div className={`relative inline-block ${animate ? 'animate-bounce-slow' : ''}`}>
+        <div className={`qq-portrait ${frame} ${config.box}`}>
+          <Sprite id={sprite} scale={config.scale} label={`${baseClass} avatar`} />
         </div>
 
-        {/* Level badge */}
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-          <span className={`
-            ${config.badge}
-            bg-gradient-to-r from-yellow-500 to-amber-500
-            text-slate-900
-            rounded-full
-            font-bold-heading
-            pixelated
-            shadow-lg
-            border-2 border-yellow-300
-          `}>
+        {level >= 5 && (
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+            <Sprite id="icon_crown" scale={size === 'small' ? 1 : 2} />
+          </div>
+        )}
+
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
+          <span className={`qq-chip qq-chip--brass whitespace-nowrap px-1.5 ${size === 'small' ? 'text-sm' : 'text-base'}`}>
             LV {level}
           </span>
         </div>
@@ -1161,8 +1102,9 @@ const QuitQuestRPG = () => {
 
   // Particle Effects Component
   const ParticleEffect = () => {
-    if (!showParticles) return null;
-    
+    // Not over a battle (it has its own effects), and not with Reduced Effects.
+    if (!showParticles || currentScreen === 'battle' || userData.settings?.reducedEffects === true) return null;
+
     return (
       <div className="fixed inset-0 pointer-events-none z-50">
         {[...Array(20)].map((_, i) => (
@@ -1176,7 +1118,7 @@ const QuitQuestRPG = () => {
               animationDuration: `${3 + Math.random() * 2}s`
             }}
           >
-            <Sparkles className="text-yellow-400 w-6 h-6" />
+            <Sprite id="icon_sparkle" scale={2} />
           </div>
         ))}
       </div>
@@ -1186,30 +1128,131 @@ const QuitQuestRPG = () => {
   // Level Up Animation
   const LevelUpAnimation = () => {
     if (!isLevelingUp) return null;
-    
+
     return (
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-        <div className="bg-yellow-600 text-slate-900 px-8 py-4 rounded-lg animate-scale-up pixelated">
-          <h2 className="text-3xl font-black-hero">LEVEL UP!</h2>
-          <p className="text-center mt-2 font-medium-text">Knight Level {stats.knightLevel}</p>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50 px-4">
+        <Panel tone="legendary" className="animate-fade-in text-center px-6">
+          <h2 className="type-title text-brass-300">Level Up!</h2>
+          <p className="type-stat text-bone mt-1">Knight Level {stats.knightLevel}</p>
+        </Panel>
       </div>
+    );
+  };
+
+  // Shared heading for screens and panels.
+  const Heading = ({ icon, children, as: Tag = 'h2', className = '' }) => (
+    <Tag className={`type-heading text-brass-300 text-center text-balance ${className}`}>
+      {icon && <Icon id={icon} scale={2} className="mr-2" />}
+      {children}
+    </Tag>
+  );
+
+  // The world map is presentation only: this adapter hands it the game's
+  // own progress, health milestones and story beats. Another data source
+  // could produce the same shape (see lib/journey/layout.js).
+  const journeyData = () => ({
+    day: stats.daysSmokeFree,
+    milestones: achievementsList
+      .filter(a => a.category === 'health')
+      .map(a => ({
+        id: a.id,
+        day: a.minutesRequired ? a.minutesRequired / 1440 : a.hoursRequired ? a.hoursRequired / 24 : a.daysRequired,
+        title: a.title,
+        description: a.description,
+        icon: a.icon,
+        experience: a.experience,
+        unlocked: userData.achievements.includes(a.id)
+      })),
+    storyBeats: storyContent.chapters.filter(ch => ch.day > 0).map(ch => ({ day: ch.day, title: ch.title })),
+    // Craving camps along the road start the same battles as the Quest tab's
+    // Mild / Medium / Strong buttons; the fortress is the Nicotine Lord.
+    encounters: [
+      { id: 'camp_mild', day: 9, tier: 'mild', enemies: TIER_POOLS.mild.map(id => ENEMIES[id].name) },
+      { id: 'camp_medium', day: 45, tier: 'medium', enemies: TIER_POOLS.medium.map(id => ENEMIES[id].name) },
+      { id: 'camp_strong', day: 100, tier: 'strong', enemies: TIER_POOLS.strong.map(id => ENEMIES[id].name) },
+      { id: 'fortress', day: 180, tier: 'boss', boss: true, enemyId: 'nicotine_lord', enemies: ['The Nicotine Lord'] }
+    ]
+  });
+
+  // A short celebration on the map after a battle is won (set on Continue).
+  const [mapCheer, setMapCheer] = useState(null); // { id, xp }
+  // It plays once: cleared after it has shown, so revisiting the tab does not replay it.
+  useEffect(() => {
+    if (!mapCheer) return undefined;
+    const t = setTimeout(() => setMapCheer(null), 3000);
+    return () => clearTimeout(t);
+  }, [mapCheer]);
+
+  /**
+   * The world map (from above or on the road; the choice is remembered).
+   * Shown at the top of the Quest tab (compact: no region list) and in full
+   * under Story > World Map. Called as a function so the map stays mounted.
+   */
+  const renderWorldMap = ({ compact = false, celebrate = null }) => {
+    if (!statsReady) return <div className="qq-inset" style={{ height: 240 }} aria-hidden="true" />;
+    const mapView = userData.journey?.view === 'road' ? 'road' : 'overhead';
+    const openStoryDay = (day) => {
+      setStoryDay(day);
+      setStoryView('archive');
+      setCurrentScreen('story');
+    };
+    const shared = {
+      journey: buildJourneyLayout(journeyData()),
+      journeyState: userData.journey || {},
+      onJourneyStateChange: (patch) => setUserData(prev => ({ ...prev, journey: { ...(prev.journey || {}), ...patch } })),
+      reducedEffects: userData.settings?.reducedEffects === true,
+      onOpenStory: openStoryDay,
+      onFight: (encounter) => (encounter.boss ? startBattleAgainst(encounter.enemyId) : startBattle(encounter.tier)),
+      onReadRegion: (region) => {
+        // Open the region's first story chapter you have reached.
+        const today = Math.max(1, stats.daysSmokeFree);
+        const first = storyContent.chapters.find(ch => ch.day >= Math.max(1, region.from) && ch.day <= Math.min(region.to, today));
+        openStoryDay(first ? first.day : Math.min(region.from, today));
+      },
+      compact,
+      celebrate,
+      onOpenFull: compact ? () => { setStoryView('world'); setCurrentScreen('story'); } : undefined,
+    };
+    return (
+      <>
+        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Map view">
+          {[['overhead', 'From above'], ['road', 'On the road']].map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={mapView === v}
+              onClick={() => shared.onJourneyStateChange({ view: v })}
+              className={`qq-chip px-3 py-1 text-base ${mapView === v ? 'qq-chip--brass' : 'qq-chip--locked'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {mapView === 'overhead' ? (
+          <OverworldMap {...shared} heroClass={heroClass} />
+        ) : (
+          <JourneyMap {...shared} heroSpriteId={`hero_${heroClass}`} />
+        )}
+      </>
     );
   };
 
   // Story Screen Component
   const StoryScreen = () => {
-    const [selectedDay, setSelectedDay] = useState(stats.daysSmokeFree || 1);
-    const [viewMode, setViewMode] = useState('today'); // 'today', 'archive', 'map'
-    
+    // A remembered day never runs past today (e.g. after a progress reset).
+    const selectedDay = storyDay !== null && storyDay <= Math.max(1, stats.daysSmokeFree) ? storyDay : (stats.daysSmokeFree || 1);
+    const setSelectedDay = setStoryDay;
+    const viewMode = storyView;
+    const setViewMode = setStoryView;
+
     const availableStories = storyContent.chapters.filter(
       ch => ch.day > 0 && ch.day <= stats.daysSmokeFree
     );
-    
+
     const getCurrentStory = () => {
       const todayStory = storyContent.chapters.find(ch => ch.day === stats.daysSmokeFree);
       if (todayStory) return todayStory;
-      
+
       // Return a random motivational snippet
       const snippets = storyContent.chapters.find(ch => ch.day === -1)?.snippets || [];
       const randomSnippet = snippets[Math.floor(Math.random() * snippets.length)];
@@ -1218,7 +1261,7 @@ const QuitQuestRPG = () => {
         text: randomSnippet.replace('{heroName}', userData.heroName)
       };
     };
-    
+
     const getStoryForDay = (day) => {
       const story = storyContent.chapters.find(ch => ch.day === day);
       if (story) {
@@ -1227,7 +1270,7 @@ const QuitQuestRPG = () => {
           text: story.text.replace('{heroName}', userData.heroName)
         };
       }
-      
+
       // Return daily wisdom for days without specific stories
       const snippets = storyContent.chapters.find(ch => ch.day === -1)?.snippets || [];
       const snippetIndex = day % snippets.length;
@@ -1236,122 +1279,96 @@ const QuitQuestRPG = () => {
         text: snippets[snippetIndex].replace('{heroName}', userData.heroName)
       };
     };
-    
+
     const currentStory = getCurrentStory();
     const selectedStory = getStoryForDay(selectedDay);
-    
+
+    const chapters = [
+      { n: 1, name: 'Awakening', days: '1-30' },
+      { n: 2, name: 'Journey', days: '31-60' },
+      { n: 3, name: 'Trials', days: '61-90' },
+      { n: 4, name: 'Transform', days: '91-120' },
+      { n: 5, name: 'Mastery', days: '121-150' },
+      { n: 6, name: 'Legend', days: '151-180' }
+    ];
+
     return (
       <div className="space-y-4">
         {/* Story Header */}
-        <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900 border-4 border-purple-700 rounded-lg p-6 relative overflow-hidden">
+        <Panel tone="raised" className="relative overflow-hidden">
           <PixelBackground environment={
             storyChapter <= 2 ? 'forest' :
             storyChapter <= 4 ? 'mountain' :
             storyChapter <= 6 ? 'castle' :
             'dragon'
           } />
-          
+
           <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold-title text-yellow-400 text-center mb-4 pixelated">
-              📜 THE LEGEND OF {userData.heroName.toUpperCase()} 📜
+            <h2 className="type-heading text-brass-300 text-center text-balance mb-1">
+              <Icon id="icon_scroll" scale={2} className="mr-2" />The Legend of {userData.heroName}
             </h2>
-            <p className="text-purple-200 text-center pixelated text-xs font-medium-text">
+            <p className="type-caption text-indigo-300 text-center">
               Chapter {storyChapter}: Day {stats.daysSmokeFree} of Your Epic Journey
             </p>
-            
+
             {/* View Mode Tabs */}
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                onClick={() => setViewMode('today')}
-                className={`px-3 py-1 rounded pixelated text-xs ${
-                  viewMode === 'today' 
-                    ? 'bg-yellow-500 text-slate-900' 
-                    : 'bg-purple-800 text-purple-200 hover:bg-purple-700'
-                }`}
-              >
-                Today's Story
-              </button>
-              <button
-                onClick={() => setViewMode('archive')}
-                className={`px-3 py-1 rounded pixelated text-xs ${
-                  viewMode === 'archive' 
-                    ? 'bg-yellow-500 text-slate-900' 
-                    : 'bg-purple-800 text-purple-200 hover:bg-purple-700'
-                }`}
-              >
-                Story Archive
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`px-3 py-1 rounded pixelated text-xs ${
-                  viewMode === 'map' 
-                    ? 'bg-yellow-500 text-slate-900' 
-                    : 'bg-purple-800 text-purple-200 hover:bg-purple-700'
-                }`}
-              >
-                Journey Map
-              </button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+              {[['today', "Today's Story"], ['archive', 'Story Archive'], ['map', 'Journey Map'], ['world', 'World Map']].map(([mode, label]) => (
+                <Button key={mode} size="sm" selected={viewMode === mode} onClick={() => setViewMode(mode)}>
+                  {label}
+                </Button>
+              ))}
             </div>
           </div>
-        </div>
+        </Panel>
 
         {/* Today's Story View */}
         {viewMode === 'today' && currentStory && (
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
-            <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4 mb-4">
-              <h3 className="text-2xl font-extrabold-title text-yellow-400 mb-4 pixelated text-center">
-                {currentStory.title}
-              </h3>
-              <div className="parchment-bg rounded-lg p-6 shadow-lg">
-                <p className="story-text text-center">
-                  {currentStory.text.replace('{heroName}', userData.heroName)}
-                </p>
-              </div>
+          <Panel className="space-y-4">
+            <h3 className="type-heading text-brass-300 text-center text-balance">{currentStory.title}</h3>
+            <div className="qq-inset qq-inset--parchment p-5">
+              <p className="story-text text-center">
+                {currentStory.text.replace('{heroName}', userData.heroName)}
+              </p>
             </div>
-            
+
             {/* Story Stats */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-purple-900 bg-opacity-50 rounded p-2">
-                <p className="text-purple-300 text-xs pixelated">Stories Read</p>
-                <p className="text-yellow-400 text-lg font-bold pixelated">{availableStories.length}</p>
-              </div>
-              <div className="bg-purple-900 bg-opacity-50 rounded p-2">
-                <p className="text-purple-300 text-xs pixelated">Chapter</p>
-                <p className="text-yellow-400 text-lg font-bold pixelated">{storyChapter}</p>
-              </div>
-              <div className="bg-purple-900 bg-opacity-50 rounded p-2">
-                <p className="text-purple-300 text-xs pixelated">Days Total</p>
-                <p className="text-yellow-400 text-lg font-bold pixelated">{stats.daysSmokeFree}</p>
-              </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {[['Stories Read', availableStories.length], ['Chapter', storyChapter], ['Days Total', stats.daysSmokeFree]].map(([label, value]) => (
+                <div key={label} className="qq-inset p-2">
+                  <p className="qq-label">{label}</p>
+                  <p className="type-stat text-brass-300">{value}</p>
+                </div>
+              ))}
             </div>
-            
+
             {!todayStoryViewed && stats.daysSmokeFree === currentStory.day && (
-              <div className="mt-4 text-center">
-                <span className="text-yellow-400 animate-pulse pixelated text-sm">✨ New chapter unlocked! ✨</span>
-              </div>
+              <p className="text-center animate-pulse type-label text-brass-300">
+                <Icon id="icon_sparkle" className="mr-1" />New chapter unlocked!<Icon id="icon_sparkle" className="ml-1" />
+              </p>
             )}
-          </div>
+          </Panel>
         )}
 
         {/* Story Archive View */}
         {viewMode === 'archive' && (
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold-heading text-yellow-400 mb-4 pixelated text-center">
-              📚 YOUR STORY COLLECTION
-            </h3>
-            
+          <Panel className="space-y-4">
+            <Heading icon="icon_book">Your Story Collection</Heading>
+
             {/* Day Selector */}
-            <div className="mb-4">
-              <label className="text-yellow-400 text-xs pixelated block mb-2">Select Day to Read:</label>
+            <div>
+              <label htmlFor="story-day" className="qq-label block mb-2">Select Day to Read</label>
               <div className="flex gap-2 items-center">
-                <button
+                <Button
+                  size="sm"
                   onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
                   disabled={selectedDay <= 1}
-                  className="px-3 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-700 disabled:opacity-50 text-white rounded pixelated"
+                  aria-label="Previous day"
                 >
-                  ←
-                </button>
+                  <Icon id="icon_arrow_left" />
+                </Button>
                 <input
+                  id="story-day"
                   type="number"
                   value={selectedDay}
                   onChange={(e) => {
@@ -1360,31 +1377,32 @@ const QuitQuestRPG = () => {
                   }}
                   min="1"
                   max={stats.daysSmokeFree}
-                  className="w-20 p-1 bg-slate-700 border-2 border-slate-600 rounded text-white text-center pixelated"
+                  className="qq-input w-20 py-1"
                 />
-                <button
+                <Button
+                  size="sm"
                   onClick={() => setSelectedDay(Math.min(stats.daysSmokeFree, selectedDay + 1))}
                   disabled={selectedDay >= stats.daysSmokeFree}
-                  className="px-3 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-700 disabled:opacity-50 text-white rounded pixelated"
+                  aria-label="Next day"
                 >
-                  →
-                </button>
-                <span className="text-gray-400 text-xs pixelated">of {stats.daysSmokeFree} days</span>
+                  <Icon id="icon_arrow_right" />
+                </Button>
+                <span className="qq-label">of {stats.daysSmokeFree} days</span>
               </div>
             </div>
-            
+
             {/* Selected Story Display */}
-            <div className="bg-yellow-900 bg-opacity-30 rounded-lg p-4">
-              <h4 className="text-xl font-bold-heading text-yellow-400 mb-3 pixelated text-center">
+            <div className="space-y-3">
+              <h4 className="type-subheading text-brass-300 text-center text-balance">
                 Day {selectedDay}: {selectedStory.title}
               </h4>
-              <div className="parchment-bg rounded-lg p-6 shadow-lg">
+              <div className="qq-inset qq-inset--parchment p-5">
                 <p className="story-text text-center">
                   {selectedStory.text}
                 </p>
               </div>
               {selectedStory.day > 0 && (
-                <p className="text-yellow-500 text-xs text-center mt-3 pixelated font-medium-text">
+                <p className="type-caption text-brass-400 text-center">
                   {selectedStory.day <= 30 ? 'Chapter 1: The Awakening' :
                    selectedStory.day <= 60 ? 'Chapter 2: The Journey' :
                    selectedStory.day <= 90 ? 'Chapter 3: The Trials' :
@@ -1394,77 +1412,72 @@ const QuitQuestRPG = () => {
                 </p>
               )}
             </div>
-            
+
+            {/* Premium side tales for this day (none written yet; see lib/premium/story.js) */}
+            {premiumChaptersFor(selectedDay, isPremium).map((tale) => (
+              <Panel key={tale.title} tone={tale.locked ? 'sunken' : 'parchment'} className="space-y-2">
+                <p className="type-subheading text-brass-300">{tale.locked && <Icon id="icon_lock" className="mr-2" />}{tale.title}</p>
+                {tale.locked ? (
+                  <Button size="sm" onClick={openPremium}>A Premium side tale. See Premium</Button>
+                ) : (
+                  <p className="story-text">{tale.text}</p>
+                )}
+              </Panel>
+            ))}
+
             {/* Quick Jump to Milestone Days */}
-            <div className="mt-4">
-              <p className="text-yellow-400 text-xs pixelated mb-2">Quick Jump to Milestones:</p>
-              <div className="flex flex-wrap gap-2">
+            <div>
+              <p className="qq-label mb-2">Quick Jump to Milestones</p>
+              <div className="flex flex-wrap gap-1.5">
                 {[1, 3, 7, 14, 21, 30, 50, 60, 90, 100, 120, 150, 180, 365].map(day => (
                   <button
                     key={day}
                     onClick={() => setSelectedDay(day)}
                     disabled={day > stats.daysSmokeFree}
-                    className={`px-2 py-1 rounded text-xs pixelated ${
-                      day <= stats.daysSmokeFree
-                        ? 'bg-purple-700 hover:bg-purple-600 text-white'
-                        : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    }`}
+                    className={`qq-chip px-2 py-1 text-base ${day <= stats.daysSmokeFree ? '' : 'qq-chip--locked'}`}
                   >
                     Day {day}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
+          </Panel>
+        )}
+
+        {/* World Map View */}
+        {viewMode === 'world' && (
+          <Panel className="space-y-2">
+            <Heading icon="icon_map">The World</Heading>
+            {renderWorldMap({})}
+            <AdSlot screen="worldMap" inCravingFlow={battleState.inBattle} />
+          </Panel>
         )}
 
         {/* Journey Map View */}
         {viewMode === 'map' && (
-          <div className="bg-gradient-to-br from-amber-900 to-amber-800 border-4 border-amber-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold-heading text-amber-300 mb-4 pixelated text-center">
-              🗺️ YOUR HEROIC JOURNEY
-            </h3>
-            
-            {/* Chapter Progress */}
-            <div className="mb-4">
-              <div className="grid grid-cols-3 gap-2 text-center mb-4">
-                <div className={`p-2 rounded ${storyChapter >= 1 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.1: Awakening</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 1-30</p>
+          <Panel tone="parchment" className="space-y-4">
+            <Heading icon="icon_map">Your Heroic Journey</Heading>
+
+            {/* Chapter Progress: reached chapters are progress, so moss */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {chapters.map(ch => (
+                <div key={ch.n} className={`qq-chip p-2 ${storyChapter >= ch.n ? 'qq-chip--moss' : 'qq-chip--locked'}`}>
+                  <p className="text-sm leading-tight">Ch.{ch.n}: {ch.name}</p>
+                  <p className="text-lg leading-tight">Days {ch.days}</p>
                 </div>
-                <div className={`p-2 rounded ${storyChapter >= 2 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.2: Journey</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 31-60</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 3 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.3: Trials</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 61-90</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 4 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.4: Transform</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 91-120</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 5 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.5: Mastery</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 121-150</p>
-                </div>
-                <div className={`p-2 rounded ${storyChapter >= 6 ? 'bg-green-700' : 'bg-gray-700'}`}>
-                  <p className="text-xs text-white pixelated">Ch.6: Legend</p>
-                  <p className="text-yellow-400 font-bold pixelated">Days 151-180</p>
-                </div>
-              </div>
+              ))}
             </div>
-            
+
             {/* Interactive Day Grid */}
-            <div className="bg-slate-900 bg-opacity-50 rounded p-4">
-              <p className="text-amber-300 text-xs pixelated mb-2">Click any unlocked day to read its story:</p>
+            <div className="qq-inset p-3">
+              <p className="type-caption text-brass-300 mb-2">Tap any unlocked day to read its story:</p>
               <div className="grid grid-cols-10 gap-1">
                 {[...Array(180)].map((_, i) => {
                   const day = i + 1;
                   const hasStory = storyContent.chapters.some(ch => ch.day === day);
                   const isUnlocked = day <= stats.daysSmokeFree;
                   const isCurrent = day === stats.daysSmokeFree;
-                  
+
                   return (
                     <button
                       key={day}
@@ -1475,49 +1488,43 @@ const QuitQuestRPG = () => {
                         }
                       }}
                       disabled={!isUnlocked}
-                      className={`
-                        h-8 rounded flex items-center justify-center text-xs font-bold pixelated transition-all
-                        ${isCurrent ? 'bg-yellow-500 text-slate-900 animate-pulse ring-2 ring-yellow-300' :
-                          isUnlocked ? (hasStory ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' : 'bg-blue-700 hover:bg-blue-600 text-blue-200 cursor-pointer') :
-                          hasStory ? 'bg-amber-800 text-amber-600 cursor-not-allowed' :
-                          'bg-gray-700 text-gray-500 cursor-not-allowed'}
-                      `}
+                      className={`qq-chip h-8 flex items-center justify-center text-sm ${
+                        isCurrent ? 'qq-chip--brass animate-pulse' :
+                        isUnlocked ? (hasStory ? 'qq-chip--moss' : '') :
+                        hasStory ? 'qq-chip--sealed' :
+                        'qq-chip--locked'
+                      }`}
                       title={
-                        isUnlocked ? `Day ${day} - Click to read` : 
+                        isUnlocked ? `Day ${day} - Tap to read` :
                         `Day ${day} - Locked (${day - stats.daysSmokeFree} days to unlock)`
                       }
                     >
-                      {hasStory && isUnlocked ? '📜' : day}
+                      {hasStory && isUnlocked ? <Sprite id="icon_scroll" scale={1} label={`Day ${day} story`} /> : day}
                     </button>
                   );
                 })}
               </div>
             </div>
-            
+
             {/* Legend */}
-            <div className="mt-4 flex justify-around text-xs pixelated">
-              <span className="text-green-400">📜 Story Day ({availableStories.length})</span>
-              <span className="text-blue-400">✓ Completed Day</span>
-              <span className="text-yellow-400 animate-pulse">★ Today</span>
-              <span className="text-gray-400">🔒 Locked</span>
+            <div className="flex flex-wrap justify-around gap-2 qq-label">
+              <span className="text-moss-300"><Icon id="icon_scroll" className="mr-1" />Story Day ({availableStories.length})</span>
+              <span className="text-indigo-300"><Icon id="icon_check" className="mr-1" />Completed Day</span>
+              <span className="text-brass-300 animate-pulse"><Icon id="icon_star" className="mr-1" />Today</span>
+              <span className="text-stone-400"><Icon id="icon_lock" className="mr-1" />Locked</span>
             </div>
-            
+
             {/* Progress Summary */}
-            <div className="mt-4 bg-slate-900 bg-opacity-50 rounded p-3 text-center">
-              <p className="text-amber-300 pixelated text-sm">
-                You've unlocked {availableStories.length} of {storyContent.chapters.filter(ch => ch.day > 0).length} story entries
+            <div className="qq-inset text-center space-y-2">
+              <p className="type-caption text-bone">
+                You&rsquo;ve unlocked {availableStories.length} of {storyContent.chapters.filter(ch => ch.day > 0).length} story entries
               </p>
-              <div className="w-full bg-amber-800 rounded-full h-3 mt-2">
-                <div 
-                  className="bg-gradient-to-r from-green-500 to-yellow-500 h-3 rounded-full transition-all"
-                  style={{ width: `${(stats.daysSmokeFree / 180) * 100}%` }}
-                />
-              </div>
-              <p className="text-amber-400 text-xs mt-1 pixelated">
+              <ProgressBar value={stats.daysSmokeFree} max={180} tone="moss" label="Six-month journey" />
+              <p className="qq-label text-moss-300">
                 {Math.round((stats.daysSmokeFree / 180) * 100)}% of 6-month journey complete
               </p>
             </div>
-          </div>
+          </Panel>
         )}
       </div>
     );
@@ -1528,7 +1535,7 @@ const QuitQuestRPG = () => {
     const logActivity = (activityType) => {
       const newActivities = { ...userData.activities };
       const newSpecialEvents = { ...userData.specialEvents };
-      
+
       // Update activity counts
       switch(activityType) {
         case 'walk':
@@ -1572,20 +1579,29 @@ const QuitQuestRPG = () => {
           newSpecialEvents.drivingWithout++;
           break;
       }
-      
+
       setUserData(prev => ({
         ...prev,
         activities: newActivities,
         specialEvents: newSpecialEvents,
         totalExperience: prev.totalExperience + 10 // Small XP for activities
       }));
-      
+
       // Check for new achievements
       checkAchievements(stats.daysSmokeFree);
     };
-    
+
+    const environment = [
+      null,
+      { icon: 'icon_hut', text: 'The Humble Beginning - Forest Path' },
+      { icon: 'icon_tree', text: 'The Enchanted Forest - Growing Stronger' },
+      { icon: 'icon_mountain', text: 'The Mountain Peak - Rising Above' },
+      { icon: 'icon_castle', text: 'The Royal Castle - Nearly There' },
+      { icon: 'icon_volcano', text: 'The Dragon\'s Lair - Ultimate Power' }
+    ][Math.min(5, Math.max(1, stats.knightLevel))];
+
     return (
-      <div className="space-y-4 relative">
+      <div className="space-y-4 relative overflow-x-clip">
         <PixelBackground environment={
           stats.knightLevel === 1 ? 'forest' :
           stats.knightLevel === 2 ? 'forest' :
@@ -1593,307 +1609,286 @@ const QuitQuestRPG = () => {
           stats.knightLevel === 4 ? 'castle' :
           'dragon'
         } />
-        
+
         {/* Story Alert if new story available */}
         {userData.storyProgress.includes(stats.daysSmokeFree) && !todayStoryViewed && (
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 border-4 border-purple-500 rounded-lg p-3 text-center animate-pulse">
-            <p className="text-white font-bold pixelated">📜 New Story Chapter Unlocked! 📜</p>
-            <button
-              onClick={() => setCurrentScreen('story')}
-              className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-slate-900 rounded font-bold transition-all pixelated"
-            >
+          <Panel tone="raised" className="text-center relative z-10 space-y-2">
+            <p className="type-subheading text-brass-300">
+              <Icon id="icon_scroll" className="mr-2" />New Story Chapter Unlocked!<Icon id="icon_scroll" className="ml-2" />
+            </p>
+            <Button size="sm" onClick={() => setCurrentScreen('story')}>
               Read Now
-            </button>
-          </div>
+            </Button>
+          </Panel>
         )}
-        
-        {/* Craving Emergency Button */}
-        <div className="bg-gradient-to-r from-red-600 to-orange-600 border-4 border-red-500 rounded-lg p-4 text-center animate-pulse-slow relative z-10">
-          <h3 className="text-white font-bold-heading mb-2 pixelated">🚨 CRAVING EMERGENCY? 🚨</h3>
-          <p className="text-red-100 text-sm mb-3 font-light-body">Fight the urge with an epic battle!</p>
+
+        {/* The world map leads the Quest tab: where the knight is on the journey */}
+        <Panel className="relative z-10 space-y-2 qq-home-map">
+          <Heading icon="icon_map">Your Journey</Heading>
+          {renderWorldMap({ compact: true, celebrate: mapCheer })}
+        </Panel>
+
+        {/* Craving Emergency: fighting a craving is a positive action, so moss */}
+        <Panel tone="danger" className="text-center relative z-10 space-y-3">
+          <h3 className="type-heading text-rust-300">
+            <Icon id="icon_alert" className="mr-2" />Craving Emergency?
+          </h3>
+          <p className="type-body text-bone">Fight the urge with an epic battle!</p>
+          <Button tone="moss" onClick={startUrge} className="w-full">
+            <Icon id="icon_alert" />Urge Mode: start now
+          </Button>
+          <p className="qq-label">Or pick how strong it feels</p>
           <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => startBattle('mild')}
-              className="py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-900 rounded-lg font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              Mild
-            </button>
-            <button
-              onClick={() => startBattle('medium')}
-              className="py-2 bg-orange-500 hover:bg-orange-400 text-white rounded-lg font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              Medium
-            </button>
-            <button
-              onClick={() => startBattle('strong')}
-              className="py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              Strong
-            </button>
+            <Button tone="moss" onClick={() => startBattle('mild')}>Mild</Button>
+            <Button tone="moss" onClick={() => startBattle('medium')}>Medium</Button>
+            <Button tone="moss" onClick={() => startBattle('strong')}>Strong</Button>
           </div>
-        </div>
+        </Panel>
 
         {/* Hero Card with Avatar */}
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-shimmer"></div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-6">
-                <CharacterAvatar level={stats.knightLevel} size="large" animate={isLevelingUp} />
-                <div>
-                  <h2 className="text-2xl font-extrabold-title text-slate-900 pixelated">{userData.heroName}</h2>
-                  <p className="text-slate-800 pixelated font-medium-text">Level {stats.knightLevel} {userData.avatarClass}</p>
-                  <div className="mt-2">
-                    <p className="text-4xl font-black-hero text-slate-900 pixelated">{stats.daysSmokeFree}</p>
-                    <p className="text-sm text-slate-800 pixelated font-medium-text">DAYS SMOKE-FREE</p>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Swords className="w-4 h-4 text-slate-800" />
-                    <span className="text-sm text-slate-800 pixelated font-medium-text">Battles Won: {userData.battlesWon}</span>
-                  </div>
-                </div>
+        <Panel tone="raised" className="relative z-10">
+          <div className="flex items-center gap-5 flex-wrap">
+            <CharacterAvatar level={stats.knightLevel} size="large" animate={isLevelingUp} />
+            <div className="min-w-0 flex-1">
+              <h2 className="type-heading text-bone break-words">{userData.heroName}</h2>
+              <p className="type-caption text-indigo-300 capitalize">Level {stats.knightLevel} {userData.avatarClass}</p>
+              <div className="mt-2">
+                <p className="type-statXL text-moss-300">{stats.daysSmokeFree}</p>
+                <p className="qq-label">Days Smoke-Free</p>
               </div>
-            </div>
-            
-            {/* Health & XP Bars */}
-            <div className="space-y-2 mt-4">
-              <div>
-                <div className="flex justify-between text-xs text-slate-800 mb-1 pixelated">
-                  <span>Health</span>
-                  <span>{Math.round(stats.healthPercentage)}%</span>
-                </div>
-                <div className="w-full bg-slate-800 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-red-500 to-pink-500 h-3 rounded-full transition-all duration-1000"
-                    style={{ width: `${stats.healthPercentage}%` }}
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <div className="flex justify-between text-xs text-slate-800 mb-1 pixelated">
-                  <span>Experience</span>
-                  <span>{stats.experienceToNext} to next level</span>
-                </div>
-                <div className="w-full bg-slate-800 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-1000"
-                    style={{ 
-                      width: `${((userData.totalExperience % 500) / 500) * 100}%` 
-                    }}
-                  />
-                </div>
-              </div>
+              <p className="mt-2 qq-label text-bone flex flex-wrap items-center gap-x-2">
+                <Sprite id="icon_swords" scale={1} />
+                Battles Won: <span className="type-stat text-brass-300">{userData.battlesWon}</span>
+              </p>
             </div>
           </div>
-        </div>
+
+          {/* Health & XP Bars: both are positive progress, so moss */}
+          <div className="space-y-3 mt-5">
+            <div>
+              <div className="flex justify-between qq-label mb-1">
+                <span>Health</span>
+                <span className="text-moss-300">{Math.round(stats.healthPercentage)}%</span>
+              </div>
+              <ProgressBar value={stats.healthPercentage} tone="moss" label="Health" />
+            </div>
+            <div>
+              <div className="flex justify-between qq-label mb-1">
+                <span>Experience</span>
+                <span className="text-moss-300">{stats.experienceToNext} to next level</span>
+              </div>
+              <ProgressBar value={userData.totalExperience % 500} max={500} tone="moss" label="Experience" />
+            </div>
+          </div>
+        </Panel>
 
         {/* Environment Card */}
-        <div className={`rounded-lg p-4 border-4 relative z-10 ${
-          stats.knightLevel === 1 ? 'bg-gradient-to-br from-gray-700 to-gray-800 border-gray-600' :
-          stats.knightLevel === 2 ? 'bg-gradient-to-br from-green-700 to-green-800 border-green-600' :
-          stats.knightLevel === 3 ? 'bg-gradient-to-br from-blue-700 to-blue-800 border-blue-600' :
-          stats.knightLevel === 4 ? 'bg-gradient-to-br from-purple-700 to-purple-800 border-purple-600' :
-          'bg-gradient-to-br from-orange-700 to-red-800 border-orange-600'
-        }`}>
-          <p className="text-white text-center text-sm pixelated">
-            {stats.knightLevel === 1 ? '🏚️ The Humble Beginning - Forest Path' :
-             stats.knightLevel === 2 ? '🌲 The Enchanted Forest - Growing Stronger' :
-             stats.knightLevel === 3 ? '🏔️ The Mountain Peak - Rising Above' :
-             stats.knightLevel === 4 ? '🏰 The Royal Castle - Nearly There' :
-             '🌋 The Dragon\'s Lair - Ultimate Power'}
+        <Panel tone="sunken" className="relative z-10 space-y-2 text-center">
+          <p className="type-subheading text-indigo-300">
+            <Icon id={environment.icon} className="mr-2" />
+            {environment.text}
           </p>
-        </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              setStoryView('world');
+              setCurrentScreen('story');
+            }}
+          >
+            <Icon id="icon_map" />Full map &amp; regions
+          </Button>
+        </Panel>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 relative z-10">
-          <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-4 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <DollarSign className="w-8 h-8 mx-auto mb-2 text-slate-900" />
-            <p className="text-sm text-slate-800 pixelated font-medium-text">GOLD SAVED</p>
-            <p className="text-2xl font-extrabold-title text-slate-900 pixelated">${stats.moneySaved.toFixed(2)}</p>
-            <div className="mt-2 flex justify-center gap-1">
+        <div className="grid grid-cols-2 gap-3 relative z-10">
+          <Panel className="text-center">
+            <Sprite id="icon_coins" scale={2} className="mx-auto mb-1 block" />
+            <p className="qq-label">Gold Saved</p>
+            <p className="type-statL text-brass-300">${stats.moneySaved.toFixed(2)}</p>
+            <div className="mt-2 flex justify-center gap-1 min-h-4">
               {[...Array(Math.min(5, Math.floor(stats.moneySaved / 100)))].map((_, i) => (
-                <span key={i} className="text-yellow-300">💰</span>
+                <Sprite key={i} id="icon_coin_bag" scale={1} />
               ))}
             </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-amber-700 to-amber-800 border-4 border-amber-600 rounded-lg p-4 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <Shield className="w-8 h-8 mx-auto mb-2 text-amber-100" />
-            <p className="text-sm text-amber-200 pixelated font-medium-text">ENEMIES DEFEATED</p>
-            <p className="text-2xl font-extrabold-title text-white pixelated">{stats.cigarettesAvoided.toLocaleString()}</p>
-            <div className="mt-2 flex justify-center gap-1">
+          </Panel>
+
+          <Panel className="text-center">
+            <Sprite id="icon_shield" scale={2} className="mx-auto mb-1 block" />
+            <p className="qq-label">Enemies Defeated</p>
+            <p className="type-statL text-bone">{stats.cigarettesAvoided.toLocaleString()}</p>
+            <div className="mt-2 flex justify-center gap-1 min-h-4">
               {[...Array(Math.min(5, Math.floor(stats.cigarettesAvoided / 500)))].map((_, i) => (
-                <span key={i}>💀</span>
+                <Sprite key={i} id="icon_skull" scale={1} />
               ))}
             </div>
-          </div>
+          </Panel>
         </div>
 
-        {/* Real-World Activities Section */}
-        <div className="bg-gradient-to-br from-green-800 to-green-900 border-4 border-green-700 rounded-lg p-4 relative z-10">
-          <h3 className="text-xl font-bold-heading text-green-300 mb-3 flex items-center gap-2 pixelated">
-            <Activity className="w-5 h-5" /> HEALTHY ACTIVITIES
+        {/* Records & Treasury: Premium stats and savings (free players see previews) */}
+        <Panel tone="sunken" className="relative z-10 text-center space-y-2">
+          <p className="type-subheading text-indigo-300"><Icon id="icon_scroll" className="mr-2" />Records &amp; Treasury</p>
+          <p className="type-caption text-bone">Your streak, battles and savings in depth.</p>
+          <Button size="sm" onClick={() => openScreen('stats')}>
+            <Icon id="icon_target" />Open Records
+          </Button>
+        </Panel>
+
+        {/* A gentle, one-time mention of Premium after a real milestone */}
+        <PremiumNote />
+
+        {/* Real-World Activities Section: logging one is a positive action */}
+        <Panel className="relative z-10 space-y-3">
+          <h3 className="type-heading text-brass-300 flex items-center gap-2">
+            <Sprite id="icon_heartbeat" scale={2} /> Healthy Activities
           </h3>
-          <p className="text-green-200 text-sm mb-3 font-light-body">Log activities to earn achievements!</p>
-          <div className="grid grid-cols-4 gap-2">
-            <button
-              onClick={() => logActivity('walk')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              🚶 Walk
-            </button>
-            <button
-              onClick={() => logActivity('exercise')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              💪 Exercise
-            </button>
-            <button
-              onClick={() => logActivity('meditate')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              🧘 Meditate
-            </button>
-            <button
-              onClick={() => logActivity('water')}
-              className="py-2 px-1 bg-green-700 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-all transform hover:scale-105 pixelated"
-            >
-              💧 Water
-            </button>
+          <p className="type-body text-bone">Log activities to earn achievements!</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[['walk', 'icon_walk', 'Walk'], ['exercise', 'icon_strength', 'Exercise'], ['meditate', 'icon_meditate', 'Meditate'], ['water', 'icon_droplet', 'Water']].map(([type, icon, label]) => (
+              <Button key={type} tone="moss" size="sm" onClick={() => logActivity(type)}>
+                <Icon id={icon} />{label}
+              </Button>
+            ))}
           </div>
-        </div>
+        </Panel>
 
         {/* Health Status */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-4 border-slate-700 rounded-lg p-6 relative overflow-hidden z-10">
-          <div className="absolute top-0 right-0 opacity-20">
-            <Heart className="w-20 h-20 text-red-500 animate-pulse" />
+        <Panel className="relative overflow-hidden z-10 space-y-3">
+          <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
+            <Sprite id="icon_heart" scale={5} className="animate-pulse" />
           </div>
-          <h3 className="text-xl font-bold-heading text-yellow-500 mb-3 flex items-center gap-2 relative z-10 pixelated">
-            <Heart className="w-5 h-5" /> HEALTH STATUS
+          <h3 className="type-heading text-brass-300 flex items-center gap-2 relative z-10">
+            <Sprite id="icon_heart" scale={2} /> Health Status
           </h3>
-          <p className="text-gray-300 relative z-10 font-light-body">{stats.healthStatus}</p>
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {stats.daysSmokeFree >= 1 && <span className="text-2xl animate-bounce-slow">🫁</span>}
-            {stats.daysSmokeFree >= 7 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.1s'}}>💓</span>}
-            {stats.daysSmokeFree >= 30 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.2s'}}>💪</span>}
-            {stats.daysSmokeFree >= 100 && <span className="text-2xl animate-bounce-slow" style={{animationDelay: '0.3s'}}>🛡️</span>}
+          <p className="type-body text-bone relative z-10"><Icon id={getHealthIcon(stats.daysSmokeFree)} className="mr-2" />{stats.healthStatus}</p>
+          <div className="grid grid-cols-4 gap-2 relative z-10">
+            {stats.daysSmokeFree >= 1 && <span className="animate-bounce-slow"><Sprite id="icon_lung" scale={2} label="Lungs recovering" /></span>}
+            {stats.daysSmokeFree >= 7 && <span className="animate-bounce-slow" style={{animationDelay: '0.1s'}}><Sprite id="icon_heartbeat" scale={2} label="Heart rate normal" /></span>}
+            {stats.daysSmokeFree >= 30 && <span className="animate-bounce-slow" style={{animationDelay: '0.2s'}}><Sprite id="icon_strength" scale={2} label="Lung function improving" /></span>}
+            {stats.daysSmokeFree >= 100 && <span className="animate-bounce-slow" style={{animationDelay: '0.3s'}}><Sprite id="icon_shield" scale={2} label="Heart disease risk dropping" /></span>}
           </div>
+        </Panel>
+
+        {/* Collapses to nothing when no ad shows (always on the web) */}
+        <div className="relative z-10 empty:hidden">
+          <AdSlot screen="dashboard" inCravingFlow={battleState.inBattle} />
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * Premium note: shown at most twice ever (after day 7 and after day 30),
+   * never in the first session, never while a battle is on, gone for good
+   * once dismissed. No pressure: two buttons, "See Premium" and "Not now".
+   */
+  const PREMIUM_NOTE_DAYS = [7, 30];
+  const premiumNoteDay = [...PREMIUM_NOTE_DAYS].reverse().find(d => stats.daysSmokeFree >= d);
+  const premiumNotesSeen = userData.premiumNote?.seen || [];
+  const showPremiumNote =
+    !isPremium &&
+    !battleState.inBattle &&
+    !(ads && ads.firstSession) &&
+    premiumNoteDay !== undefined &&
+    !premiumNotesSeen.includes(premiumNoteDay) &&
+    premiumNotesSeen.length < PREMIUM_NOTE_DAYS.length;
+  const dismissPremiumNote = () => setUserData(prev => ({
+    ...prev,
+    premiumNote: { seen: [...new Set([...(prev.premiumNote?.seen || []), ...PREMIUM_NOTE_DAYS.filter(d => d <= stats.daysSmokeFree)])] }
+  }));
+  const PremiumNote = () => (showPremiumNote ? (
+    <Panel tone="raised" className="relative z-10 space-y-2 text-center" role="note" aria-label="About Premium">
+      <p className="type-subheading text-brass-300">
+        {premiumNoteDay === 7 ? 'A whole week smoke-free.' : 'A month smoke-free.'}
+      </p>
+      <p className="type-body text-bone">
+        If you would like deeper stats, savings projections and new armour for your knight, Premium has them. Everything you use now stays free.
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button size="sm" onClick={() => { dismissPremiumNote(); openPremium(); }}>See Premium</Button>
+        <Button size="sm" onClick={dismissPremiumNote}>Not now</Button>
+      </div>
+    </Panel>
+  ) : null);
+
+  // Records & Treasury: advanced stats and savings projections (Premium),
+  // with locked previews for everyone else.
+  const RecordsScreen = () => {
+    const statsData = advancedStats(userData, { perfectVictories: battleState.perfectVictories || 0 });
+    const savings = savingsProjection(userData);
+    return (
+      <div className="space-y-4">
+        <Panel tone="raised" className="text-center space-y-1">
+          <Heading icon="icon_scroll">Records &amp; Treasury</Heading>
+          <p className="type-caption text-bone">Day {stats.daysSmokeFree} of your quest</p>
+        </Panel>
+
+        <section className="space-y-3" aria-labelledby="records-stats">
+          <h3 id="records-stats" className="type-heading text-brass-300 text-center">Advanced Stats</h3>
+          <PremiumGate
+            title="Advanced Stats"
+            summary="Your streak, cravings resisted week by week, and battle results by craving strength. Shown here with sample numbers."
+            onOpenPremium={openPremium}
+            preview={<AdvancedStats data={SAMPLE_STATS} />}
+          >
+            <AdvancedStats data={statsData} />
+          </PremiumGate>
+        </section>
+
+        <section className="space-y-3" aria-labelledby="records-savings">
+          <h3 id="records-savings" className="type-heading text-brass-300 text-center">Savings Projections</h3>
+          <PremiumGate
+            title="Savings Projections"
+            summary="What you will have saved at each milestone and over the next year, from the costs you entered. Shown here with sample numbers."
+            onOpenPremium={openPremium}
+            preview={<SavingsProjections data={SAMPLE_SAVINGS} />}
+          >
+            <SavingsProjections data={savings} />
+          </PremiumGate>
+        </section>
+
+        <AdSlot screen="stats" inCravingFlow={battleState.inBattle} />
+
+        <div className="text-center">
+          <Button size="sm" onClick={() => setCurrentScreen(returnScreen)}>
+            <Icon id="icon_arrow_left" />Back
+          </Button>
         </div>
       </div>
     );
   };
 
   // Battle Screen Component
+  /** After a battle: back to the Quest tab and its map; a win gets a cheer there. */
+  const continueAfterBattle = () => {
+    const r = battleState.result;
+    setBattleState(prev => ({ ...prev, result: null, engine: null, inBattle: false }));
+    setMapCheer(r && r.outcome === 'victory' ? { id: Date.now(), xp: r.rewards.xp } : null);
+    setCurrentScreen('dashboard');
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   const BattleScreen = () => {
-    if (!battleState.currentEnemy) return null;
-    
-    return (
-      <div className="space-y-4">
-        {/* Battle Arena */}
-        <div className="bg-gradient-to-br from-red-900 to-purple-900 border-4 border-red-700 rounded-lg p-6 relative overflow-hidden">
-          <PixelBackground environment="dungeon" />
-          
-          {/* Battle Status */}
-          <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold-title text-yellow-500 text-center mb-4 pixelated">⚔️ BATTLE MODE ⚔️</h2>
-            
-            {/* Enemy Section */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-red-400 font-bold pixelated">{battleState.currentEnemy.name}</span>
-                <span className="text-white pixelated">{battleState.enemyHP}/{battleState.enemyMaxHP} HP</span>
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-4">
-                <div 
-                  className="bg-gradient-to-r from-red-600 to-red-500 h-4 rounded-full transition-all duration-500"
-                  style={{ width: `${(battleState.enemyHP / battleState.enemyMaxHP) * 100}%` }}
-                />
-              </div>
-              
-              {/* Enemy Avatar */}
-              <div className={`text-center mt-4 ${enemyAnimation}`}>
-                <span className="text-7xl inline-block">
-                  {battleState.currentEnemy.icon}
-                </span>
-              </div>
-            </div>
-            
-            {/* VS Divider */}
-            <div className="text-center my-4">
-              <span className="text-yellow-400 text-2xl font-bold pixelated">⚡ VS ⚡</span>
-            </div>
-            
-            {/* Player Section */}
-            <div className="mb-6">
-              <div className={`text-center mb-4 ${battleAnimation}`}>
-                <CharacterAvatar level={stats.knightLevel} size="medium" />
-              </div>
-              
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-green-400 font-bold pixelated">{userData.heroName}</span>
-                <span className="text-white pixelated">{battleState.playerHP}/{battleState.playerMaxHP} HP</span>
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-4">
-                <div 
-                  className="bg-gradient-to-r from-green-600 to-green-500 h-4 rounded-full transition-all duration-500"
-                  style={{ width: `${(battleState.playerHP / battleState.playerMaxHP) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Battle Actions */}
-        {battleState.inBattle ? (
-          <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-4">
-            <h3 className="text-yellow-500 font-bold mb-3 pixelated">Your Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => playerAttack('normal')}
-                disabled={!battleState.playerTurn}
-                className={`py-3 px-4 rounded-lg border-2 transition-all pixelated ${
-                  battleState.playerTurn 
-                    ? 'bg-blue-600 hover:bg-blue-500 border-blue-500 text-white transform hover:scale-105' 
-                    : 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <Sword className="w-5 h-5 mx-auto mb-1" />
-                <span className="text-sm">Attack</span>
-              </button>
-              
-              <button
-                onClick={() => playerAttack('special')}
-                disabled={!battleState.playerTurn || battleState.specialCharge < 100}
-                className={`py-3 px-4 rounded-lg border-2 transition-all pixelated ${
-                  battleState.playerTurn && battleState.specialCharge >= 100
-                    ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-500 text-white transform hover:scale-105 animate-pulse' 
-                    : 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <Zap className="w-5 h-5 mx-auto mb-1" />
-                <span className="text-sm">Special</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-slate-800 border-4 border-slate-700 rounded-lg p-4 text-center">
-            <p className="text-yellow-400 font-bold mb-3 pixelated">
-              {battleState.battleLog[battleState.battleLog.length - 1]}
-            </p>
-            <button
-              onClick={() => setCurrentScreen('dashboard')}
-              className="py-3 px-6 bg-green-600 hover:bg-green-500 text-white rounded-lg border-2 border-green-500 transition-all transform hover:scale-105 pixelated"
-            >
-              Continue Quest
-            </button>
-          </div>
-        )}
-      </div>
-    );
+    const engine = battleState.engine;
+    const r = battleState.result;
+    // The battle stays on screen when it ends: the outcome plays on the field
+    // and the results appear beneath it.
+    if (engine && (!isOver(engine) || r)) {
+      return (
+        <BattleView
+          battle={engine}
+          onChange={onBattleChange}
+          onFinish={finishBattle}
+          heroSpriteId={`hero_${heroClass}`}
+          reducedEffects={reducedEffectsOn}
+          fx={battleFx}
+          result={r}
+          onContinue={continueAfterBattle}
+          onRetry={r ? () => beginBattle(r.enemyId, r.tier, r.mode) : undefined}
+          onUrgeAgain={startUrge}
+        />
+      );
+    }
+    return <BattleCamp onUrge={startUrge} onPractice={startBattle} />;
   };
 
   // Achievements Screen Component
@@ -1905,355 +1900,387 @@ const QuitQuestRPG = () => {
     // Helper to check if achievement is unlocked
     const isUnlocked = (achievementId) => userData.achievements.includes(achievementId);
 
-    // Rarity colors
-    const getRarityColor = (rarity) => {
-      switch (rarity) {
-        case 'common': return 'from-gray-600 to-gray-700';
-        case 'uncommon': return 'from-green-600 to-green-700';
-        case 'rare': return 'from-blue-600 to-blue-700';
-        case 'epic': return 'from-purple-600 to-purple-700';
-        case 'legendary': return 'from-yellow-600 to-orange-600';
-        default: return 'from-gray-600 to-gray-700';
-      }
-    };
-
     const getRarityBadge = (rarity) => {
-      switch (rarity) {
-        case 'common': return '⚪ Common';
-        case 'uncommon': return '🟢 Uncommon';
-        case 'rare': return '🔵 Rare';
-        case 'epic': return '🟣 Epic';
-        case 'legendary': return '🟡 Legendary';
-        default: return '⚪ Common';
-      }
+      const names = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+      const key = names[rarity] ? rarity : 'common';
+      return <><Icon id={`icon_rarity_${key}`} className="mr-1" />{names[key]}</>;
     };
 
     return (
       <div className="space-y-4 max-w-4xl mx-auto pb-8">
         {/* Header Stats */}
-        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 sticky top-0 z-10">
-          <h2 className="text-2xl font-extrabold-title text-slate-900 text-center mb-4 pixelated">🏆 HALL OF GLORY</h2>
-          <div className="flex justify-around mb-4">
+        <Panel tone="raised" className="sticky top-0 z-10 space-y-3">
+          <Heading icon="icon_trophy">Hall of Glory</Heading>
+          <div className="flex justify-around">
             <div className="text-center">
-              <p className="text-3xl font-black-hero text-slate-900 pixelated">{unlockedCount}</p>
-              <p className="text-sm text-slate-800 pixelated font-medium-text">UNLOCKED</p>
+              <p className="type-statL text-moss-300">{unlockedCount}</p>
+              <p className="qq-label">Unlocked</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-black-hero text-slate-900 pixelated">{totalCount}</p>
-              <p className="text-sm text-slate-800 pixelated font-medium-text">TOTAL</p>
+              <p className="type-statL text-bone">{totalCount}</p>
+              <p className="qq-label">Total</p>
             </div>
           </div>
-          <div className="w-full bg-yellow-800 rounded-full h-3">
-            <div
-              className="bg-gradient-to-r from-yellow-300 to-amber-300 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
-        </div>
+          <ProgressBar value={completionPercentage} tone="moss" label="Achievements unlocked" />
+        </Panel>
 
-        {/* Achievement Gallery Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
+        {/* Achievement Gallery Grid: completed achievements carry the moss meaning */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {achievementsList.map((achievement) => {
             const unlocked = isUnlocked(achievement.id);
 
             return (
-              <div
+              <Panel
                 key={achievement.id}
-                className={`rounded-lg border-4 p-4 transition-all duration-300 ${
-                  unlocked
-                    ? `bg-gradient-to-br ${getRarityColor(achievement.rarity)} border-yellow-500 transform hover:scale-105 hover:shadow-xl animate-achievement-unlock`
-                    : 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-600 opacity-60'
-                }`}
+                tone={unlocked ? (achievement.rarity === 'legendary' ? 'legendary' : 'default') : 'sunken'}
+                className={`text-center ${unlocked ? 'animate-achievement-unlock' : 'opacity-60'}`}
               >
-                {/* Icon */}
-                <div className="text-center mb-3">
-                  <span className={`text-5xl ${unlocked ? 'animate-bounce-slow' : 'grayscale opacity-50'}`}>
-                    {unlocked ? achievement.icon : '🔒'}
+                <div className="mb-2">
+                  <span className={`inline-block ${unlocked ? 'animate-bounce-slow' : ''}`}>
+                    <Sprite id={unlocked ? achievement.icon : 'icon_lock'} scale={3} label={unlocked ? achievement.title : 'Locked'} />
                   </span>
                 </div>
 
-                {/* Title */}
-                <h3 className={`text-center font-bold-heading mb-2 pixelated text-sm ${
-                  unlocked ? 'text-yellow-300' : 'text-gray-400'
-                }`}>
+                <h3 className={`type-subheading mb-1 text-balance ${unlocked ? 'text-brass-300' : 'text-stone-400'}`}>
                   {unlocked ? achievement.title : '???'}
                 </h3>
 
-                {/* Description */}
-                <p className={`text-center text-xs mb-3 font-light-body ${
-                  unlocked ? 'text-gray-200' : 'text-gray-500'
-                }`}>
+                <p className={`type-caption mb-3 ${unlocked ? 'text-bone' : 'text-stone-500'}`}>
                   {unlocked ? achievement.description : 'Keep questing to unlock!'}
                 </p>
 
-                {/* Footer - XP and Rarity */}
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`pixelated font-medium-text ${
-                    unlocked ? 'text-green-300' : 'text-gray-500'
-                  }`}>
-                    +{achievement.experience} XP
+                <div className="flex items-center justify-between qq-label">
+                  <span className={unlocked ? 'text-moss-300' : 'text-stone-500'}>
+                    {unlocked && <Icon id="icon_check" className="mr-1" />}+{achievement.experience} XP
                   </span>
-                  <span className={`pixelated font-medium-text ${
-                    unlocked ? 'text-white' : 'text-gray-500'
-                  }`}>
+                  <span className={unlocked ? 'text-bone' : 'text-stone-500'}>
                     {getRarityBadge(achievement.rarity)}
                   </span>
                 </div>
-
-                {/* Unlocked shine effect */}
-                {unlocked && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 hover:opacity-20 transition-opacity pointer-events-none rounded-lg"></div>
-                )}
-              </div>
+              </Panel>
             );
           })}
         </div>
 
         {/* Motivational Footer */}
         {unlockedCount < totalCount && (
-          <div className="bg-gradient-to-br from-purple-900 to-purple-800 border-4 border-purple-700 rounded-lg p-4 text-center mx-4">
-            <p className="text-purple-200 pixelated font-light-body">
-              ⚔️ {totalCount - unlockedCount} achievements await you, brave hero! ⚔️
+          <Panel tone="sunken" className="text-center">
+            <p className="type-body text-indigo-300">
+              <Icon id="icon_swords" className="mr-2" />{totalCount - unlockedCount} achievements await you, brave hero!<Icon id="icon_swords" className="ml-2" />
             </p>
-          </div>
+          </Panel>
         )}
 
         {/* Completion Message */}
         {unlockedCount === totalCount && (
-          <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6 text-center mx-4 animate-pulse-slow">
-            <p className="text-3xl mb-2">🎉</p>
-            <h3 className="text-xl font-extrabold-title text-slate-900 pixelated mb-2">
-              LEGENDARY HERO!
-            </h3>
-            <p className="text-slate-800 font-light-body">
-              You've unlocked every achievement! You are a true legend of Quit Quest!
+          <Panel tone="legendary" className="text-center space-y-2 animate-pulse-slow">
+            <Sprite id="icon_special" scale={2} className="mx-auto block" />
+            <h3 className="type-title text-brass-300">Legendary Hero!</h3>
+            <p className="type-body text-bone">
+              You&rsquo;ve unlocked every achievement! You are a true legend of Quit Quest!
             </p>
-          </div>
+          </Panel>
         )}
       </div>
     );
   };
 
-  // Profile Screen Component (simplified for space)
+  // World regrowth (streak greening) is on unless the player turned it off.
+  const worldGreeningOn = userData.settings?.worldGreening !== false;
+  const toggleWorldGreening = () => {
+    setUserData(prev => ({
+      ...prev,
+      settings: { ...(prev.settings || {}), worldGreening: prev.settings?.worldGreening === false }
+    }));
+  };
+
+  /** Flip a boolean setting; `fallback` is its value when never set. */
+  const toggleSetting = (key, fallback) => {
+    setUserData(prev => {
+      const current = prev.settings && typeof prev.settings[key] === 'boolean' ? prev.settings[key] : fallback;
+      return { ...prev, settings: { ...(prev.settings || {}), [key]: !current } };
+    });
+  };
+
+  // Reduced Effects: calmer battles and world map (no shake, flashes, heavy particles or parallax).
+  const reducedEffectsOn = userData.settings?.reducedEffects === true;
+  const toggleReducedEffects = () => {
+    setUserData(prev => ({
+      ...prev,
+      settings: { ...(prev.settings || {}), reducedEffects: !(prev.settings?.reducedEffects === true) }
+    }));
+  };
+
+  /** Delete my data: two steps, then everything this app saved is removed. */
+  const deleteMyData = () => {
+    deleteLocalData(window.localStorage);
+    defaultRegistry.setSkins([]);
+    window.location.reload();
+  };
+
+  // Settings on the Hero tab: help, legal, data, and (dev builds only) tools.
+  const SettingsPanels = () => (
+    <>
+      <SupportPanel />
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_scroll" scale={2} />Privacy &amp; Terms</h3>
+        <ul className="space-y-1 type-body">
+          <li>{qqEnv.legal.privacyPolicyUrl ? <a className="qq-link" href={qqEnv.legal.privacyPolicyUrl} target="_blank" rel="noopener noreferrer">Privacy Policy</a> : <span className="text-stone-400">Privacy Policy (coming soon)</span>}</li>
+          <li>{qqEnv.legal.termsUrl ? <a className="qq-link" href={qqEnv.legal.termsUrl} target="_blank" rel="noopener noreferrer">Terms of Use</a> : <span className="text-stone-400">Terms of Use (coming soon)</span>}</li>
+        </ul>
+        <p className="type-caption text-stone-400">
+          Manage or cancel: Premium is a one-time purchase with nothing to cancel. Purchases are managed in your App Store or Google Play account settings.
+        </p>
+        <Button size="sm" onClick={() => { setCurrentScreen('credits'); if (typeof window !== 'undefined') window.scrollTo({ top: 0 }); }}>
+          <Sprite id="icon_scroll" scale={1} />Credits
+        </Button>
+      </Panel>
+
+      <Panel tone="danger" className="space-y-3">
+        <h3 className="type-subheading text-rust-300">Delete My Data</h3>
+        {deleteStep === 0 && (
+          <>
+            <p className="type-body text-bone">Remove your hero, progress and settings from this device. This cannot be undone.</p>
+            <Button tone="rust" size="sm" onClick={() => setDeleteStep(1)}>Delete my data</Button>
+          </>
+        )}
+        {deleteStep === 1 && (
+          <>
+            <p className="type-body text-bone">
+              This deletes your quit date, story progress, achievements, battle records and settings. Purchases are not affected: they belong to your App Store or Google Play account and can be restored.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button tone="rust" size="sm" onClick={() => { setDeleteText(''); setDeleteStep(2); }}>Continue</Button>
+              <Button size="sm" onClick={() => setDeleteStep(0)}>Keep my data</Button>
+            </div>
+          </>
+        )}
+        {deleteStep === 2 && (
+          <>
+            <label htmlFor="qq-delete-confirm" className="type-body text-bone block">Type DELETE to confirm.</label>
+            <input id="qq-delete-confirm" className="qq-input w-full" value={deleteText} onChange={(e) => setDeleteText(e.target.value)} autoComplete="off" />
+            <div className="flex flex-wrap gap-2">
+              <Button tone="rust" size="sm" disabled={deleteText.trim().toUpperCase() !== 'DELETE'} onClick={deleteMyData}>Delete everything</Button>
+              <Button size="sm" onClick={() => setDeleteStep(0)}>Cancel</Button>
+            </div>
+          </>
+        )}
+      </Panel>
+
+      {process.env.QQ_DEV_TOOLS === 'true' && DevToolsPanel()}
+    </>
+  );
+
+  // DEVELOPER TOOLS: present only in development and preview builds. The
+  // build flag is inlined, so production bundles drop this panel entirely.
+  const DevToolsPanel = process.env.QQ_DEV_TOOLS !== 'true' ? () => null : () => {
+    const current = devMockControls.scenario || 'off';
+    const choose = (sc) => {
+      devMockControls.set(sc === 'off' ? null : sc);
+      window.location.reload();
+    };
+    return (
+      <Panel tone="sunken" className="space-y-3 qq-dev-panel">
+        <h3 className="type-subheading text-stone-400">Developer tools (not in production builds)</h3>
+        <p className="type-caption text-stone-400">Purchase mock: pretend store for testing Premium. Current: {current}.</p>
+        <div className="flex flex-wrap gap-2">
+          {['off', 'locked', 'unlocked', 'pending', 'failing', 'offline', 'store_unavailable'].map((sc) => (
+            <Button key={sc} size="sm" selected={current === sc} onClick={() => choose(sc)}>{sc.replace('_', ' ')}</Button>
+          ))}
+        </div>
+        <Button size="sm" onClick={() => { devMockControls.resetPurchase(); window.location.reload(); }}>Reset mock purchase</Button>
+        <p className="type-caption text-stone-400">Battle: jump into any enemy (win or lose instantly from inside the battle).</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.values(ENEMIES).map((e) => (
+            <Button key={e.id} size="sm" onClick={() => beginBattle(e.id, e.boss ? 'boss' : e.tier, 'practice')}>{e.name}</Button>
+          ))}
+          <Button size="sm" onClick={startUrge}>Urge Mode</Button>
+        </div>
+      </Panel>
+    );
+  };
+
+  // Profile Screen Component
   const ProfileScreen = () => (
     <div className="space-y-4">
-      <div className="bg-gradient-to-br from-yellow-600 to-amber-600 border-4 border-yellow-500 rounded-lg p-6">
-        <div className="flex flex-col items-center text-center">
+      <Panel tone="raised">
+        <div className="flex flex-col items-center text-center gap-1 pb-2">
           <CharacterAvatar level={stats.knightLevel} size="large" />
-          <h2 className="text-2xl font-extrabold-title text-slate-900 mt-4 pixelated">{userData.heroName}</h2>
-          <p className="text-slate-800 pixelated font-medium-text">Level {stats.knightLevel} {userData.avatarClass}</p>
-          <p className="text-lg font-bold-heading text-slate-900 mt-2 pixelated">{stats.daysSmokeFree} Days Strong!</p>
+          <h2 className="type-title text-bone mt-5 break-words max-w-full">{userData.heroName}</h2>
+          <p className="type-caption text-indigo-300 capitalize">Level {stats.knightLevel} {userData.avatarClass}</p>
+          <p className="type-statL text-moss-300 mt-1">{stats.daysSmokeFree} Days Strong!</p>
         </div>
-      </div>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300">World Regrowth</h3>
+        <p className="type-body text-bone">
+          As your streak grows, moss creeps into the brass trim and the world turns greener: from day 30, 90 and 150.
+        </p>
+        <Button tone={worldGreeningOn ? 'moss' : 'brass'} selected={worldGreeningOn} onClick={toggleWorldGreening}>
+          {worldGreeningOn ? 'Regrowth on' : 'Regrowth off'}
+        </Button>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300">Reduced Effects</h3>
+        <p className="type-body text-bone">
+          Calmer motion everywhere: no screen shake, flashes or heavy particles in battle, and on the world map no drifting particles or parallax, with the knight, reveals and camera moving without animation. Turns on by itself if your device asks for reduced motion.
+        </p>
+        <Button selected={reducedEffectsOn} onClick={toggleReducedEffects}>
+          {reducedEffectsOn ? 'Reduced Effects on' : 'Reduced Effects off'}
+        </Button>
+      </Panel>
+
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300">Sound &amp; Haptics</h3>
+        <p className="type-body text-bone">
+          Battle sounds are off unless you turn them on, and follow your device&rsquo;s silent switch. Haptics are short, gentle buzzes on hits and breathing cues, where your device supports them.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button selected={userData.settings?.sound === true} onClick={() => toggleSetting('sound', false)}>
+            {userData.settings?.sound === true ? 'Sound on' : 'Sound off'}
+          </Button>
+          <Button selected={userData.settings?.haptics !== false} onClick={() => toggleSetting('haptics', true)}>
+            {userData.settings?.haptics !== false ? 'Haptics on' : 'Haptics off'}
+          </Button>
+        </div>
+      </Panel>
+
+      {/* Premium */}
+      <Panel tone={isPremium ? 'raised' : 'default'} className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_crown" scale={2} />Premium</h3>
+        <p className="type-body text-bone">
+          {isPremium
+            ? 'Premium is unlocked: advanced stats, savings projections, knight skins and no ads. Thank you!'
+            : 'A one-time purchase for advanced stats, savings projections, knight skins and no ads. Everything else stays free.'}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={openPremium}>{isPremium ? 'About Premium' : 'See Premium'}</Button>
+          {entitlements.purchasesAvailable && (
+            <Button size="sm" onClick={() => entitlements.restore()} disabled={entitlements.restoring}>
+              {entitlements.restoring ? 'Restoring...' : 'Restore Purchases'}
+            </Button>
+          )}
+        </div>
+      </Panel>
+
+      {/* Knight skins (Premium) */}
+      <Panel className="space-y-3">
+        <h3 className="type-subheading text-brass-300 flex flex-wrap items-center gap-2"><Sprite id="icon_helmet" scale={2} />Knight Armour</h3>
+        <SkinPicker
+          heroClass={['warrior', 'mage', 'rogue'].includes(userData.avatarClass) ? userData.avatarClass : 'warrior'}
+          selected={heroSkin}
+          onSelect={chooseSkin}
+          onOpenPremium={openPremium}
+        />
+      </Panel>
+
+      {SettingsPanels()}
     </div>
   );
 
+  const tabs = [
+    { screen: 'dashboard', label: 'Quest', icon: 'icon_shield' },
+    { screen: 'story', label: 'Story', icon: 'icon_book', dot: !todayStoryViewed && userData.storyProgress.includes(stats.daysSmokeFree) ? 'brass' : null },
+    { screen: 'battle', label: 'Battle', icon: 'icon_swords', dot: battleState.inBattle ? 'rust' : null },
+    { screen: 'achievements', label: 'Glory', icon: 'icon_trophy' },
+    { screen: 'profile', label: 'Hero', icon: 'icon_helmet' }
+  ];
+
+  const greening = greeningStage(stats.daysSmokeFree, worldGreeningOn);
+
   // Main Game Screen
   const GameScreen = () => (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900">
-      {/* Particle Effects */}
-      <ParticleEffect />
-      
-      {/* Level Up Animation */}
-      <LevelUpAnimation />
-      
-      {/* Header */}
-      <div className="bg-slate-900 border-b-4 border-slate-700 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-transparent to-purple-900 opacity-30"></div>
-        <div className="max-w-4xl mx-auto p-4 relative z-10">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-extrabold-title text-yellow-500 pixelated">🏰 QUIT QUEST</h1>
-            <div className="flex items-center gap-3">
+    <GreeningProvider stage={greening}>
+      <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-indigo-900 to-indigo-950 relative">
+        {/* World regrowth: a faint moss glow that rises with the streak */}
+        {greening > 0 && (
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{ background: `radial-gradient(ellipse at 50% 115%, color-mix(in srgb, var(--c-moss700) ${greening * 14}%, transparent), transparent 65%)` }}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Particle Effects */}
+        <ParticleEffect />
+
+        {/* Level Up Animation */}
+        <LevelUpAnimation />
+
+        {/* Header */}
+        <header className="bg-indigo-950 border-b-2 border-brass-700 relative">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="type-heading text-brass-300 min-w-0"><Icon id="icon_castle" scale={2} className="mr-2" />Quit Quest</h1>
+            {/* Urge Mode: one tap from any screen into a short battle */}
+            {!battleState.inBattle && (
+              <Button tone="moss" size="sm" onClick={startUrge} className="qq-urge-btn" aria-label="Urge Mode: start a short battle now">
+                <Icon id="icon_alert" />Urge
+              </Button>
+            )}
+            <div className="flex items-center gap-3 min-w-0">
               <CharacterAvatar level={stats.knightLevel} size="small" />
-              <div className="text-right">
-                <p className="text-yellow-500 font-bold-heading pixelated">{userData.heroName}</p>
-                <p className="text-gray-400 text-xs pixelated font-medium-text">Day {stats.daysSmokeFree}</p>
+              <div className="text-right min-w-0">
+                <p className="type-caption text-brass-300 truncate">{userData.heroName}</p>
+                <p className="qq-label">Day {stats.daysSmokeFree}</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Navigation Tabs */}
-      <div className="bg-slate-800 border-b-4 border-slate-700">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-5">
-            <button
-              onClick={() => setCurrentScreen('dashboard')}
-              className={`py-3 text-center transition-all pixelated ${
-                currentScreen === 'dashboard' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Shield className="w-6 h-6 mx-auto mb-1" />
-              <span className="text-xs font-bold">QUEST</span>
-            </button>
-            <button
-              onClick={() => setCurrentScreen('story')}
-              className={`py-3 text-center transition-all relative pixelated ${
-                currentScreen === 'story' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <BookOpen className="w-6 h-6 mx-auto mb-1" />
-              <span className="text-xs font-bold">STORY</span>
-              {!todayStoryViewed && userData.storyProgress.includes(stats.daysSmokeFree) && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setCurrentScreen('battle')}
-              className={`py-3 text-center transition-all relative pixelated ${
-                currentScreen === 'battle' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Swords className="w-6 h-6 mx-auto mb-1" />
-              <span className="text-xs font-bold">BATTLE</span>
-              {battleState.inBattle && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setCurrentScreen('achievements')}
-              className={`py-3 text-center transition-all pixelated ${
-                currentScreen === 'achievements' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Trophy className="w-6 h-6 mx-auto mb-1" />
-              <span className="text-xs font-bold">GLORY</span>
-            </button>
-            <button
-              onClick={() => setCurrentScreen('profile')}
-              className={`py-3 text-center transition-all pixelated ${
-                currentScreen === 'profile' 
-                  ? 'bg-gradient-to-b from-slate-700 to-slate-800 text-yellow-500 border-b-4 border-yellow-500' 
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <User className="w-6 h-6 mx-auto mb-1" />
-              <span className="text-xs font-bold">HERO</span>
-            </button>
+        {/* Navigation Tabs */}
+        <nav className="bg-indigo-900 border-b-2 border-indigo-950 relative" aria-label="Main">
+          <div className="max-w-4xl mx-auto grid grid-cols-5">
+            {tabs.map(tab => {
+              const active = currentScreen === tab.screen;
+              return (
+                <button
+                  key={tab.screen}
+                  onClick={() => {
+                    if (currentScreen === 'story' && tab.screen !== 'story' && tab.screen !== 'battle' && ads) {
+                      const last = (userData.history?.battles || []).slice(-1)[0];
+                      ads.maybeInterstitial('story_closed', { inCravingFlow: battleState.inBattle, lastBattleResult: last ? last.result : null });
+                    }
+                    setCurrentScreen(tab.screen);
+                  }}
+                  aria-label={tab.label}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative py-2 text-center ${active ? 'qq-chip qq-chip--brass' : 'text-stone-400'}`}
+                >
+                  <Sprite id={tab.icon} scale={2} className="mx-auto mb-0.5 block" />
+                  <span className={`qq-label qq-tab-label ${active ? 'text-indigo-950' : ''}`}>{tab.label}</span>
+                  {tab.dot && (
+                    <span className={`absolute top-1 right-2 w-2 h-2 animate-pulse ${tab.dot === 'rust' ? 'bg-rust-400' : 'bg-brass-300'}`} />
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </div>
+        </nav>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto p-4">
-        {currentScreen === 'dashboard' && <DashboardScreen />}
-        {currentScreen === 'story' && <StoryScreen />}
-        {currentScreen === 'battle' && <BattleScreen />}
-        {currentScreen === 'achievements' && <AchievementsScreen />}
-        {currentScreen === 'profile' && <ProfileScreen />}
+        {/* Content */}
+        <main className="max-w-4xl mx-auto p-4 relative">
+          {/* Called as a function (no hooks) so the map on it stays mounted */}
+          {currentScreen === 'dashboard' && DashboardScreen()}
+          {/* Called as a function (no hooks) so the world map stays mounted between state changes */}
+          {currentScreen === 'story' && StoryScreen()}
+          {/* Called as a function (no hooks) so the battle field stays mounted between turns */}
+          {currentScreen === 'battle' && BattleScreen()}
+          {currentScreen === 'achievements' && <AchievementsScreen />}
+          {/* Called as a function (no hooks) so inputs keep focus between state changes */}
+          {currentScreen === 'profile' && ProfileScreen()}
+          {currentScreen === 'stats' && RecordsScreen()}
+          {currentScreen === 'premium' && <PremiumScreen onClose={() => setCurrentScreen(returnScreen)} />}
+          {currentScreen === 'credits' && <CreditsScreen onClose={() => setCurrentScreen('profile')} />}
+        </main>
       </div>
-    </div>
+    </GreeningProvider>
   );
 
   return (
     <>
-      <style jsx>{`
-        .pixelated {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-weight: 600;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        
-        @keyframes twinkle {
-          0%, 100% { opacity: 0; }
-          50% { opacity: 1; }
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        
-        @keyframes scale-up {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-        
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-        
-        .animate-twinkle {
-          animation: twinkle 5s infinite;
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animate-scale-up {
-          animation: scale-up 0.5s ease-out;
-        }
-        
-        .animate-bounce-slow {
-          animation: bounce-slow 2s ease-in-out infinite;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 2s ease-in-out infinite;
-        }
-        
-        .player-attack {
-          animation: attack-right 0.5s ease-out;
-        }
-        
-        .enemy-attack {
-          animation: attack-left 0.5s ease-out;
-        }
-        
-        .heal {
-          animation: heal-glow 1s ease-out;
-        }
-        
-        @keyframes attack-right {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(20px); }
-        }
-        
-        @keyframes attack-left {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(-20px); }
-        }
-        
-        @keyframes heal-glow {
-          0% { filter: brightness(1); }
-          50% { filter: brightness(1.5) hue-rotate(120deg); }
-          100% { filter: brightness(1); }
-        }
-      `}</style>
       {gameState === 'setup' ? (
         <SetupScreen
           setupStep={setupStep}
@@ -2264,7 +2291,8 @@ const QuitQuestRPG = () => {
           setSetupStep={setSetupStep}
         />
       ) : (
-        <GameScreen />
+        // Called as a function (no hooks) so the game tree is not remounted on every state change
+        GameScreen()
       )}
     </>
   );
